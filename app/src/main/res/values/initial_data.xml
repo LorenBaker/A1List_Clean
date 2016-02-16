@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="list_title_names">
+        <item>List 4</item>
+        <item>List 3</item>
+        <item>List 2</item>
+        <item>List 1</item>
+    </string-array>
+
+    <string-array name="list_1_items">
+        <item>List 01 - Item 01</item>
+        <item>List 01 - Item 02</item>
+        <item>List 01 - Item 03</item>
+        <item>List 01 - Item 04</item>
+        <item>List 01 - Item 05</item>
+        <item>List 01 - Item 06</item>
+        <item>List 01 - Item 07</item>
+        <item>List 01 - Item 08</item>
+        <item>List 01 - Item 09</item>
+        <item>List 01 - Item 10</item>
+    </string-array>
+
+    <string-array name="list_2_items">
+        <item>List 02 - Item 01</item>
+        <item>List 02 - Item 02</item>
+        <item>List 02 - Item 03</item>
+        <item>List 02 - Item 04</item>
+        <item>List 02 - Item 05</item>
+        <item>List 02 - Item 06</item>
+        <item>List 02 - Item 07</item>
+        <item>List 02 - Item 08</item>
+        <item>List 02 - Item 09</item>
+        <item>List 02 - Item 10</item>
+    </string-array>
+
+    <string-array name="list_3_items">
+        <item>List 03 - Item 01</item>
+        <item>List 03 - Item 02</item>
+        <item>List 03 - Item 03</item>
+        <item>List 03 - Item 04</item>
+        <item>List 03 - Item 05</item>
+        <item>List 03 - Item 06</item>
+        <item>List 03 - Item 07</item>
+        <item>List 03 - Item 08</item>
+        <item>List 03 - Item 09</item>
+        <item>List 03 - Item 10</item>
+    </string-array>
+
+    <string-array name="list_4_items">
+        <item>List 04 - Item 01</item>
+        <item>List 04 - Item 02</item>
+        <item>List 04 - Item 03</item>
+        <item>List 04 - Item 04</item>
+        <item>List 04 - Item 05</item>
+        <item>List 04 - Item 06</item>
+        <item>List 04 - Item 07</item>
+        <item>List 04 - Item 08</item>
+        <item>List 04 - Item 09</item>
+        <item>List 04 - Item 10</item>
+    </string-array>
+    
+    
+</resources>
