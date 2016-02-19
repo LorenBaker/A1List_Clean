@@ -12,9 +12,6 @@ import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.Button;
 
-import com.backendless.Backendless;
-import com.backendless.async.callback.AsyncCallback;
-import com.backendless.exceptions.BackendlessFault;
 import com.lbconsulting.a1list.AndroidApplication;
 
 import java.util.regex.Matcher;
@@ -31,23 +28,24 @@ public class CommonMethods {
     public static void changePasswordRequest(final Context context, final String email) {
         if (isNetworkAvailable()) {
             if (!email.equals(MySettings.NOT_AVAILABLE)) {
-                Backendless.UserService.restorePassword(email, new AsyncCallback<Void>()
-                {
-                    public void handleResponse(Void response) {
-                        String msg = "An email has been sent to " + email + " with a link to change your password.";
-                        String title = "Change Password Request";
-                        CommonMethods.showOkDialog(context, title, msg);
+                // TODO: implement change Password request
+//                Backendless.UserService.restorePassword(email, new AsyncCallback<Void>()
+//                {
+//                    public void handleResponse(Void response) {
+                        String msg = "TODO:An email has been sent to " + email + " with a link to change your password.";
+//                        String title = "Change Password Request";
+//                        CommonMethods.showOkDialog(context, title, msg);
                         Timber.i("changePasswordRequest(): %s", msg);
-                    }
-
-                    public void handleFault(BackendlessFault fault) {
-                        // password recovery failed, to get the error code call fault.getCode()
-                        String msg = "Error " + fault.getCode() + ". " + fault.getMessage();
-                        String title = "Change Password Request Error";
-                        CommonMethods.showOkDialog(context, title, msg);
-                        Timber.e("changePasswordRequest(): %s", msg);
-                    }
-                });
+//                    }
+//
+//                    public void handleFault(BackendlessFault fault) {
+//                        // password recovery failed, to get the error code call fault.getCode()
+//                        String msg = "Error " + fault.getCode() + ". " + fault.getMessage();
+//                        String title = "Change Password Request Error";
+//                        CommonMethods.showOkDialog(context, title, msg);
+//                        Timber.e("changePasswordRequest(): %s", msg);
+//                    }
+//                });
             }
         } else {
             String msg = "Unable to request change of password. Network is not available.";
@@ -144,11 +142,10 @@ public class CommonMethods {
      * @param dp A value in dp (density independent pixels) unit. Which we need to convert into pixels
      * @return A float value to represent px equivalent to dp depending on device density
      */
-    public static int convertDpToPixel(int dp) {
-        float floatDp = (float) dp;
+    public static int convertDpToPixel(float dp) {
         Resources resources = AndroidApplication.getContext().getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
-        float px = floatDp * (metrics.densityDpi / 160f);
+        float px = dp * (metrics.densityDpi / 160f);
         return Math.round(px);
     }
 

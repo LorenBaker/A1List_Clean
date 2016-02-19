@@ -2,6 +2,15 @@
 <manifest package="com.lbconsulting.a1list"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- To auto-complete the txtEmail text field in the login form with the user's emails -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.READ_PROFILE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <application
         android:name="com.lbconsulting.a1list.AndroidApplication"
         android:allowBackup="true"
@@ -9,13 +18,36 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.lbconsulting.a1list.presentation.ui.activities.MainActivity">
+
+        <activity
+            android:name=".presentation.ui.activities.backendless.BackendlessLoginActivity"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
+
+        <activity
+            android:name=".presentation.ui.activities.backendless.BackendlessRegistrationActivity"
+            android:label="@string/title_activity_registration"
+            android:theme="@style/AppTheme.NoActionBar">
+
+        </activity>
+
+        <activity
+            android:name=".presentation.ui.activities.MainActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+
+        <provider
+            android:name="com.lbconsulting.a1list.domain.storage.A1List_ContentProvider"
+            android:authorities="com.lbconsulting.a1list"
+            android:exported="false"/>
+
     </application>
 
 </manifest>

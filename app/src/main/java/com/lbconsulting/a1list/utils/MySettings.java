@@ -10,6 +10,7 @@ import android.preference.PreferenceManager;
 public class MySettings {
 
     public static final String NOT_AVAILABLE = "N/A";
+    public static final String EXTRA_IS_STARTED_FROM_REGISTRATION_ACTIVITY = "extraIsStartedFromRegistrationActivity";
 
     private static final String SETTING_ACTIVE_LIST_TITLE_UUID = "activeListTitleUuid";
     private static final String SETTING_IS_FIRST_TIME_APP_RUN = "isFirstTimeAppRun";
@@ -25,7 +26,9 @@ public class MySettings {
         mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
+
     //region SETTING_ACTIVE_LIST_TITLE_UUID
+
     public static String getActiveListTitleUuid() {
         return mPreferences.getString(SETTING_ACTIVE_LIST_TITLE_UUID, NOT_AVAILABLE);
     }
@@ -35,8 +38,8 @@ public class MySettings {
         editor.putString(SETTING_ACTIVE_LIST_TITLE_UUID, activeListTitleUuid);
         editor.apply();
     }
-    //endregion
 
+    //endregion
 
     //region SETTING_IS_FIRST_TIME_APP_RUN
     public static boolean isFirstTimeAppRun() {
@@ -49,6 +52,17 @@ public class MySettings {
         editor.apply();
     }
     //endregion
+
+    //region SETTING_ACTIVE_USER
+    public static String getActiveUserID() {
+        return mPreferences.getString(SETTING_ACTIVE_USER_ID, NOT_AVAILABLE);
+    }
+
+    public static void setActiveUserID(String activeUserID) {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putString(SETTING_ACTIVE_USER_ID, activeUserID);
+        editor.apply();
+    }
 
     public static String getActiveUserFirstName() {
         return mPreferences.getString(SETTING_ACTIVE_USER_FIRST_NAME, NOT_AVAILABLE);
@@ -117,4 +131,6 @@ public class MySettings {
         }
         return result;
     }
+
+    //endregion
 }

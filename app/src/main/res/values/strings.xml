@@ -23,4 +23,7 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email completions." </string>
     <string name="error_passwords_do_not_match">Passwords do not match.</string>
     <string name="tvMessagesReceived_text">Messages Received:</string>
+
+    <string name="btnEditItemName_contentDescription">Edit Item Name</string>
+
 </resources>

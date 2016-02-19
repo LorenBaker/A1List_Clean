@@ -7,6 +7,7 @@ import android.app.LoaderManager.LoaderCallbacks;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -71,9 +72,15 @@ public class BackendlessLoginActivity extends AppCompatActivity implements Loade
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         Timber.i("onCreate()");
+        boolean isTablet = getResources().getBoolean(R.bool.isTablet);
+        if (isTablet) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
         setContentView(R.layout.activity_login);
+
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.txtEmail);
         populateAutoComplete();
@@ -90,9 +97,7 @@ public class BackendlessLoginActivity extends AppCompatActivity implements Loade
             }
         });
 
-        // TODO: remove hard coded email and password
-        mEmailView.setText("LorenABaker@comcast.net");
-        mPasswordView.setText("BEprmbaker5493");
+
 
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
@@ -406,26 +411,6 @@ public class BackendlessLoginActivity extends AppCompatActivity implements Loade
         if (userToken != null && !userToken.equals("")) {
             Timber.i("validateUserLogin(): User login is available. Starting MainActivity.");
             startMainActivity();
-/*            AsyncCallback<Boolean> isValidLoginCallback = new AsyncCallback<Boolean>() {
-                @Override
-                public void handleResponse(Boolean isValidLogin) {
-                    MyLog.i("BackendlessLoginActivity", "onCreate: isValidLoginCallback - " + isValidLogin);
-                    if (isValidLogin) {
-                        startMainActivity();
-                    } else {
-                        showProgress(false);
-                    }
-
-                }
-
-                @Override
-                public void handleFault(BackendlessFault fault) {
-                    MyLog.e("BackendlessLoginActivity", "onCreate: isValidLoginCallback: BackendlessFault: " + fault.getMessage());
-
-                }
-
-            };
-            Backendless.UserService.isValidLogin(isValidLoginCallback);*/
         } else {
             showProgress(false);
         }
@@ -435,8 +420,10 @@ public class BackendlessLoginActivity extends AppCompatActivity implements Loade
         Intent intent = new Intent(this, MainActivity.class);
         // reset the backstack
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(MySettings.EXTRA_IS_STARTED_FROM_REGISTRATION_ACTIVITY, false);
         startActivity(intent);
         finish();
+
     }
 
     private void startRegistrationActivity() {

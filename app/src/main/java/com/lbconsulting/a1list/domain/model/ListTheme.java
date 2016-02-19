@@ -1,5 +1,7 @@
 package com.lbconsulting.a1list.domain.model;
 
+import com.lbconsulting.a1list.utils.MySettings;
+
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.UUID;
@@ -12,6 +14,7 @@ import java.util.UUID;
 public class ListTheme {
 
     private String objectId;
+    private long Id;
     private String name;
     private int startColor; // int
     private int endColor;
@@ -34,8 +37,34 @@ public class ListTheme {
         // A default constructor is required.
     }
 
-
     //region Getters and Setters
+
+    public static ListTheme newInstance(String newThemeName,
+                                        int startColor, int endColor,
+                                        int textColor, float textSize,
+                                        float horizontalPaddingInDp, float verticalPaddingInDp,
+                                        boolean isBold, boolean isTransparent, boolean isDefaultTheme) {
+
+        ListTheme newTheme = new ListTheme();
+        newTheme.setName(newThemeName);
+        newTheme.setStartColor(startColor);
+        newTheme.setEndColor(endColor);
+        newTheme.setTextColor(textColor);
+        newTheme.setTextSize(textSize);
+        newTheme.setHorizontalPaddingInDp(horizontalPaddingInDp);
+        newTheme.setVerticalPaddingInDp(verticalPaddingInDp);
+        newTheme.setBold(isBold);
+        newTheme.setChecked(false);
+        newTheme.setDefaultTheme(isDefaultTheme);
+        newTheme.setMarkedForDeletion(false);
+        newTheme.setTransparent(isTransparent);
+        String newUuid = UUID.randomUUID().toString();
+        // replace uuid "-" with "_" to distinguish it from Backendless objectId
+        newUuid = newUuid.replace("-", "_");
+        newTheme.setUuid(newUuid);
+
+        return newTheme;
+    }
 
     public int getEndColor() {
         return endColor;
@@ -50,9 +79,26 @@ public class ListTheme {
         return horizontalPaddingInDp;
     }
 
+//    public int getHorizontalPaddingPx() {
+//        return CommonMethods.convertDpToPixel(getInt(HORIZONTAL_PADDING_DP));
+//    }
+//
+//    private int getHorizontalPaddingDp() {
+//        return getInt(HORIZONTAL_PADDING_DP);
+//    }
+
     public void setHorizontalPaddingInDp(float horizontalPaddingInDp) {
         setThemeDirty(true);
         this.horizontalPaddingInDp = horizontalPaddingInDp;
+    }
+
+    public float getVerticalPaddingInDp() {
+        return verticalPaddingInDp;
+    }
+
+    public void setVerticalPaddingInDp(float verticalPaddingInDp) {
+        setThemeDirty(true);
+        this.verticalPaddingInDp = verticalPaddingInDp;
     }
 
     public boolean isThemeDirty() {
@@ -118,11 +164,23 @@ public class ListTheme {
     }
 
     public String getObjectId() {
+        if (objectId == null || objectId.isEmpty()) {
+            objectId = MySettings.NOT_AVAILABLE;
+        }
+
         return objectId;
     }
 
     public void setObjectId(String objectId) {
         this.objectId = objectId;
+    }
+
+    public long getId() {
+        return Id;
+    }
+
+    public void setId(long id) {
+        Id = id;
     }
 
     public int getStartColor() {
@@ -161,15 +219,6 @@ public class ListTheme {
         this.uuid = uuid;
     }
 
-    public float getVerticalPaddingInDp() {
-        return verticalPaddingInDp;
-    }
-
-    public void setVerticalPaddingInDp(float verticalPaddingInDp) {
-        setThemeDirty(true);
-        this.verticalPaddingInDp = verticalPaddingInDp;
-    }
-
     public Date getUpdated() {
         return updated;
     }
@@ -187,11 +236,13 @@ public class ListTheme {
     }
 
 
+    //endregion
+
     @Override
     public String toString() {
-        DateFormat  mDateFormat = DateFormat.getDateTimeInstance();
-
-        String result = "Name: " + getName() +"\n"
+        DateFormat mDateFormat = DateFormat.getDateTimeInstance();
+        String result = "Name: " + getName();
+/*        String result = "Name: " + getName() + "\n"
                 + "ObjectId = " + getObjectId() + "\n"
                 + "Uuid = " + getUuid() + "\n"
                 + "Start Color = " + getStartColor() + "\n"
@@ -206,40 +257,9 @@ public class ListTheme {
                 + "defaultTheme = " + isDefaultTheme() + "\n"
                 + "markedForDeletion = " + isMarkedForDeletion() + "\n"
                 + "transparent = " + isTransparent() + "\n"
-                + "date/time modified = " + mDateFormat.format(getUpdated()) +"\n\n";
+                + "date/time modified = " + mDateFormat.format(getUpdated()) + "\n\n";*/
 
         return result;
     }
-
-
-    //endregion
-
-    public static ListTheme newInstance(String newThemeName,
-                                             int startColor, int endColor,
-                                             int textColor, float textSize,
-                                             float horizontalPaddingInDp, float verticalPaddingInDp,
-                                             boolean isBold, boolean isTransparent, boolean isDefaultTheme) {
-
-        ListTheme newTheme = new ListTheme();
-        newTheme.setName(newThemeName);
-        newTheme.setStartColor(startColor);
-        newTheme.setEndColor(endColor);
-        newTheme.setTextColor(textColor);
-        newTheme.setTextSize(textSize);
-        newTheme.setHorizontalPaddingInDp(horizontalPaddingInDp);
-        newTheme.setVerticalPaddingInDp(verticalPaddingInDp);
-        newTheme.setBold(isBold);
-        newTheme.setChecked(false);
-        newTheme.setDefaultTheme(isDefaultTheme);
-        newTheme.setMarkedForDeletion(false);
-        newTheme.setTransparent(isTransparent);
-        String newUuid = UUID.randomUUID().toString();
-        // replace uuid "-" with "_" to distinguish it from Backendless objectId
-        newUuid = newUuid.replace("-", "_");
-        newTheme.setUuid(newUuid);
-
-        return newTheme;
-    }
-
 
 }
