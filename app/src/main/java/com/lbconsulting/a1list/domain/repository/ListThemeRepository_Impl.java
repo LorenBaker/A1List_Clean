@@ -171,6 +171,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
         listTheme.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemeSqlTable.COL_CHECKED)) > 0);
         listTheme.setDefaultTheme(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemeSqlTable.COL_DEFAULT_THEME)) > 0);
         listTheme.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemeSqlTable.COL_MARKED_FOR_DELETION)) > 0);
+        listTheme.setStruckOut(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemeSqlTable.COL_STRUCK_OUT)) > 0);
         listTheme.setTransparent(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemeSqlTable.COL_TRANSPARENT)) > 0);
         listTheme.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListThemeSqlTable.COL_UUID)));
         long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListThemeSqlTable.COL_UPDATED));
@@ -366,7 +367,6 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
         }
     }
 
-
     public void update(ListTheme listTheme, ContentValues contentValues, boolean updateBackendless) {
         String selection = ListThemeSqlTable.COL_UUID + " = '" + listTheme.getUuid() + "'";
         String[] selectionArgs = null;
@@ -410,45 +410,51 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
             return;
         }
 
-        boolean currentValue;
+        boolean newValue;
         ContentValues cv = new ContentValues();
-        String selection = ListThemeSqlTable.COL_UUID + " = ?'";
-        String[] selectionArgs = {listTheme.getUuid() + "'"};
+        String selection = ListThemeSqlTable.COL_UUID + " = '" + listTheme.getUuid() + "'";
+        String[] selectionArgs = null;
 
         switch (fieldName) {
             case ListThemeSqlTable.COL_BOLD:
-                currentValue = currentListTheme.isBold();
-                cv.put(ListThemeSqlTable.COL_BOLD, !currentValue);
+                newValue = !currentListTheme.isBold();
+                cv.put(ListThemeSqlTable.COL_BOLD,  newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_CHECKED:
-                currentValue = currentListTheme.isChecked();
-                cv.put(ListThemeSqlTable.COL_CHECKED, !currentValue);
+                newValue = !currentListTheme.isChecked();
+                cv.put(ListThemeSqlTable.COL_CHECKED,  newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_DEFAULT_THEME:
-                currentValue = currentListTheme.isDefaultTheme();
-                cv.put(ListThemeSqlTable.COL_DEFAULT_THEME, !currentValue);
+                newValue = !currentListTheme.isDefaultTheme();
+                cv.put(ListThemeSqlTable.COL_DEFAULT_THEME,  newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_THEME_DIRTY:
-                currentValue = currentListTheme.isThemeDirty();
-                cv.put(ListThemeSqlTable.COL_THEME_DIRTY, !currentValue);
+                newValue = !currentListTheme.isThemeDirty();
+                cv.put(ListThemeSqlTable.COL_THEME_DIRTY,  newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_MARKED_FOR_DELETION:
-                currentValue = currentListTheme.isMarkedForDeletion();
-                cv.put(ListThemeSqlTable.COL_MARKED_FOR_DELETION, !currentValue);
+                newValue = !currentListTheme.isMarkedForDeletion();
+                cv.put(ListThemeSqlTable.COL_MARKED_FOR_DELETION,  newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_TRANSPARENT:
-                currentValue = currentListTheme.isTransparent();
-                cv.put(ListThemeSqlTable.COL_TRANSPARENT, !currentValue);
+                newValue = !currentListTheme.isTransparent();
+                cv.put(ListThemeSqlTable.COL_TRANSPARENT,  newValue ? TRUE : FALSE);
+                update(listTheme, cv, selection, selectionArgs, updateBackendless);
+                break;
+
+            case ListThemeSqlTable.COL_STRUCK_OUT:
+                newValue = !currentListTheme.isStruckOut();
+                cv.put(ListThemeSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 

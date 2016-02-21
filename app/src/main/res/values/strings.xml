@@ -25,5 +25,6 @@
     <string name="tvMessagesReceived_text">Messages Received:</string>
 
     <string name="btnEditItemName_contentDescription">Edit Item Name</string>
+    <string name="action_deleteListThemeStrikeouts_title">Delete Struck Out List Themes</string>
 
 </resources>

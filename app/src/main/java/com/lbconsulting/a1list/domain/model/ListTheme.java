@@ -27,6 +27,7 @@ public class ListTheme {
     private boolean checked;
     private boolean defaultTheme;
     private boolean markedForDeletion;
+    private boolean struckOut;
     private boolean transparent;
     private String uuid;
     private Date updated;
@@ -143,6 +144,14 @@ public class ListTheme {
     public void setMarkedForDeletion(boolean isMarkedForDeletion) {
         setThemeDirty(true);
         this.markedForDeletion = isMarkedForDeletion;
+    }
+
+    public boolean isStruckOut() {
+        return struckOut;
+    }
+
+    public void setStruckOut(boolean struckOut) {
+        this.struckOut = struckOut;
     }
 
     public boolean isTransparent() {

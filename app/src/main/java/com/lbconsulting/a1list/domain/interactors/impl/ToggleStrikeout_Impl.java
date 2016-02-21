@@ -2,50 +2,38 @@ package com.lbconsulting.a1list.domain.interactors.impl;
 
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
-import com.lbconsulting.a1list.domain.interactors.AllListThemeInteractor;
+import com.lbconsulting.a1list.domain.interactors.ToggleStrikeoutInteractor;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
+import com.lbconsulting.a1list.domain.storage.ListThemeSqlTable;
 
 import java.util.List;
 
 /**
- * An interactor that retrieves all ListThemes
+ * This is an interactor toggles a ListTheme's strikeout attribute.
+ * <p/>
  */
-public class AllListThemeInteractor_Impl extends AbstractInteractor implements AllListThemeInteractor {
+public class ToggleStrikeout_Impl extends AbstractInteractor implements ToggleStrikeoutInteractor {
 
-
-
-    private final AllListThemeInteractor.Callback mCallback;
+    private final ToggleStrikeoutInteractor.Callback mCallback;
     private final ListThemeRepository mListThemeRepository;
-    private String mAction = NONE;
-    private ListTheme mSelectedListTheme;
+    private ListTheme mListTheme;
 
-    public AllListThemeInteractor_Impl(Executor threadExecutor, MainThread mainThread,
-                                       Callback callback, ListThemeRepository listThemeRepository) {
+    public ToggleStrikeout_Impl(Executor threadExecutor,
+                                MainThread mainThread,
+                                Callback callback, ListThemeRepository listThemeRepository,
+                                ListTheme listTheme) {
         super(threadExecutor, mainThread);
-
         mCallback = callback;
         mListThemeRepository = listThemeRepository;
+        mListTheme = listTheme;
     }
-
-//    public void toggleStrikeout(ListTheme listTheme){
-//        mListThemeRepository.toggle(listTheme,ListThemeSqlTable.COL_STRUCK_OUT, true);
-//    }
 
     @Override
     public void run() {
-
-//        switch (mAction) {
-//            case TOGGLE_STRIKEOUT:
-//                mListThemeRepository.toggle(mSelectedListTheme, ListThemeSqlTable.COL_STRUCK_OUT, true);
-//                break;
-//
-//            default:
-//
-//        }
-
-        // retrieve all ListThemes that are not marked for deletion
+        // TODO: Implement this with your business logic
+        mListThemeRepository.toggle(mListTheme, ListThemeSqlTable.COL_STRUCK_OUT, true);
         final List<ListTheme> allListThemes = mListThemeRepository.getAllListThemes(false);
         // check if we have failed to retrieve any ListThemes
         if (allListThemes == null || allListThemes.size() == 0) {
@@ -56,17 +44,13 @@ public class AllListThemeInteractor_Impl extends AbstractInteractor implements A
             postAllListThemes(allListThemes);
         }
     }
-//
-//    public void setAction(ListTheme listTheme, String action) {
-//        mSelectedListTheme = listTheme;
-//        mAction = action;
-//    }
+
 
     private void postAllListThemes(final List<ListTheme> allListThemes) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onAllListThemesRetrieved(allListThemes);
+                mCallback.onStrikeout(allListThemes);
             }
         });
     }
@@ -75,7 +59,7 @@ public class AllListThemeInteractor_Impl extends AbstractInteractor implements A
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onRetrievalFailed("No Themes retrieved!");
+                mCallback.onToggleStrikeoutFailed("No Themes retrieved!");
             }
         });
     }

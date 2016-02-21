@@ -97,6 +97,9 @@ public class BackendlessLoginActivity extends AppCompatActivity implements Loade
             }
         });
 
+        // TODO: Remove hard coded email and password
+        mEmailView.setText("LorenABaker@comcast.net");
+        mPasswordView.setText("BEprmbaker5493");
 
 
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
@@ -417,10 +420,10 @@ public class BackendlessLoginActivity extends AppCompatActivity implements Loade
     }
 
     private void startMainActivity() {
+        MySettings.setStartedFromRegistrationActivity(false);
         Intent intent = new Intent(this, MainActivity.class);
-        // reset the backstack
+        // reset the backStack
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(MySettings.EXTRA_IS_STARTED_FROM_REGISTRATION_ACTIVITY, false);
         startActivity(intent);
         finish();
 

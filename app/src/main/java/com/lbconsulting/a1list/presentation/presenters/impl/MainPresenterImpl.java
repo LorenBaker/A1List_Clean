@@ -4,15 +4,15 @@ import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.SampleInteractor;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
-import com.lbconsulting.a1list.presentation.presenters.MainPresenter;
+import com.lbconsulting.a1list.presentation.presenters.interfaces.zPresenterTemplate;
 
 /**
  * Created by dmilicic on 12/13/15.
  */
-public class MainPresenterImpl extends AbstractPresenter implements MainPresenter,
+public class MainPresenterImpl extends AbstractPresenter implements zPresenterTemplate,
         SampleInteractor.Callback {
 
-    private MainPresenter.View mView;
+    private zPresenterTemplate.View mView;
 
     public MainPresenterImpl(Executor executor,
                              MainThread mainThread,

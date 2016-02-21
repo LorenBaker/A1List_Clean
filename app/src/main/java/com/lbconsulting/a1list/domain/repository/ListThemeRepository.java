@@ -23,7 +23,9 @@ public interface ListThemeRepository {
 
 
     //region Update
-    void update(ListTheme listTheme,ContentValues contentValues, String selection, String[] selectionArgs,  boolean updateBackendless);
+    void update(ListTheme listTheme, ContentValues contentValues, String selection, String[] selectionArgs, boolean updateBackendless);
+
+    void toggle(ListTheme listTheme, String fieldName, boolean updateBackendless);
     //endregion
 
     //region Delete

@@ -10,7 +10,7 @@ import android.preference.PreferenceManager;
 public class MySettings {
 
     public static final String NOT_AVAILABLE = "N/A";
-    public static final String EXTRA_IS_STARTED_FROM_REGISTRATION_ACTIVITY = "extraIsStartedFromRegistrationActivity";
+    public static final String SETTING_IS_STARTED_FROM_REGISTRATION_ACTIVITY = "isStartedFromRegistrationActivity";
 
     private static final String SETTING_ACTIVE_LIST_TITLE_UUID = "activeListTitleUuid";
     private static final String SETTING_IS_FIRST_TIME_APP_RUN = "isFirstTimeAppRun";
@@ -26,7 +26,18 @@ public class MySettings {
         mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
+    //region SETTING_IS_STARTED_FROM_REGISTRATION_ACTIVITY
+    public static boolean isStartedFromRegistrationActivity(){
+        return mPreferences.getBoolean(SETTING_IS_STARTED_FROM_REGISTRATION_ACTIVITY, true);
+    }
 
+    public static void setStartedFromRegistrationActivity(boolean isStartedFromRegistrationActivity){
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putBoolean(SETTING_IS_STARTED_FROM_REGISTRATION_ACTIVITY, isStartedFromRegistrationActivity);
+        editor.apply();
+    }
+
+//endregion
     //region SETTING_ACTIVE_LIST_TITLE_UUID
 
     public static String getActiveListTitleUuid() {

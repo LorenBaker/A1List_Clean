@@ -2,6 +2,8 @@ package com.lbconsulting.a1list.presentation.ui.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -19,6 +21,7 @@ import android.widget.TextView;
 
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.model.ListTheme;
+import com.lbconsulting.a1list.presentation.ui.activities.ManageListThemesActivity;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
 import java.util.List;
@@ -35,6 +38,8 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
     private final ListView mListView;
     private final boolean mShowBtnEditThemeName;
     private final View mSnackbarView;
+    private ListTheme mSelectedTheme;
+
 
     public ListThemeArrayAdapter(Context context, ListView listView, boolean showBtnEditThemeName, View snackbarView) {
         super(context, 0);
@@ -96,7 +101,7 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
         ListThemeViewHolder holder;
 
         // Get the data item for this position
-        ListTheme listTheme = getItem(position);
+        mSelectedTheme = getItem(position);
 
         // Check if an existing view is being reused, otherwise inflate the view
         if (convertView == null) {
@@ -108,32 +113,39 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
         }
 
         // Populate the data into the template view using the data object
-        if (listTheme != null) {
-            holder.tvThemeName.setText(listTheme.getName());
-            holder.tvThemeName.setTextSize(TypedValue.COMPLEX_UNIT_SP, listTheme.getTextSize());
-            holder.tvThemeName.setTextColor(listTheme.getTextColor());
+        if (mSelectedTheme != null) {
+            holder.tvThemeName.setText(mSelectedTheme.getName());
+            holder.tvThemeName.setTextSize(TypedValue.COMPLEX_UNIT_SP, mSelectedTheme.getTextSize());
+            holder.tvThemeName.setTextColor(mSelectedTheme.getTextColor());
 
-            int horizontalPadding = CommonMethods.convertDpToPixel(listTheme.getHorizontalPaddingInDp());
-            int verticalPadding = CommonMethods.convertDpToPixel(listTheme.getVerticalPaddingInDp());
+            int horizontalPadding = CommonMethods.convertDpToPixel(mSelectedTheme.getHorizontalPaddingInDp());
+            int verticalPadding = CommonMethods.convertDpToPixel(mSelectedTheme.getVerticalPaddingInDp());
             holder.tvThemeName.setPadding(horizontalPadding, verticalPadding,
                     horizontalPadding, verticalPadding);
 
-            if (listTheme.isTransparent()) {
+            if (mSelectedTheme.isTransparent()) {
                 holder.llRowThemeName.setBackgroundColor(Color.TRANSPARENT);
                 mListView.setDivider(null);
                 mListView.setDividerHeight(0);
             } else {
-                holder.llRowThemeName.setBackground(getBackgroundDrawable(listTheme.getStartColor(), listTheme.getEndColor()));
+                holder.llRowThemeName.setBackground(getBackgroundDrawable(mSelectedTheme.getStartColor(), mSelectedTheme.getEndColor()));
                 mListView.setDivider(new ColorDrawable(ContextCompat.getColor(mContext, R.color.greyLight3_50Transparent)));
                 mListView.setDividerHeight(1);
+            }
+
+            if(mSelectedTheme.isStruckOut()){
+                setStrikeOut(holder.tvThemeName,mSelectedTheme.isBold());
+            } else {
+                setNoStrikeOut(holder.tvThemeName,mSelectedTheme.isBold(),mSelectedTheme.getTextColor());
             }
         }
 
         holder.tvThemeName.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ListTheme selectedTheme = (ListTheme) v.getTag();
-                CommonMethods.showSnackbar(mSnackbarView,selectedTheme.getName()+" selected.", Snackbar.LENGTH_SHORT);
+                mSelectedTheme = (ListTheme) v.getTag();
+//                CommonMethods.showSnackbar(mSnackbarView,mSelectedTheme.getName()+" selected.", Snackbar.LENGTH_SHORT);
+                ManageListThemesActivity.toggleStrikeout(mSelectedTheme);
 //                EventBus.getDefault().post(new MyEvents.setLocalAttributes(selectedTheme.getLocalUuid()));
 //                EventBus.getDefault().post(new MyEvents.dismissDialogSelectTheme());
             }
@@ -149,20 +161,39 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
             @Override
             public void onClick(View v) {
                 ListTheme selectedTheme = (ListTheme) v.getTag();
-                CommonMethods.showSnackbar(mSnackbarView, "btnEditThemeName: " + selectedTheme.getName() + "clicked.", Snackbar.LENGTH_SHORT);
+                CommonMethods.showSnackbar(mSnackbarView, "btnEditThemeName: " + selectedTheme.getName() + " clicked.", Snackbar.LENGTH_SHORT);
 
 //                        showEditThemeNameDialog(selectedTheme.getUuid());
             }
         });
 
         // save the item so it can be retrieved later
-        holder.tvThemeName.setTag(listTheme);
-        holder.btnEditThemeName.setTag(listTheme);
+        holder.tvThemeName.setTag(mSelectedTheme);
+        holder.btnEditThemeName.setTag(mSelectedTheme);
 
         // Return the completed view to render on screen
         return convertView;
     }
 
+    private void setStrikeOut(TextView tv, boolean isBold) {
+        if (isBold) {
+            tv.setTypeface(null, Typeface.BOLD_ITALIC);
+        } else {
+            tv.setTypeface(null, Typeface.ITALIC);
+        }
+        tv.setTextColor(ContextCompat.getColor(mContext, R.color.crimson));
+        tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+    }
+
+    private void setNoStrikeOut(TextView tv, boolean isBold, int textColor) {
+        if (isBold) {
+            tv.setTypeface(null, Typeface.BOLD);
+        } else {
+            tv.setTypeface(null, Typeface.NORMAL);
+        }
+        tv.setTextColor(textColor);
+        tv.setPaintFlags(tv.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+    }
     private Drawable getBackgroundDrawable(int startColor, int endColor) {
         int colors[] = {startColor, endColor};
         return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);

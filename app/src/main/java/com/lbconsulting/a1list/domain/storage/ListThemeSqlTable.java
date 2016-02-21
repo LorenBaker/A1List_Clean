@@ -26,6 +26,7 @@ public class ListThemeSqlTable {
     public static final String COL_CHECKED = "checked";
     public static final String COL_DEFAULT_THEME = "defaultTheme";
     public static final String COL_MARKED_FOR_DELETION = "markedForDeletion";
+    public static final String COL_STRUCK_OUT = "struckOut";
     public static final String COL_TRANSPARENT = "transparent";
     public static final String COL_UUID = "uuid";
     public static final String COL_UPDATED = "updated";
@@ -35,7 +36,7 @@ public class ListThemeSqlTable {
             COL_START_COLOR, COL_END_COLOR, COL_TEXT_COLOR, COL_TEXT_SIZE,
             COL_HORIZONTAL_PADDING_IN_DP, COL_VERTICAL_PADDING_IN_DP,
             COL_THEME_DIRTY, COL_BOLD, COL_CHECKED, COL_DEFAULT_THEME,
-            COL_MARKED_FOR_DELETION, COL_TRANSPARENT, COL_UUID, COL_UPDATED};
+            COL_MARKED_FOR_DELETION, COL_STRUCK_OUT, COL_TRANSPARENT, COL_UUID, COL_UPDATED};
 
     public static final String CONTENT_PATH = "listTheme";
     public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + "vnd.lbconsulting."
@@ -66,6 +67,7 @@ public class ListThemeSqlTable {
                     + COL_CHECKED + " integer default 0, "
                     + COL_DEFAULT_THEME + " integer default 0, "
                     + COL_MARKED_FOR_DELETION + " integer default 0, "
+                    + COL_STRUCK_OUT + " integer default 0, "
                     + COL_TRANSPARENT + " integer default 0, "
                     + COL_UUID + " text default '', "
                     + COL_UPDATED + " integer default 0"

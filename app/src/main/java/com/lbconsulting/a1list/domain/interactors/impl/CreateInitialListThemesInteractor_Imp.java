@@ -43,6 +43,7 @@ public class CreateInitialListThemesInteractor_Imp extends AbstractInteractor im
 
             ListTheme newListTheme;
 
+            // TODO: create resource strings for the initial ListThemes
             newListTheme = ListTheme.newInstance("Genoa",
                     Color.parseColor("#4c898e"), Color.parseColor("#125156"),
                     ContextCompat.getColor(mContext, R.color.white),
@@ -153,7 +154,85 @@ public class CreateInitialListThemesInteractor_Imp extends AbstractInteractor im
                 newBackendlessListThemeCount++;
             }
 
+            newListTheme = ListTheme.newInstance("Breaker Bay",
+                    Color.parseColor("#6d8b93"), Color.parseColor("#31535c"),
+                    ContextCompat.getColor(mContext, R.color.white),
+                    17f, 10f, 10f, false, false, false);
+            requestedListThemeCount++;
+            response = mListThemeRepository.insert(newListTheme);
+            if (response != null) {
+                newBackendlessListThemeCount++;
+            }
 
+            newListTheme = ListTheme.newInstance("Sandrift",
+                    Color.parseColor("#cbb59d"), Color.parseColor("#92806c"),
+                    ContextCompat.getColor(mContext, R.color.white),
+                    17f, 10f, 10f, false, false, false);
+            requestedListThemeCount++;
+            response = mListThemeRepository.insert(newListTheme);
+            if (response != null) {
+                newBackendlessListThemeCount++;
+            }
+
+            newListTheme = ListTheme.newInstance("Pale Brown",
+                    Color.parseColor("#ac956c"), Color.parseColor("#705c39"),
+                    ContextCompat.getColor(mContext, R.color.white),
+                    17f, 10f, 10f, false, false, false);
+            requestedListThemeCount++;
+            response = mListThemeRepository.insert(newListTheme);
+            if (response != null) {
+                newBackendlessListThemeCount++;
+            }
+
+            newListTheme = ListTheme.newInstance("Seagull",
+                    Color.parseColor("#94dcea"), Color.parseColor("#4ea0ab"),
+                    ContextCompat.getColor(mContext, R.color.black),
+                    17f, 10f, 10f, false, false, false);
+            requestedListThemeCount++;
+            response = mListThemeRepository.insert(newListTheme);
+            if (response != null) {
+                newBackendlessListThemeCount++;
+            }
+
+            newListTheme = ListTheme.newInstance("Beige",
+                    Color.parseColor("#fefefe"), Color.parseColor("#d3d8c2"),
+                    ContextCompat.getColor(mContext, R.color.black),
+                    17f, 10f, 10f, false, false, false);
+            requestedListThemeCount++;
+            response = mListThemeRepository.insert(newListTheme);
+            if (response != null) {
+                newBackendlessListThemeCount++;
+            }
+
+            newListTheme = ListTheme.newInstance("Orange",
+                    Color.parseColor("#ff6c52"), Color.parseColor("#e0341e"),
+                    ContextCompat.getColor(mContext, R.color.white),
+                    17f, 10f, 10f, false, false, false);
+            requestedListThemeCount++;
+            response = mListThemeRepository.insert(newListTheme);
+            if (response != null) {
+                newBackendlessListThemeCount++;
+            }
+
+            newListTheme = ListTheme.newInstance("Arsenic",
+                    Color.parseColor("#545c67"), Color.parseColor("#1d242c"),
+                    ContextCompat.getColor(mContext, R.color.white),
+                    17f, 10f, 10f, false, false, false);
+            requestedListThemeCount++;
+            response = mListThemeRepository.insert(newListTheme);
+            if (response != null) {
+                newBackendlessListThemeCount++;
+            }
+
+            newListTheme = ListTheme.newInstance("Acapulco",
+                    Color.parseColor("#8dbab3"), Color.parseColor("#58857e"),
+                    ContextCompat.getColor(mContext, R.color.white),
+                    17f, 10f, 10f, false, false, false);
+            requestedListThemeCount++;
+            response = mListThemeRepository.insert(newListTheme);
+            if (response != null) {
+                newBackendlessListThemeCount++;
+            }
 
             final List<ListTheme> allListThemes = mListThemeRepository.getAllListThemes(false);
             String createdListThemeMessage;
@@ -179,7 +258,7 @@ public class CreateInitialListThemesInteractor_Imp extends AbstractInteractor im
                             String.format("All %d ListThemes saved to Backendless.", requestedListThemeCount);
                 }
 
-                postInitialListThemesCreated(allListThemes, createdListThemeMessage);
+                postInitialListThemesCreated( createdListThemeMessage);
 
             }
         } catch (Exception e) {
@@ -187,11 +266,11 @@ public class CreateInitialListThemesInteractor_Imp extends AbstractInteractor im
         }
     }
 
-    private void postInitialListThemesCreated(final List<ListTheme> allListThemes, final String message) {
+    private void postInitialListThemesCreated( final String message) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onInitialListThemesCreated(allListThemes, message);
+                mCallback.onInitialListThemesCreated( message);
             }
         });
     }

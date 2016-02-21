@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".activities.ManageListThemeActivity">
+
+    <item
+        android:id="@+id/action_deleteListThemeStrikeouts"
+        android:icon="@drawable/ic_delete_white"
+        android:orderInCategory="10"
+        android:title="@string/action_deleteListThemeStrikeouts_title"
+        app:showAsAction="ifRoom" />
+
+</menu>

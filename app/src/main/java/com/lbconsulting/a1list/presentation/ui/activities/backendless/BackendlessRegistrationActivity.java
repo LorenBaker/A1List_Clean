@@ -441,10 +441,10 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
     }
 
     private void startMainActivity() {
+        MySettings.setStartedFromRegistrationActivity(true);
         Intent intent = new Intent(this, MainActivity.class);
-        // reset the backstack
+        // reset the backStack
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(MySettings.EXTRA_IS_STARTED_FROM_REGISTRATION_ACTIVITY, true);
         startActivity(intent);
         finish();
     }

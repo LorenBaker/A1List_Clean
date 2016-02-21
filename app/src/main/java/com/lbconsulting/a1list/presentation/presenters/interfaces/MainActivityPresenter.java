@@ -1,10 +1,10 @@
-package com.lbconsulting.a1list.presentation.presenters;
+package com.lbconsulting.a1list.presentation.presenters.interfaces;
 
 import com.lbconsulting.a1list.presentation.presenters.base.BasePresenter;
 import com.lbconsulting.a1list.presentation.ui.BaseView;
 
 
-public interface MainPresenter extends BasePresenter {
+public interface MainActivityPresenter extends BasePresenter {
 
     interface View extends BaseView {
         // TODO: Add your view methods

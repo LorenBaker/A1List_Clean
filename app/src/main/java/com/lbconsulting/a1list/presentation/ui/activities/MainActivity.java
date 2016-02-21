@@ -9,7 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ListView;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.backendless.Backendless;
@@ -21,12 +23,8 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.CreateInitialListThemesInteractor;
 import com.lbconsulting.a1list.domain.interactors.impl.CreateInitialListThemesInteractor_Imp;
-import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.presentation.presenters.ListThemesPresenter;
-import com.lbconsulting.a1list.presentation.presenters.impl.ListThemePresenter_Impl;
 import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;
-import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeArrayAdapter;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.CsvParser;
@@ -40,19 +38,25 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity implements ListThemesPresenter.ListThemeView,
-        CreateInitialListThemesInteractor.Callback {
+public class MainActivity extends AppCompatActivity implements CreateInitialListThemesInteractor.Callback {
     @Bind(R.id.fab)
     FloatingActionButton mFab;
+
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
-    @Bind(R.id.lvThemes)
-    ListView lvThemes;
-    private boolean mIsStartedFromRegistrationActivity;
+
+    @Bind(R.id.tvMainActivity)
+    TextView tvMainActivity;
+
+    @Bind(R.id.mainActivityProgressBar)
+    ProgressBar mProgressBar;
+
+    @Bind(R.id.tvProgressBarMessage)
+    TextView tvProgressBarMessage;
+
     private String MESSAGE_CHANNEL = "";
     private Subscription mSubscription;
-    private ListThemeArrayAdapter mListThemeAdapter;
-    private ListThemePresenter_Impl mPresenter;
+
     private CreateInitialListThemesInteractor_Imp mListThemeCreator;
 
     @Override
@@ -69,16 +73,9 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
 
         ButterKnife.bind(this);
 
-        Bundle extras = getIntent().getExtras();
-        if (extras != null) {
-            mIsStartedFromRegistrationActivity = extras.getBoolean(MySettings.EXTRA_IS_STARTED_FROM_REGISTRATION_ACTIVITY);
-        }
-
 //        Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
 
-        mListThemeAdapter = new ListThemeArrayAdapter(this, lvThemes, true, mFab);
-        lvThemes.setAdapter(mListThemeAdapter);
 
         //region Messaging
         MESSAGE_CHANNEL = MySettings.getActiveUserID();
@@ -97,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
 
                     @Override
                     public void handleFault(BackendlessFault fault) {
-                        Timber.e("Backendless.Messaging.subscribe()MessageCallback: BackendlessFault: ", fault.getMessage());
+                        Timber.e("Backendless.Messaging.subscribe()MessageCallback: BackendlessFault: %s", fault.getMessage());
                     }
                 }, new AsyncCallback<Subscription>() {
 
@@ -109,15 +106,13 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
 
                     @Override
                     public void handleFault(BackendlessFault fault) {
-                        Timber.e("Backendless.FAIL messaging.subscribe()SubscriptionCallback: BackendlessFault: ", fault.getMessage());
+                        Timber.e("Backendless.FAIL messaging.subscribe()SubscriptionCallback: BackendlessFault: %s", fault.getMessage());
 
                     }
                 }
         );
         //endregion
 
-        mPresenter = new ListThemePresenter_Impl(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, new ListThemeRepository_Impl(this));
 
         mListThemeCreator = new CreateInitialListThemesInteractor_Imp(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, new ListThemeRepository_Impl(this), this);
@@ -132,69 +127,69 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
         CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
     }
 
-    @Override
-    public void showProgress() {
-        Timber.i("showProgress()");
-    }
-
-    @Override
-    public void hideProgress() {
-        Timber.i("hideProgress()");
-    }
-
-    @Override
-    public void showError(String message) {
-        Timber.e("showError(): %s", message);
-    }
-
-
-    @Override
-    public void displayAllListThemes(List<ListTheme> allListThemes) {
-        mListThemeAdapter.setData(allListThemes);
-        mListThemeAdapter.notifyDataSetChanged();
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
         Timber.i("onResume()");
-        if (mIsStartedFromRegistrationActivity) {
+
+        if (MySettings.isStartedFromRegistrationActivity()) {
             Timber.i("onResume(): Show welcome dialog");
-            // TODO: show welcome dialog
             initializeApp();
         } else {
-            // present all ListThemes
-            Timber.i("onResume(): starting  ListThemePresenter_Impl");
-            mPresenter.resume();
+
+            // TODO: Figure out where to hide the progress bar
+            hideProgressBar();
+//            mMainActivityPresenter.resume();
+
         }
 
 //        initializeApp();
     }
 
-
     private void initializeApp() {
         Timber.i("initializeApp()");
+        showProgressBar();
         mListThemeCreator.execute();
     }
 
-
     @Override
-    public void onInitialListThemesCreated(List<ListTheme> listThemes, String message) {
+    public void onInitialListThemesCreated(String message) {
         Timber.i("onInitialListThemesCreated():\n%s", message);
-        mPresenter.resume();
+        hideProgressBar();
+        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
+        // TODO: show welcome dialog
+//        mMainActivityPresenter.resume();
     }
 
     @Override
     public void onListThemesCreationFailed(String errorMessage) {
         Timber.e("onListThemesCreationFailed(): %s.", errorMessage);
+        hideProgressBar();
+    }
+
+    private void showProgressBar() {
+        Timber.i("showProgressBar()");
+        mProgressBar.setVisibility(View.VISIBLE);
+        tvProgressBarMessage.setVisibility(View.VISIBLE);
+        tvMainActivity.setVisibility(View.GONE);
+        // TODO: hide menus
+    }
+
+    private void hideProgressBar() {
+        Timber.i("hideProgressBar()");
+        mProgressBar.setVisibility(View.GONE);
+        tvProgressBarMessage.setVisibility(View.GONE);
+        tvMainActivity.setVisibility(View.VISIBLE);
+        // TODO: show menus
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         Timber.i("onPause()");
+        MySettings.setStartedFromRegistrationActivity(false);
     }
-
 
     @Override
     protected void onDestroy() {
@@ -222,11 +217,43 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_who_is_logged_in) {
+
+        if (id == R.id.action_deleteItemsStruckOut) {
+            deleteStruckOutItems();
+            return true;
+        } else if (id == R.id.action_showFavorites) {
+            showFavorites();
+            return true;
+        } else if (id == R.id.action_newList) {
+            createNewList();
+            return true;
+
+        } else if (id == R.id.action_listSorting) {
+            showListSortingDialogue();
+            return true;
+
+        } else if (id == R.id.action_editListTheme) {
+            editListTheme();
+            return true;
+
+        } else if (id == R.id.action_manageLists) {
+            showManageListActivity();
+            return true;
+
+        } else if (id == R.id.action_manageThemes) {
+            showManageListThemesActivity();
+            return true;
+
+        } else if (id == R.id.action_refresh) {
+            refresh();
+            return true;
+
+        } else if (id == R.id.action_who_is_logged_in) {
             showActiveUser();
             return true;
 
         } else if (id == R.id.action_change_my_password) {
+            changePassword();
             final String activeUserEmail = MySettings.getActiveUserEmail();
             CommonMethods.changePasswordRequest(this, activeUserEmail);
             return true;
@@ -236,11 +263,53 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
             return true;
 
         } else if (id == R.id.action_settings) {
+            showPreferencesActivity();
             Toast.makeText(this, "action_settings clicked", Toast.LENGTH_SHORT).show();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void deleteStruckOutItems() {
+        Toast.makeText(this, "deleteStruckOutItems clicked", Toast.LENGTH_SHORT).show();
+
+    }
+
+    private void showFavorites() {
+        Toast.makeText(this, "showFavorites clicked", Toast.LENGTH_SHORT).show();
+
+    }
+
+    private void createNewList() {
+        Toast.makeText(this, "createNewList clicked", Toast.LENGTH_SHORT).show();
+
+    }
+
+    private void showListSortingDialogue() {
+        Toast.makeText(this, "showListSortingDialogue clicked", Toast.LENGTH_SHORT).show();
+
+    }
+
+    private void editListTheme() {
+        Toast.makeText(this, "editListTheme clicked", Toast.LENGTH_SHORT).show();
+
+    }
+
+    private void showManageListActivity() {
+        Toast.makeText(this, "showManageListActivity clicked", Toast.LENGTH_SHORT).show();
+
+    }
+
+    private void showManageListThemesActivity() {
+//        Toast.makeText(this, "showManageListThemesActivity clicked", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, ManageListThemesActivity.class);
+        startActivity(intent);
+    }
+
+    private void refresh() {
+        Toast.makeText(this, "refresh clicked", Toast.LENGTH_SHORT).show();
+
     }
 
     private void showActiveUser() {
@@ -252,6 +321,11 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
         CommonMethods.showSnackbar(mFab, msg, Snackbar.LENGTH_LONG);
     }
 
+    private void changePassword() {
+        Toast.makeText(this, "deleteStruckOutItems clicked", Toast.LENGTH_SHORT).show();
+
+    }
+
     private void logoutUser() {
 // TODO: Figure out how to logoutUser if they uninstall the app
         if (CommonMethods.isNetworkAvailable()) {
@@ -259,7 +333,7 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
                 public void handleResponse(Void response) {
                     // user has been logged out.
                     String msg = "User logged out.";
-                    Timber.i("logoutUser(): ", msg);
+                    Timber.i("logoutUser(): %s", msg);
                     CommonMethods.showSnackbar(mFab, msg, Snackbar.LENGTH_LONG);
                     MySettings.resetActiveUserAndEmail();
                     MESSAGE_CHANNEL = MySettings.NOT_AVAILABLE;
@@ -268,14 +342,19 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
 
                 public void handleFault(BackendlessFault e) {
                     // something went wrong and logout failed, to get the error code call fault.getCode()
-                    Timber.e("logoutUser(): BackendlessFault: ", e.getMessage());
+                    Timber.e("logoutUser(): BackendlessFault: %s", e.getMessage());
                 }
             });
         } else {
             String msg = "Unable to log user. Network is not available";
-            Timber.i("logoutUser(): ", msg);
+            Timber.i("logoutUser(): %s", msg);
             CommonMethods.showSnackbar(mFab, msg, Snackbar.LENGTH_LONG);
         }
+    }
+
+    private void showPreferencesActivity() {
+        Toast.makeText(this, "deleteStruckOutItems clicked", Toast.LENGTH_SHORT).show();
+
     }
 
     private void startLoginActivity() {
@@ -283,8 +362,6 @@ public class MainActivity extends AppCompatActivity implements ListThemesPresent
         startActivity(intent);
         finish();
     }
-
-
 
     private class MessagePayload {
         private String mCreationTime;
