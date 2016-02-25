@@ -7,8 +7,8 @@ import android.support.v4.content.ContextCompat;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
-import com.lbconsulting.a1list.domain.interactors.CreateInitialListThemesInteractor;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
+import com.lbconsulting.a1list.domain.interactors.interfaces.CreateInitialListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
 
@@ -19,15 +19,15 @@ import timber.log.Timber;
 /**
  * An interactor that retrieves all ListThemes
  */
-public class CreateInitialListThemesInteractor_Imp extends AbstractInteractor implements CreateInitialListThemesInteractor {
+public class CreateInitialListThemes_InBackground extends AbstractInteractor implements CreateInitialListThemes_Interactor {
 
     private final Callback mCallback;
     private final ListThemeRepository mListThemeRepository;
     private final Context mContext;
 
-    public CreateInitialListThemesInteractor_Imp(Executor threadExecutor, MainThread mainThread,
-                                                 Callback callback, ListThemeRepository listThemeRepository,
-                                                 Context context) {
+    public CreateInitialListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
+                                                Callback callback, ListThemeRepository listThemeRepository,
+                                                Context context) {
         super(threadExecutor, mainThread);
         mCallback = callback;
         mListThemeRepository = listThemeRepository;

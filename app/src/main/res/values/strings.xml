@@ -27,4 +27,48 @@
     <string name="btnEditItemName_contentDescription">Edit Item Name</string>
     <string name="action_deleteListThemeStrikeouts_title">Delete Struck Out List Themes</string>
 
+<!--Strings of button titles-->
+    <string name="btnThemeName_text">"Theme Name: %1$s"</string>
+    <string name="btnCancel_title">Cancel</string>
+    <string name="btnHorizontalMargin_text">"Horizontal Margin: %d"</string>
+    <string name="btnOk_title">OK</string>
+    <string name="btnApply_title">Apply</string>
+    <string name="btnSave_title">Save</string>
+    <string name="btnSaveNew_title">Save/New</string>
+    <string name="btnSelect_title">Select</string>
+    <string name="btnTextSize_text">"Text Size: %1.0f"</string>
+    <string name="btnTextStyle_text_bold">Text Style: Bold</string>
+    <string name="btnTextStyle_text_normal">Text Style: Normal</string>
+    <string name="btnVerticalMargin_text">"Vertical Margin: %d"</string>
+
+<!--Strings related to new or edit ListThemes-->
+    <string name="themeProposedName_invalidName_error">Theme \"%1s\" already exists.\nPlease enter a unique Theme name.</string>
+    <string name="themeProposedName_isEmpty_error">The Theme\'s name cannot be empty.\nPlease enter a unique Theme name.</string>
+    <string name="themeUnableToDelete_message">Theme \"%1s\" is the last Theme in the datastore. There must be a minimum of one Theme in the datastore.</string>
+    <string name="themeUnableToDelete_title">Unable to Delete Theme</string>
+    <string name="editListThemesNameDialog_title">Edit Theme Name</string>
+    <string name="txtListThemeName_hint">Theme Name</string>
+    <string name="dialogSelectTheme_title">Select a Theme</string>
+    <string name="editListThemeNameDialog_title">Edit Theme Name</string>
+
+
+    <!--Strings related to new or edit ListTitles-->
+    <string name="newListITitleDialog_title">Create New List</string>
+    <string name="newListTitleName_isEmpty_error">The List\'s name cannot be empty.\nPlease enter a unique List name.</string>
+    <string name="newListTitleName_listExists_error">List \"%1s\" already exists.\nPlease enter a unique List name.</string>
+    <string name="txtListTitleName_hint">List Name</string>
+    <string name="newListTitleDialog_title">Create New List</string>
+    <string name="editListTitleDialog_title">Edit List Name</string>
+
+<!--Strings related to Color Picker-->
+    <string name="onColorChanged">#%1s</string>
+    <string name="colorPicker_endColor_title">Select Gradient End Color</string>
+    <string name="colorPicker_startColor_title">Select Gradient Start Color</string>
+    <string name="colorPicker_textColor_title">Select Text Color</string>
+
+
+<!--Strings related to Number Picker-->
+    <string name="numberPickerDialog_select_horizontal_padding_title">Select Horizontal Padding</string>
+    <string name="numberPickerDialog_select_text_size_title">Select Text Size</string>
+    <string name="numberPickerDialog_select_vertical_padding_title">Select Vertical Padding</string>
 </resources>

@@ -29,15 +29,10 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
     private final int FALSE = 0;
     private final int TRUE = 1;
     private final Context mContext;
-//    private final DateFormat mDateFormat;
-//    private final SimpleDateFormat sdf;
-
 
     public ListThemeRepository_Impl(Context context) {
         // private constructor
         this.mContext = context;
-//        mDateFormat = DateFormat.getDateTimeInstance();
-//        sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss.SSS", Locale.US);
 
     }
 
@@ -86,7 +81,8 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
 
             // if the network is available ... save new listTheme to Backendless
             if (CommonMethods.isNetworkAvailable()) {
-                backendlessResponse = saveListThemeToBackendless(listTheme);
+                // TODO: save listTheme to Backendless
+//                backendlessResponse = saveListThemeToBackendless(listTheme);
                 // TODO: send message to Backendless to notify other devices of the new ListTheme
             }
 
@@ -155,7 +151,6 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
 
     //region Read
 
-
     private ListTheme ListThemeFromCursor(Cursor cursor) {
         ListTheme listTheme = new ListTheme();
         listTheme.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListThemeSqlTable.COL_ID)));
@@ -211,10 +206,10 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
                 + ListThemeSqlTable.COL_MARKED_FOR_DELETION + " = ?";
         String selectionArgs[] = new String[]{uuid, String.valueOf(FALSE)};
         String sortOrder = null;
-
-        ContentResolver cr = mContext.getContentResolver();
         try {
+            ContentResolver cr = mContext.getContentResolver();
             cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+
         } catch (Exception e) {
             Timber.e("getThemeCursorByUuid(): Exception: %s.", e.getMessage());
         }
@@ -330,6 +325,48 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
         return cursor;
     }
 
+    private ListTheme getListTheme(String listThemeName) {
+        ListTheme result = null;
+        Cursor cursor = null;
+        Uri uri = ListThemeSqlTable.CONTENT_URI;
+        String selection = ListThemeSqlTable.COL_NAME + " = ?";
+        String[] selectionArgs = new String[]{listThemeName};
+        String[] projection = ListThemeSqlTable.PROJECTION_ALL;
+        String sortOrder = null;
+
+        ContentResolver cr = mContext.getContentResolver();
+        try {
+            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    result = ListThemeFromCursor(cursor);
+                }
+                cursor.close();
+            }
+        } catch (Exception e) {
+            Timber.e("getListTheme(): Exception: %s.", e.getMessage());
+        }
+
+        return result;
+    }
+
+    public boolean isValidThemeName(ListTheme originalListTheme, String proposedListThemeName) {
+        boolean isValidName = false;
+        ListTheme listThemeFromName = getListTheme(proposedListThemeName);
+        if (listThemeFromName == null) {
+            // The proposed ListTheme name is not in the SQLite db.
+            isValidName = true;
+        } else {
+            // A ListTheme with the proposed name exists in the SQLite db ...
+            // so, check its Uuid with the original ListTheme
+            if (originalListTheme.getUuid().equals(listThemeFromName.getUuid())) {
+                // both the original and existing ListTheme are the same object
+                isValidName = true;
+            }
+        }
+
+        return isValidName;
+    }
     //endregion
 
     //region Update
@@ -359,7 +396,8 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
             if (numberOfRecordsUpdated < 1) {
                 Timber.e("update(): Error trying to update SQLite db: %s", contentValues.toString());
             } else if (updateBackendless && CommonMethods.isNetworkAvailable()) {
-                saveListThemeToBackendless(listTheme);
+
+                // TODO: saveListThemeToBackendless(listTheme);
                 // TODO: Send update message to other devices
             }
         } catch (Exception e) {
@@ -418,37 +456,37 @@ public class ListThemeRepository_Impl implements ListThemeRepository {
         switch (fieldName) {
             case ListThemeSqlTable.COL_BOLD:
                 newValue = !currentListTheme.isBold();
-                cv.put(ListThemeSqlTable.COL_BOLD,  newValue ? TRUE : FALSE);
+                cv.put(ListThemeSqlTable.COL_BOLD, newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_CHECKED:
                 newValue = !currentListTheme.isChecked();
-                cv.put(ListThemeSqlTable.COL_CHECKED,  newValue ? TRUE : FALSE);
+                cv.put(ListThemeSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_DEFAULT_THEME:
                 newValue = !currentListTheme.isDefaultTheme();
-                cv.put(ListThemeSqlTable.COL_DEFAULT_THEME,  newValue ? TRUE : FALSE);
+                cv.put(ListThemeSqlTable.COL_DEFAULT_THEME, newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_THEME_DIRTY:
                 newValue = !currentListTheme.isThemeDirty();
-                cv.put(ListThemeSqlTable.COL_THEME_DIRTY,  newValue ? TRUE : FALSE);
+                cv.put(ListThemeSqlTable.COL_THEME_DIRTY, newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_MARKED_FOR_DELETION:
                 newValue = !currentListTheme.isMarkedForDeletion();
-                cv.put(ListThemeSqlTable.COL_MARKED_FOR_DELETION,  newValue ? TRUE : FALSE);
+                cv.put(ListThemeSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 
             case ListThemeSqlTable.COL_TRANSPARENT:
                 newValue = !currentListTheme.isTransparent();
-                cv.put(ListThemeSqlTable.COL_TRANSPARENT,  newValue ? TRUE : FALSE);
+                cv.put(ListThemeSqlTable.COL_TRANSPARENT, newValue ? TRUE : FALSE);
                 update(listTheme, cv, selection, selectionArgs, updateBackendless);
                 break;
 

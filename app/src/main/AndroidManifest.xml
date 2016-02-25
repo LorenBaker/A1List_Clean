@@ -50,7 +50,15 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lbconsulting.a1list.presentation.ui.activities.MainActivity" />
+        </activity>
 
+        <activity
+            android:name=".presentation.ui.activities.ListThemeActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.lbconsulting.a1list.presentation.ui.activities.ManageListThemesActivity" />
         </activity>
 
         <provider

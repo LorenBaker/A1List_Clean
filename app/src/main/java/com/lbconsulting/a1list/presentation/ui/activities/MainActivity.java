@@ -21,8 +21,8 @@ import com.backendless.exceptions.BackendlessFault;
 import com.backendless.messaging.Message;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.CreateInitialListThemesInteractor;
-import com.lbconsulting.a1list.domain.interactors.impl.CreateInitialListThemesInteractor_Imp;
+import com.lbconsulting.a1list.domain.interactors.impl.CreateInitialListThemes_InBackground;
+import com.lbconsulting.a1list.domain.interactors.interfaces.CreateInitialListThemes_Interactor;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
@@ -38,7 +38,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity implements CreateInitialListThemesInteractor.Callback {
+public class MainActivity extends AppCompatActivity implements CreateInitialListThemes_Interactor.Callback {
     @Bind(R.id.fab)
     FloatingActionButton mFab;
 
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     private String MESSAGE_CHANNEL = "";
     private Subscription mSubscription;
 
-    private CreateInitialListThemesInteractor_Imp mListThemeCreator;
+    private CreateInitialListThemes_InBackground mListThemeCreator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         //endregion
 
 
-        mListThemeCreator = new CreateInitialListThemesInteractor_Imp(ThreadExecutor.getInstance(),
+        mListThemeCreator = new CreateInitialListThemes_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, new ListThemeRepository_Impl(this), this);
 
         showActiveUser();

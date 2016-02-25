@@ -7,7 +7,7 @@ import com.lbconsulting.a1list.presentation.ui.BaseView;
 import java.util.List;
 
 
-public interface ManageListThemesActvityPresenter extends BasePresenter {
+public interface ListThemesPresenter extends BasePresenter {
 
     interface ListThemeView extends BaseView {
 

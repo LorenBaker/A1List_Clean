@@ -1,6 +1,6 @@
 package com.lbconsulting.a1list.domain.model;
 
-import com.lbconsulting.a1list.utils.MySettings;
+import android.graphics.drawable.GradientDrawable;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -35,10 +35,10 @@ public class ListTheme {
 
 
     public ListTheme() {
-        // A default constructor is required.
+        // A default constructor.
     }
 
-    //region Getters and Setters
+
 
     public static ListTheme newInstance(String newThemeName,
                                         int startColor, int endColor,
@@ -67,6 +67,7 @@ public class ListTheme {
         return newTheme;
     }
 
+    //region Getters and Setters
     public int getEndColor() {
         return endColor;
     }
@@ -173,10 +174,6 @@ public class ListTheme {
     }
 
     public String getObjectId() {
-        if (objectId == null || objectId.isEmpty()) {
-            objectId = MySettings.NOT_AVAILABLE;
-        }
-
         return objectId;
     }
 
@@ -244,6 +241,11 @@ public class ListTheme {
         this.created = created;
     }
 
+
+    public GradientDrawable getBackgroundDrawable() {
+        int colors[] = {getStartColor(), getEndColor()};
+        return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);
+    }
 
     //endregion
 

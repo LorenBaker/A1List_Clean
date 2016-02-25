@@ -2,7 +2,7 @@ package com.lbconsulting.a1list.presentation.presenters.impl;
 
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
-import com.lbconsulting.a1list.domain.interactors.SampleInteractor;
+import com.lbconsulting.a1list.domain.interactors.interfaces.SampleInteractor;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.zPresenterTemplate;
 

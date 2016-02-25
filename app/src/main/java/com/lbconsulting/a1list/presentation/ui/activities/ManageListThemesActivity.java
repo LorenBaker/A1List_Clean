@@ -16,8 +16,8 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.presentation.presenters.impl.ManageListThemesActivityPresenter_Impl;
-import com.lbconsulting.a1list.presentation.presenters.interfaces.ManageListThemesActvityPresenter;
+import com.lbconsulting.a1list.presentation.presenters.impl.ListThemesPresenter_Impl;
+import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemesPresenter;
 import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeArrayAdapter;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
@@ -32,8 +32,8 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-public class ManageListThemesActivity extends AppCompatActivity implements ManageListThemesActvityPresenter.ListThemeView{
-    private static ManageListThemesActivityPresenter_Impl mPresenter;
+public class ManageListThemesActivity extends AppCompatActivity implements ListThemesPresenter.ListThemeView{
+    private static ListThemesPresenter_Impl mPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
     @Bind(R.id.toolbar)
@@ -54,29 +54,6 @@ public class ManageListThemesActivity extends AppCompatActivity implements Manag
     // The app seemed more responsive running on the UI thread as opposed to running both the Toggle
     // Methods and ListThemeSqlTable query on background threads.
 
-    public static void toggleBold(ListTheme listTheme) {
-        mPresenter.toggleBold(listTheme);
-    }
-
-    public static void toggleChecked(ListTheme listTheme) {
-        mPresenter.toggleChecked(listTheme);
-    }
-
-    public static void toggleDefaultTheme(ListTheme listTheme) {
-        mPresenter.toggleDefaultTheme(listTheme);
-    }
-
-    public static void toggleMarkedForDeletion(ListTheme listTheme) {
-        mPresenter.toggleMarkedForDeletion(listTheme);
-    }
-
-    public static void toggleStrikeout(ListTheme listTheme) {
-        mPresenter.toggleStrikeout(listTheme);
-    }
-
-    public static void toggleTransparent(ListTheme listTheme) {
-        mPresenter.toggleTransparent(listTheme);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,7 +108,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements Manag
         );*/
         //endregion
 
-        mPresenter = new ManageListThemesActivityPresenter_Impl(ThreadExecutor.getInstance(),
+        mPresenter = new ListThemesPresenter_Impl(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, new ListThemeRepository_Impl(this));
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -164,18 +141,18 @@ public class ManageListThemesActivity extends AppCompatActivity implements Manag
     }
 
     @Override
-    public void displayAllListThemes(List<ListTheme> allListThemes) {
-        mListThemeAdapter.setData(allListThemes);
-        mListThemeAdapter.notifyDataSetChanged();
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         Timber.i("onResume()");
         mPresenter.resume();
     }
 
+    @Override
+    public void displayAllListThemes(List<ListTheme> allListThemes) {
+        // mPresenter's results
+        mListThemeAdapter.setData(allListThemes);
+        mListThemeAdapter.notifyDataSetChanged();
+    }
 
     @Override
     protected void onPause() {

@@ -2,8 +2,8 @@ package com.lbconsulting.a1list.domain.interactors.impl;
 
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
-import com.lbconsulting.a1list.domain.interactors.AllListThemeInteractor;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
+import com.lbconsulting.a1list.domain.interactors.interfaces.RetrieveAllListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
 
@@ -12,38 +12,26 @@ import java.util.List;
 /**
  * An interactor that retrieves all ListThemes
  */
-public class AllListThemeInteractor_Impl extends AbstractInteractor implements AllListThemeInteractor {
+public class RetrieveAllListThemes_InBackground extends AbstractInteractor implements RetrieveAllListThemes_Interactor {
 
 
 
-    private final AllListThemeInteractor.Callback mCallback;
+    private final RetrieveAllListThemes_Interactor.Callback mCallback;
     private final ListThemeRepository mListThemeRepository;
     private String mAction = NONE;
     private ListTheme mSelectedListTheme;
 
-    public AllListThemeInteractor_Impl(Executor threadExecutor, MainThread mainThread,
-                                       Callback callback, ListThemeRepository listThemeRepository) {
+    public RetrieveAllListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
+                                              Callback callback, ListThemeRepository listThemeRepository) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
         mListThemeRepository = listThemeRepository;
     }
 
-//    public void toggleStrikeout(ListTheme listTheme){
-//        mListThemeRepository.toggle(listTheme,ListThemeSqlTable.COL_STRUCK_OUT, true);
-//    }
 
     @Override
     public void run() {
-
-//        switch (mAction) {
-//            case TOGGLE_STRIKEOUT:
-//                mListThemeRepository.toggle(mSelectedListTheme, ListThemeSqlTable.COL_STRUCK_OUT, true);
-//                break;
-//
-//            default:
-//
-//        }
 
         // retrieve all ListThemes that are not marked for deletion
         final List<ListTheme> allListThemes = mListThemeRepository.getAllListThemes(false);
@@ -56,11 +44,6 @@ public class AllListThemeInteractor_Impl extends AbstractInteractor implements A
             postAllListThemes(allListThemes);
         }
     }
-//
-//    public void setAction(ListTheme listTheme, String action) {
-//        mSelectedListTheme = listTheme;
-//        mAction = action;
-//    }
 
     private void postAllListThemes(final List<ListTheme> allListThemes) {
         mMainThread.post(new Runnable() {

@@ -1,4 +1,4 @@
-package com.lbconsulting.a1list.domain.interactors;
+package com.lbconsulting.a1list.domain.interactors.interfaces;
 
 
 import com.lbconsulting.a1list.domain.interactors.base.Interactor;
@@ -7,7 +7,7 @@ import com.lbconsulting.a1list.domain.model.ListTheme;
 import java.util.List;
 
 
-public interface AllListThemeInteractor extends Interactor {
+public interface RetrieveAllListThemes_Interactor extends Interactor {
 
     public final String NONE = "none";
     public final String TOGGLE_STRIKEOUT = "toggle_strikeout";

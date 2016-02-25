@@ -1,10 +1,7 @@
 package com.lbconsulting.a1list.presentation.ui.adapters;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -18,43 +15,36 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.lbconsulting.a1list.R;
-import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.impl.ToggleListThemeBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.domain.storage.ListThemeSqlTable;
-import com.lbconsulting.a1list.presentation.ui.activities.ListThemeActivity;
-import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
 import java.util.List;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import timber.log.Timber;
 
 
 /**
- * An ArrayAdapter for displaying a ListTheme.
+ * An ArrayAdapter for displaying ListThemes.
  */
-public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
+public class ListThemeDialogArrayAdapter extends ArrayAdapter<ListTheme> {
 
     private final Context mContext;
     private final ListView mListView;
-    private final boolean mShowBtnEditThemeName;
-    private final View mSnackbarView;
+
     private ListTheme mSelectedTheme;
     private ListThemeRepository_Impl mListThemeRepository;
 
-    public ListThemeArrayAdapter(Context context, ListView listView, boolean showBtnEditThemeName,
-                                 View snackbarView) {
+    public ListThemeDialogArrayAdapter(Context context, ListView listView) {
         super(context, 0);
         this.mContext = context;
         this.mListView = listView;
-        this.mShowBtnEditThemeName = showBtnEditThemeName;
-        mSnackbarView = snackbarView;
-        mListThemeRepository = new ListThemeRepository_Impl(context);
-        Timber.i("ListThemeArrayAdapter(): Initialized");
+        Timber.i("ListThemeDialogArrayAdapter(): Initialized");
     }
 
     public void setData(List<ListTheme> data) {
@@ -88,10 +78,10 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
         int position;
         boolean found = false;
 
-        ListTheme item;
+        ListTheme listTheme;
         for (position = 0; position < getCount(); position++) {
-            item = getItem(position);
-            if (item.getUuid().equals(soughtUuid)) {
+            listTheme = getItem(position);
+            if (listTheme.getUuid().equals(soughtUuid)) {
                 found = true;
                 break;
             }
@@ -140,92 +130,33 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
                 mListView.setDividerHeight(1);
             }
 
-            if (mSelectedTheme.isStruckOut()) {
-                setStrikeOut(holder.tvThemeName, mSelectedTheme.isBold());
-            } else {
-                setNoStrikeOut(holder.tvThemeName, mSelectedTheme.isBold(), mSelectedTheme.getTextColor());
-            }
         }
 
         holder.tvThemeName.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mSelectedTheme = (ListTheme) v.getTag();
-                mSelectedTheme.setStruckOut(!mSelectedTheme.isStruckOut());
-                if (mSelectedTheme.isStruckOut()) {
-                    setStrikeOut((TextView) v, mSelectedTheme.isBold());
-                } else {
-                    setNoStrikeOut((TextView) v, mSelectedTheme.isBold(), mSelectedTheme.getTextColor());
-                }
-                new ToggleListThemeBooleanField_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), mListThemeRepository,
-                        mSelectedTheme, ListThemeSqlTable.COL_STRUCK_OUT).execute();
+                Toast.makeText(mContext, mSelectedTheme.getName() + " selected.", Toast.LENGTH_SHORT).show();
 
             }
         });
 
-        if (mShowBtnEditThemeName) {
-            holder.btnEditThemeName.setVisibility(View.VISIBLE);
-        } else {
-            holder.btnEditThemeName.setVisibility(View.GONE);
-        }
+        holder.btnEditThemeName.setVisibility(View.GONE);
 
-        holder.btnEditThemeName.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ListTheme selectedTheme = (ListTheme) v.getTag();
-                startListThemeActivity(selectedTheme);
-
-//                CommonMethods.showSnackbar(mSnackbarView, "btnEditThemeName: " + selectedTheme.getName() + " clicked.", Snackbar.LENGTH_SHORT);
-
-//                        showEditThemeNameDialog(selectedTheme.getUuid());
-            }
-        });
 
         // save the item so it can be retrieved later
         holder.tvThemeName.setTag(mSelectedTheme);
-        holder.btnEditThemeName.setTag(mSelectedTheme);
 
         // Return the completed view to render on screen
         return convertView;
     }
 
-    private void startListThemeActivity(ListTheme selectedTheme) {
-        Intent listThemeActivityIntent = new Intent(mContext, ListThemeActivity.class);
-        listThemeActivityIntent.putExtra(ListThemeActivity.ARG_LIST_THEME_UUID, selectedTheme.getUuid());
-        listThemeActivityIntent.putExtra(ListThemeActivity.ARG_MODE, ListThemeActivity.EDIT_EXISTING_LIST_THEME);
-        mContext. startActivity(listThemeActivityIntent);
-    }
-
-    private void setStrikeOut(TextView tv, boolean isBold) {
-        if (isBold) {
-            tv.setTypeface(null, Typeface.BOLD_ITALIC);
-        } else {
-            tv.setTypeface(null, Typeface.ITALIC);
-        }
-        tv.setTextColor(ContextCompat.getColor(mContext, R.color.crimson));
-        tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-    }
-
-    private void setNoStrikeOut(TextView tv, boolean isBold, int textColor) {
-        if (isBold) {
-            tv.setTypeface(null, Typeface.BOLD);
-        } else {
-            tv.setTypeface(null, Typeface.NORMAL);
-        }
-        tv.setTextColor(textColor);
-        tv.setPaintFlags(tv.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-    }
 
     private Drawable getBackgroundDrawable(int startColor, int endColor) {
         int colors[] = {startColor, endColor};
         return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);
     }
 
-//    private void showEditThemeNameDialog(String themeUuid) {
-//        CommonMethods.showSnackbar(mSnackbarView,selectedTheme.getName()+" selected.", Snackbar.LENGTH_SHORT);
-//        EventBus.getDefault().post(new MyEvents.showEditAttributesNameDialog(themeUuid));
-//    }
 
     @Override
     public void notifyDataSetChanged() {
@@ -233,15 +164,17 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
         Timber.i("notifyDataSetChanged()");
     }
 
-    private class ListThemeViewHolder {
-        public final TextView tvThemeName;
-        public final ImageButton btnEditThemeName;
-        public final LinearLayout llRowThemeName;
+    static class ListThemeViewHolder {
+        @Bind(R.id.tvThemeName)
+        TextView tvThemeName;
+        @Bind(R.id.btnEditThemeName)
+        ImageButton btnEditThemeName;
+        @Bind(R.id.llRowThemeName)
+        LinearLayout llRowThemeName;
 
-        public ListThemeViewHolder(View base) {
-            tvThemeName = (TextView) base.findViewById(R.id.tvThemeName);
-            btnEditThemeName = (ImageButton) base.findViewById(R.id.btnEditThemeName);
-            llRowThemeName = (LinearLayout) base.findViewById(R.id.llRowThemeName);
+
+        public ListThemeViewHolder(View view) {
+            ButterKnife.bind(this, view);
         }
     }
 }

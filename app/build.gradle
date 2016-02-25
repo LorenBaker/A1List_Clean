@@ -21,21 +21,19 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     // general
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.android.support:design:23.1.1'
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'com.jakewharton.timber:timber:4.1.0'
-
     // backendless
-    compile 'com.backendless:backendless:3.0.8.1'
-
     // network
     compile 'com.squareup.retrofit2:retrofit:2.0.0-beta3'
-
     // tests
     testCompile 'junit:junit:4.12'
-    testCompile "org.mockito:mockito-core:1.+"
+    testCompile 'org.mockito:mockito-core:1.+'
+    // EventBus
+    compile 'org.greenrobot:eventbus:3.0.0'
+    compile 'com.backendless:backendless:3.0.8.2'
 }

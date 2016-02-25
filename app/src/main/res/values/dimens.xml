@@ -7,4 +7,12 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
 
     <dimen name="fab_margin">16dp</dimen>
+
+
+    <dimen name="gap">10dp</dimen>
+    <dimen name="radius">3dp</dimen>
+    <dimen name="gap_small">4dp</dimen>
+    <dimen name="gap_large">8dp</dimen>
+    <dimen name="text">20sp</dimen>
+
 </resources>
