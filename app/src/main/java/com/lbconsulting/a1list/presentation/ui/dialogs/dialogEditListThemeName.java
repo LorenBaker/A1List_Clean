@@ -17,7 +17,7 @@ import android.widget.EditText;
 
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.utils.MyEvents;
 import com.lbconsulting.a1list.utils.MySettings;
 

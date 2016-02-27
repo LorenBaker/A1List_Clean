@@ -18,10 +18,10 @@ import android.widget.TextView;
 
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.impl.DeleteStruckOutListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.impl.ToggleListThemeBooleanField_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.DeleteStruckOutListThemes_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ToggleListThemeBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListThemesPresenter_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemesPresenter;
 import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;

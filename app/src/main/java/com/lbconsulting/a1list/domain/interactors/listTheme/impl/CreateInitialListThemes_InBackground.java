@@ -1,4 +1,4 @@
-package com.lbconsulting.a1list.domain.interactors.impl;
+package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -8,9 +8,9 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.interfaces.CreateInitialListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
 
 import java.util.List;
 
@@ -22,11 +22,11 @@ import timber.log.Timber;
 public class CreateInitialListThemes_InBackground extends AbstractInteractor implements CreateInitialListThemes_Interactor {
 
     private final Callback mCallback;
-    private final ListThemeRepository mListThemeRepository;
+    private final ListThemeRepository_interface mListThemeRepository;
     private final Context mContext;
 
     public CreateInitialListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                Callback callback, ListThemeRepository listThemeRepository,
+                                                Callback callback, ListThemeRepository_interface listThemeRepository,
                                                 Context context) {
         super(threadExecutor, mainThread);
         mCallback = callback;

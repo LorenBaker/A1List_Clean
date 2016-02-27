@@ -21,9 +21,9 @@ import android.widget.TextView;
 
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.impl.ToggleListThemeBooleanField_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ToggleListThemeBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.storage.ListThemeSqlTable;
 import com.lbconsulting.a1list.presentation.ui.activities.ListThemeActivity;
 import com.lbconsulting.a1list.threading.MainThreadImpl;

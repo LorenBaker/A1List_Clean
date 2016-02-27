@@ -1,13 +1,13 @@
-package com.lbconsulting.a1list.domain.interactors.impl;
+package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.interfaces.ApplyTextSizeAndMarginsToAllListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTextSizeAndMarginsToAllListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
 
 /**
  * This is an interactor toggles a ListTheme's strikeout attribute.
@@ -15,13 +15,13 @@ import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
  */
 public class ApplyTextSizeAndMarginsToAllListThemes_InBackground extends AbstractInteractor implements ApplyTextSizeAndMarginsToAllListThemes_Interactor {
 
-    private final ListThemeRepository mListThemeRepository;
+    private final ListThemeRepository_interface mListThemeRepository;
     private final Callback mCallback;
     private ListTheme mListTheme;
 
     public ApplyTextSizeAndMarginsToAllListThemes_InBackground(Executor threadExecutor,
                                                                MainThread mainThread, Callback callback,
-                                                               ListThemeRepository listThemeRepository,
+                                                               ListThemeRepository_interface listThemeRepository,
                                                                ListTheme listTheme) {
         super(threadExecutor, mainThread);
         mListThemeRepository = listThemeRepository;

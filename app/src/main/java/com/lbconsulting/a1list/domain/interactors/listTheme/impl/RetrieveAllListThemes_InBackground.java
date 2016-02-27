@@ -1,11 +1,11 @@
-package com.lbconsulting.a1list.domain.interactors.impl;
+package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.interfaces.RetrieveAllListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
 
 import java.util.List;
 
@@ -17,12 +17,12 @@ public class RetrieveAllListThemes_InBackground extends AbstractInteractor imple
 
 
     private final RetrieveAllListThemes_Interactor.Callback mCallback;
-    private final ListThemeRepository mListThemeRepository;
+    private final ListThemeRepository_interface mListThemeRepository;
     private String mAction = NONE;
     private ListTheme mSelectedListTheme;
 
     public RetrieveAllListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
-                                              Callback callback, ListThemeRepository listThemeRepository) {
+                                              Callback callback, ListThemeRepository_interface listThemeRepository) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;

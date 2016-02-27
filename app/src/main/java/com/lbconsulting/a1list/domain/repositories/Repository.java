@@ -1,9 +1,9 @@
-package com.lbconsulting.a1list.domain.repository;
+package com.lbconsulting.a1list.domain.repositories;
 
 import com.lbconsulting.a1list.domain.model.SampleModel;
 
 /**
- * A sample repository with CRUD operations on a model.
+ * A sample repositories with CRUD operations on a model.
  */
 public interface Repository {
 

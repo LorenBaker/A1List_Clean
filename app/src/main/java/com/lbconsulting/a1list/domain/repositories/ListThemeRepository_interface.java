@@ -1,4 +1,4 @@
-package com.lbconsulting.a1list.domain.repository;
+package com.lbconsulting.a1list.domain.repositories;
 
 import android.content.ContentValues;
 
@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Repository interface for ListTheme
  */
-public interface ListThemeRepository {
+public interface ListThemeRepository_interface {
 
     //region Create
     ListTheme insert(ListTheme listTheme);

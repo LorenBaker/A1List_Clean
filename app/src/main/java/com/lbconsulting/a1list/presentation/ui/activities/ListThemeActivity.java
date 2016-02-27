@@ -23,12 +23,12 @@ import android.widget.TextView;
 
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.impl.ApplyTextSizeAndMarginsToAllListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.impl.UpdateListTheme_InBackground;
-import com.lbconsulting.a1list.domain.interactors.interfaces.ApplyTextSizeAndMarginsToAllListThemes_Interactor;
-import com.lbconsulting.a1list.domain.interactors.interfaces.UpdateListTheme_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ApplyTextSizeAndMarginsToAllListThemes_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.UpdateListTheme_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTextSizeAndMarginsToAllListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.UpdateListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListThemeActivityPresenter_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemeActivityPresenter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogColorPicker;

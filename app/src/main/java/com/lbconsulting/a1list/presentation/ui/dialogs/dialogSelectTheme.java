@@ -16,7 +16,7 @@ import android.widget.ListView;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListThemesPresenter_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemesPresenter;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeDialogArrayAdapter;

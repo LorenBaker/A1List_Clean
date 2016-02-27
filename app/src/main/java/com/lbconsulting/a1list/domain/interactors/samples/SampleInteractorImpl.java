@@ -1,13 +1,12 @@
-package com.lbconsulting.a1list.domain.interactors.impl;
+package com.lbconsulting.a1list.domain.interactors.samples;
 
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.interfaces.SampleInteractor;
-import com.lbconsulting.a1list.domain.repository.Repository;
+import com.lbconsulting.a1list.domain.repositories.Repository;
 
 /**
- * This is an interactor boilerplate with a reference to a model repository.
+ * This is an interactor boilerplate with a reference to a model repositories.
  * <p/>
  */
 public class SampleInteractorImpl extends AbstractInteractor implements SampleInteractor {

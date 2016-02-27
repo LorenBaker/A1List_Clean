@@ -1,4 +1,4 @@
-package com.lbconsulting.a1list.domain.repository;
+package com.lbconsulting.a1list.domain.repositories;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -23,7 +23,7 @@ import timber.log.Timber;
  * This class provided CRUD operations for ListTheme
  * NOTE: All CRUD operations should run on a background thread
  */
-public class ListThemeRepository_Impl implements ListThemeRepository {
+public class ListThemeRepository_Impl implements ListThemeRepository_interface {
 
     private final int FALSE = 0;
     private final int TRUE = 1;

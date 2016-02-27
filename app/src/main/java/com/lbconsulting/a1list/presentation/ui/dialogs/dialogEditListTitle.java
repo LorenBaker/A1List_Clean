@@ -57,7 +57,7 @@ public class dialogEditListTitle extends DialogFragment {
         if (args.containsKey(ARG_LIST_TITLE_UUID)) {
             String listTitleID = args.getString(ARG_LIST_TITLE_UUID);
 //            mListTitle = ListTitle.getListTitle(listTitleID);
-            // TODO: get ListTile from repository
+            // TODO: get ListTile from repositories
         }
     }
 

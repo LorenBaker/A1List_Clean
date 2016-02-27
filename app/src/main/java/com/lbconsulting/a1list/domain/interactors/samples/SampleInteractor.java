@@ -1,4 +1,4 @@
-package com.lbconsulting.a1list.domain.interactors.interfaces;
+package com.lbconsulting.a1list.domain.interactors.samples;
 
 
 import com.lbconsulting.a1list.domain.interactors.base.Interactor;

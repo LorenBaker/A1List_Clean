@@ -1,13 +1,13 @@
-package com.lbconsulting.a1list.domain.interactors.impl;
+package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.interfaces.DeleteStruckOutListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.DeleteStruckOutListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
 import java.util.Date;
@@ -22,11 +22,11 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
 
 
     private final Callback mCallback;
-    private final ListThemeRepository mListThemeRepository;
+    private final ListThemeRepository_interface mListThemeRepository;
 
 
     public DeleteStruckOutListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                  Callback callback, ListThemeRepository listThemeRepository) {
+                                                  Callback callback, ListThemeRepository_interface listThemeRepository) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;

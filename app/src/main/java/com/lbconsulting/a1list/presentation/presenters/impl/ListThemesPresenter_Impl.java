@@ -2,10 +2,10 @@ package com.lbconsulting.a1list.presentation.presenters.impl;
 
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
-import com.lbconsulting.a1list.domain.interactors.impl.RetrieveAllListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.interfaces.RetrieveAllListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveAllListThemes_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemesPresenter;
 
@@ -20,7 +20,7 @@ public class ListThemesPresenter_Impl extends AbstractPresenter implements ListT
         RetrieveAllListThemes_Interactor.Callback {
 
     private final ListThemesPresenter.ListThemeView mView;
-    private final ListThemeRepository mListThemeRepository;
+    private final ListThemeRepository_interface mListThemeRepository;
 
     private ListTheme mListTheme;
     private String mAction;
@@ -29,7 +29,7 @@ public class ListThemesPresenter_Impl extends AbstractPresenter implements ListT
     public ListThemesPresenter_Impl(Executor executor,
                                     MainThread mainThread,
                                     ListThemesPresenter.ListThemeView view,
-                                    ListThemeRepository listThemeRepository) {
+                                    ListThemeRepository_interface listThemeRepository) {
         super(executor, mainThread);
         mView = view;
         mListThemeRepository = listThemeRepository;
