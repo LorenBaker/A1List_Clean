@@ -3,14 +3,14 @@ package com.lbconsulting.a1list.domain.interactors.impl;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.interfaces.CloneListTheme_Interactor;
+import com.lbconsulting.a1list.domain.interactors.interfaces.RetrieveListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
 
 /**
  * An interactor that retrieves all ListThemes
  */
-public class RetrieveListTheme_InBackground extends AbstractInteractor implements CloneListTheme_Interactor {
+public class RetrieveListTheme_InBackground extends AbstractInteractor implements RetrieveListTheme_Interactor {
 
     private final Callback mCallback;
     private final ListThemeRepository mListThemeRepository;
@@ -46,7 +46,7 @@ public class RetrieveListTheme_InBackground extends AbstractInteractor implement
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListThemeCloned(listTheme);
+                mCallback.onListThemeRetrieved(listTheme);
             }
         });
     }
@@ -55,7 +55,7 @@ public class RetrieveListTheme_InBackground extends AbstractInteractor implement
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListThemeCloneFailed(message);
+                mCallback.onListThemeRetrievalFailed(message);
             }
         });
     }

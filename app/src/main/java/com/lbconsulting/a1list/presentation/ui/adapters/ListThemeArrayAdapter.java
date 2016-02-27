@@ -37,7 +37,7 @@ import timber.log.Timber;
 /**
  * An ArrayAdapter for displaying a ListTheme.
  */
-public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
+public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
 
     private final Context mContext;
     private final ListView mListView;
@@ -45,11 +45,13 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
     private final View mSnackbarView;
     private ListTheme mSelectedTheme;
     private ListThemeRepository_Impl mListThemeRepository;
+    private ToggleListThemeBooleanField_InBackground.Callback mCallback;
 
     public ListThemeArrayAdapter(Context context, ListView listView, boolean showBtnEditThemeName,
                                  View snackbarView) {
         super(context, 0);
         this.mContext = context;
+        this.mCallback = (ToggleListThemeBooleanField_InBackground.Callback)context;
         this.mListView = listView;
         this.mShowBtnEditThemeName = showBtnEditThemeName;
         mSnackbarView = snackbarView;
@@ -158,7 +160,7 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
                     setNoStrikeOut((TextView) v, mSelectedTheme.isBold(), mSelectedTheme.getTextColor());
                 }
                 new ToggleListThemeBooleanField_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), mListThemeRepository,
+                        MainThreadImpl.getInstance(),mCallback , mListThemeRepository,
                         mSelectedTheme, ListThemeSqlTable.COL_STRUCK_OUT).execute();
 
             }
@@ -232,6 +234,7 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
         super.notifyDataSetChanged();
         Timber.i("notifyDataSetChanged()");
     }
+
 
     private class ListThemeViewHolder {
         public final TextView tvThemeName;

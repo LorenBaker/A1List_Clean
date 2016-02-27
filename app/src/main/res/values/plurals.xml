@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <plurals name="updatedListThemes">
+        <item quantity="one">One ListTheme updated</item>
+        <item quantity="other">%d ListThemes updated</item>
+    </plurals>
+
+
+</resources>

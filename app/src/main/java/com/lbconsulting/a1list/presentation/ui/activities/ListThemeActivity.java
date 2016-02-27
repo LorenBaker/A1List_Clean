@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -17,9 +18,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
+import com.lbconsulting.a1list.domain.interactors.impl.ApplyTextSizeAndMarginsToAllListThemes_InBackground;
+import com.lbconsulting.a1list.domain.interactors.impl.UpdateListTheme_InBackground;
+import com.lbconsulting.a1list.domain.interactors.interfaces.ApplyTextSizeAndMarginsToAllListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.interfaces.UpdateListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListThemeActivityPresenter_Impl;
@@ -41,7 +48,8 @@ import timber.log.Timber;
 
 
 public class ListThemeActivity extends AppCompatActivity implements View.OnClickListener,
-        ListThemeActivityPresenter.ListThemeActivityView {
+        ListThemeActivityPresenter.ListThemeActivityView, UpdateListTheme_Interactor.Callback,
+        ApplyTextSizeAndMarginsToAllListThemes_Interactor.Callback{
 
     public static final String ARG_LIST_THEME_UUID = "argListThemeUuid";
     public static final String ARG_MODE = "argMode";
@@ -49,7 +57,8 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     public static final int CREATE_NEW_LIST_THEME = 2;
     private static ListThemeActivityPresenter_Impl mListThemePresenter;
     @Bind(R.id.llListTheme)
-    LinearLayout llListTheme;
+    CoordinatorLayout llListTheme;
+
     @Bind(R.id.llContentListTheme)
     LinearLayout llContentListTheme;
     @Bind(R.id.llCancelNewSave)
@@ -85,12 +94,23 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     Button btnSaveTheme;
 
 
+    @Bind(R.id.listThemeActivityContent)
+    View listThemeActivityContent;
+
+    @Bind(R.id.activityProgressBar)
+    ProgressBar mProgressBar;
+
+    @Bind(R.id.tvActivityProgressBarMessage)
+    TextView tvProgressBarMessage;
+
+
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
 
 
     private int mMode;
     private ListTheme mListTheme;
+    private ListThemeRepository_Impl mListThemeRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,14 +127,16 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
         ButterKnife.bind(this);
         EventBus.getDefault().register(this);
-        
+
         Bundle args = getIntent().getExtras();
         String originalListThemeUuid = null;
         if (args.containsKey(ARG_LIST_THEME_UUID)) {
             originalListThemeUuid = args.getString(ARG_LIST_THEME_UUID);
         }
+        mListThemeRepository = new ListThemeRepository_Impl(this);
+
         mListThemePresenter = new ListThemeActivityPresenter_Impl(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, new ListThemeRepository_Impl(this), originalListThemeUuid);
+                MainThreadImpl.getInstance(), this, mListThemeRepository, originalListThemeUuid);
 
         mMode = EDIT_EXISTING_LIST_THEME;
         if (args.containsKey(ARG_MODE)) {
@@ -146,10 +168,6 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
                 Button b = (Button) v;
                 b.setOnClickListener(this);
             }
-//            else if (v instanceof RadioGroup) {
-//                rbAlphabetical.setOnClickListener(this);
-//                rbManual.setOnClickListener(this);
-//            }
         }
 
         for (int i = 0; i < llCancelNewSave.getChildCount(); i++) {
@@ -159,7 +177,6 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
                 b.setOnClickListener(this);
             }
         }
-
     }
 
     //region onEvent
@@ -293,11 +310,6 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
             case R.id.btnTextStyle:
                 mListTheme.setBold(!mListTheme.isBold());
                 displayTheme(mListTheme);
-//                if (mListTheme.isBold()) {
-//                    btnTextStyle.setText(R.string.btnTextStyle_text_bold);
-//                } else {
-//                    btnTextStyle.setText(R.string.btnTextStyle_text_normal);
-//                }
                 break;
 
             case R.id.ckItemBackgroundTransparent:
@@ -324,22 +336,50 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.btnSaveTheme:
                 saveTheme();
-                finish();
+//                finish();
                 break;
         }
     }
 
     private void saveTheme() {
-        // TODO: implement saveTheme
+        if (ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
+            showProgress("Saving Themes.");
+        }else{
+            showProgress("Saving Theme.");
+        }
+
+        new UpdateListTheme_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, mListThemeRepository, mListTheme).execute();
+
+        if (ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
+            new ApplyTextSizeAndMarginsToAllListThemes_InBackground(ThreadExecutor.getInstance(),
+                    MainThreadImpl.getInstance(), this, mListThemeRepository, mListTheme).execute();
+        }
     }
 
     @Override
-    public void displayClonedListTheme(ListTheme listTheme) {
-        Timber.i("displayClonedListTheme()");
+    public void displayRetrievedListTheme(ListTheme listTheme) {
+        Timber.i("displayRetrievedListTheme()");
         mListTheme = listTheme;
         displayTheme(listTheme);
         if (mMode == CREATE_NEW_LIST_THEME) {
             // TODO: show enter them name dialog
+        }
+    }
+
+    @Override
+    public void onListThemeUpdated(String message) {
+        Timber.i("onListThemeUpdated(): %s", message);
+        if(!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()){
+            finish();
+        }
+    }
+
+    @Override
+    public void onListThemeUpdateFailed(String errorMessage) {
+        Timber.e("onListThemeUpdateFailed(): %s.", errorMessage);
+        if(!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()){
+            finish();
         }
     }
 
@@ -352,11 +392,11 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         llListTheme.setBackground(backgroundDrawable);
         llCancelNewSave.setBackground(backgroundDrawable);
 
-        if(listTheme.isTransparent()){
+        if (listTheme.isTransparent()) {
             btnTextColor.setBackgroundColor(Color.TRANSPARENT);
             btnTextSize.setBackgroundColor(Color.TRANSPARENT);
             btnTextStyle.setBackgroundColor(Color.TRANSPARENT);
-        }else {
+        } else {
             btnTextColor.setBackground(backgroundDrawable);
             btnTextSize.setBackground(backgroundDrawable);
             btnTextStyle.setBackground(backgroundDrawable);
@@ -369,9 +409,9 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
             if (v instanceof Button) {
                 Button b = (Button) v;
                 b.setTextColor(listTheme.getTextColor());
-                if(listTheme.isTransparent()){
+                if (listTheme.isTransparent()) {
                     b.setBackgroundColor(Color.TRANSPARENT);
-                }else{
+                } else {
                     b.setBackground(backgroundDrawable);
                 }
             }
@@ -390,12 +430,12 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
 
         // show the attributes values in their respective Buttons
-            btnThemeName.setText(String.format(getString(R.string.btnThemeName_text),
-                    listTheme.getName()));
-            ckIsDefaultTheme.setChecked(listTheme.isDefaultTheme());
+        btnThemeName.setText(String.format(getString(R.string.btnThemeName_text),
+                listTheme.getName()));
+        ckIsDefaultTheme.setChecked(listTheme.isDefaultTheme());
 
         btnStartColor.setBackgroundColor(listTheme.getStartColor());
-            btnEndColor.setBackgroundColor(listTheme.getEndColor());
+        btnEndColor.setBackgroundColor(listTheme.getEndColor());
 
         if (listTheme.isBold()) {
             btnTextStyle.setText(R.string.btnTextStyle_text_bold);
@@ -434,13 +474,20 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     }
 
     @Override
-    public void showProgress() {
+    public void showProgress(String waitMessage) {
         Timber.i("showProgress()");
+        mProgressBar.setVisibility(View.VISIBLE);
+        tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
+        tvProgressBarMessage.setVisibility(View.VISIBLE);
+        listThemeActivityContent.setVisibility(View.GONE);
     }
 
     @Override
     public void hideProgress() {
         Timber.i("hideProgress()");
+        mProgressBar.setVisibility(View.GONE);
+        tvProgressBarMessage.setVisibility(View.GONE);
+        listThemeActivityContent.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -449,5 +496,18 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     }
 
 
+    @Override
+    public void onTextSizeAndMarginsApplied(String successMessage) {
+        Timber.i("onTextSizeAndMarginsApplied(): %s.", successMessage);
+        hideProgress();
+        finish();
+    }
+
+    @Override
+    public void onApplyTextSizeAndMarginsFailure(String errorMessage) {
+        Timber.e("onTextSizeAndMarginsApplied(): %s.", errorMessage);
+        hideProgress();
+        finish();
+    }
 }
 

@@ -48,16 +48,19 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     @Bind(R.id.tvMainActivity)
     TextView tvMainActivity;
 
-    @Bind(R.id.mainActivityProgressBar)
+    @Bind(R.id.mainActivityContent)
+    View mainActivityContent;
+
+    @Bind(R.id.activityProgressBar)
     ProgressBar mProgressBar;
 
-    @Bind(R.id.tvProgressBarMessage)
+    @Bind(R.id.tvActivityProgressBarMessage)
     TextView tvProgressBarMessage;
 
     private String MESSAGE_CHANNEL = "";
     private Subscription mSubscription;
 
-    private CreateInitialListThemes_InBackground mListThemeCreator;
+    private CreateInitialListThemes_InBackground mCreateInitialListThemesInBackground;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         //endregion
 
 
-        mListThemeCreator = new CreateInitialListThemes_InBackground(ThreadExecutor.getInstance(),
+        mCreateInitialListThemesInBackground = new CreateInitialListThemes_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, new ListThemeRepository_Impl(this), this);
 
         showActiveUser();
@@ -149,8 +152,8 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
 
     private void initializeApp() {
         Timber.i("initializeApp()");
-        showProgressBar();
-        mListThemeCreator.execute();
+        showProgressBar("Loading initial Themes.");
+        mCreateInitialListThemesInBackground.execute();
     }
 
     @Override
@@ -159,7 +162,6 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         hideProgressBar();
         CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
         // TODO: show welcome dialog
-//        mMainActivityPresenter.resume();
     }
 
     @Override
@@ -168,11 +170,11 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         hideProgressBar();
     }
 
-    private void showProgressBar() {
-        Timber.i("showProgressBar()");
+    private void showProgressBar(String waitMessage) {
         mProgressBar.setVisibility(View.VISIBLE);
+        tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
         tvProgressBarMessage.setVisibility(View.VISIBLE);
-        tvMainActivity.setVisibility(View.GONE);
+        mainActivityContent.setVisibility(View.GONE);
         // TODO: hide menus
     }
 
@@ -180,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         Timber.i("hideProgressBar()");
         mProgressBar.setVisibility(View.GONE);
         tvProgressBarMessage.setVisibility(View.GONE);
-        tvMainActivity.setVisibility(View.VISIBLE);
+        mainActivityContent.setVisibility(View.VISIBLE);
         // TODO: show menus
     }
 

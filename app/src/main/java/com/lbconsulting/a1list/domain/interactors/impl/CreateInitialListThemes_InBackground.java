@@ -250,15 +250,15 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     createdListThemeMessage = String.format("All %d ListThemes created in the SQLite db.", requestedListThemeCount);
                 }
 
-                if(allListThemes.size() != newBackendlessListThemeCount){
+                if (allListThemes.size() != newBackendlessListThemeCount) {
                     createdListThemeMessage = createdListThemeMessage + "\n" +
-                            String.format("Only %d out of %d requested ListThemes saved to Backendless.",  newBackendlessListThemeCount,requestedListThemeCount);
-                }else {
+                            String.format("Only %d out of %d requested ListThemes saved to the Cloud.", newBackendlessListThemeCount, requestedListThemeCount);
+                } else {
                     createdListThemeMessage = createdListThemeMessage + "\n" +
-                            String.format("All %d ListThemes saved to Backendless.", requestedListThemeCount);
+                            String.format("All %d ListThemes saved to the Cloud.", requestedListThemeCount);
                 }
 
-                postInitialListThemesCreated( createdListThemeMessage);
+                postInitialListThemesCreated(createdListThemeMessage);
 
             }
         } catch (Exception e) {
@@ -266,11 +266,11 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
         }
     }
 
-    private void postInitialListThemesCreated( final String message) {
+    private void postInitialListThemesCreated(final String message) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onInitialListThemesCreated( message);
+                mCallback.onInitialListThemesCreated(message);
             }
         });
     }

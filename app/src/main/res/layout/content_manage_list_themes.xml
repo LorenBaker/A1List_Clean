@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -10,10 +9,20 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".activities.MainActivity"
-    tools:showIn="@layout/activity_main"
     android:background="@drawable/rec_genoa_no_stroke">
 
+    <ProgressBar
+        android:id="@+id/manageListThemesProgressBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/manageListThemesProgressBarMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Please wait ...\n     Deleting Themes."
+        android:visibility="gone"/>
 
     <ListView
         android:id="@+id/lvThemes"

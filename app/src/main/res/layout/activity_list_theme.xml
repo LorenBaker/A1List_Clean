@@ -2,6 +2,7 @@
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/llListTheme"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -22,10 +23,13 @@
 
     </android.support.design.widget.AppBarLayout>
 
+    <include layout="@layout/activity_progress_bar" />
+
     <include
+        android:id="@+id/listThemeActivityContent"
         layout="@layout/content_list_theme"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"/>
+        android:layout_marginTop="?attr/actionBarSize" />
 
 </android.support.design.widget.CoordinatorLayout>

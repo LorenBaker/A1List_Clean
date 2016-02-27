@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/llListTheme"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/rec_genoa_no_stroke"
@@ -21,22 +20,12 @@
         android:layout_weight="30"/>
 
     <View
+        android:id="@+id/listThemeLine"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginBottom="2dp"
-        android:background="@android:color/darker_gray"/>
-
-    <!--<ListView-->
-        <!--android:id="@+id/lvSampleItems"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="0dp"-->
-        <!--android:layout_weight="12"/>-->
-
-    <!--<View-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="1dp"-->
-        <!--android:layout_marginTop="2dp"-->
-        <!--android:background="@android:color/darker_gray"/>-->
+        android:background="@android:color/darker_gray"
+        android:visibility="visible"/>
 
     <include
         layout="@layout/content_cancel_save_buttons"

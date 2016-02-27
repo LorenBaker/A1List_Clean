@@ -19,16 +19,28 @@ public interface ListThemeRepository {
     ListTheme getListThemeByUuid(String uuid);
 
     List<ListTheme> getAllListThemes(boolean isMarkedForDeletion);
+
+    ListTheme retrieveDefaultListTheme();
+    List<ListTheme> retrieveStruckOutListThemes();
+    int getNumberOfStruckOutListThemes();
     //endregion
 
 
     //region Update
-    void update(ListTheme listTheme, ContentValues contentValues, String selection, String[] selectionArgs, boolean updateBackendless);
+    boolean update(ListTheme listTheme, ContentValues contentValues, boolean updateBackendless);
+    boolean update(ListTheme listTheme, boolean updateBackendless);
+    int toggle(ListTheme listTheme, String fieldName, boolean updateBackendless);
+    void clearDefaultFlag();
+    int applyTextSizeAndMarginsToAllListThemes(ListTheme listTheme, boolean updateBackendless);
 
-    void toggle(ListTheme listTheme, String fieldName, boolean updateBackendless);
     //endregion
 
     //region Delete
-    void delete(String selection, String[] selectionArgs);
+    int delete(ListTheme listTheme);
+
+    int markDeleted(ListTheme listTheme);
+
+
+
     //endregion
 }

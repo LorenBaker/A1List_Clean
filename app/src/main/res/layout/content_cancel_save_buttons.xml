@@ -12,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="Apply text size and margins to all List Themes"/>
+        android:text="Apply text size and margins to all List Themes"
+        android:visibility="visible"/>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/llCancelNewSave"
@@ -20,7 +21,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:layout_gravity="center_vertical">
+    android:layout_gravity="center_vertical"
+    android:visibility="visible">
 
 
     <Button

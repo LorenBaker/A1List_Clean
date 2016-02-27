@@ -5,18 +5,17 @@ import com.lbconsulting.a1list.domain.interactors.base.Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 
 
-public interface CloneListTheme_Interactor extends Interactor {
+public interface RetrieveListTheme_Interactor extends Interactor {
 
 
     interface Callback {
 
         // interactor callback methods
-        void onListThemeCloned( ListTheme listTheme);
+        void onListThemeRetrieved(ListTheme listTheme);
 
-        void onListThemeCloneFailed(String error);
+        void onListThemeRetrievalFailed(String error);
 
     }
-//    void setAction(ListTheme listTheme, String action);
 
     // TODO: Add interactor methods here
 }

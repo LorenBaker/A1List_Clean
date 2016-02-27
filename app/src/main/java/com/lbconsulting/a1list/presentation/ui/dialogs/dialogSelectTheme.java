@@ -98,11 +98,6 @@ public class dialogSelectTheme extends DialogFragment implements  ListThemesPres
 
         mListThemesPresenter.resume();
 
-//        mListThemeRepository.
-//        List<ListAttributes> attributesList = ListAttributes.getAllListAttributes();
-//        mListThemeArrayAdapter.setData(attributesList);
-//        mListThemeArrayAdapter.notifyDataSetChanged();
-
         // build the dialog
         mDialog = new AlertDialog.Builder(getActivity())
                 .setTitle(R.string.dialogSelectTheme_title)
@@ -117,8 +112,6 @@ public class dialogSelectTheme extends DialogFragment implements  ListThemesPres
     public void onDestroy() {
         super.onDestroy();
         Timber.i("onDestroy()");
-//        MyLog.i("dialogSelectTheme", "onDestroy");
-//        EventBus.getDefault().unregister(this);
     }
 
 
@@ -131,7 +124,7 @@ public class dialogSelectTheme extends DialogFragment implements  ListThemesPres
     }
 
     @Override
-    public void showProgress() {
+    public void showProgress(String waitMessage) {
 
     }
 

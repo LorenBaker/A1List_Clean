@@ -14,7 +14,7 @@ public class AndroidApplication extends Application {
     private static Context mContext;
 
     private final String APP_ID ="E3C25B04-0237-343F-FF8D-4ACDD2199C00";
-    private final String ANDROID_SECRET_KEY ="A3F008D8-0966-48BC-FFEA-3DF898407400";
+    private final String ANDROID_SECRET_KEY ="D631E44F-7983-D11D-FFE5-6C5541A09000";
     private final String APP_VERSION="v1";
 
     @Override

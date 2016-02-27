@@ -14,18 +14,20 @@
     tools:showIn="@layout/activity_main"
     android:background="@drawable/rec_genoa_no_stroke">
 
-    <ProgressBar
-        android:id="@+id/mainActivityProgressBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="visible"/>
 
-    <TextView
-        android:id="@+id/tvProgressBarMessage"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Please wait ...\n     Loading initial Themes."
-        android:visibility="visible"/>
+
+    <!--<ProgressBar-->
+        <!--android:id="@+id/mainActivityProgressBar"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:visibility="visible"/>-->
+
+    <!--<TextView-->
+        <!--android:id="@+id/tvProgressBarMessage"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Please wait ...\n     Loading initial Themes."-->
+        <!--android:visibility="visible"/>-->
 
     <TextView
         android:id="@+id/tvMainActivity"

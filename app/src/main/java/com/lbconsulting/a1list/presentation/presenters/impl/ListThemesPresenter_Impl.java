@@ -41,7 +41,7 @@ public class ListThemesPresenter_Impl extends AbstractPresenter implements ListT
 
     @Override
     public void resume() {
-        mView.showProgress();
+        mView.showProgress("Retrieving all themes.");
         mRetrieveAllListThemes_inBackground.execute();
     }
 

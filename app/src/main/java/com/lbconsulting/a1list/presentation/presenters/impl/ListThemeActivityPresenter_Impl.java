@@ -3,7 +3,7 @@ package com.lbconsulting.a1list.presentation.presenters.impl;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.impl.RetrieveListTheme_InBackground;
-import com.lbconsulting.a1list.domain.interactors.interfaces.CloneListTheme_Interactor;
+import com.lbconsulting.a1list.domain.interactors.interfaces.RetrieveListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repository.ListThemeRepository;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
@@ -15,7 +15,7 @@ import timber.log.Timber;
  * Presents a cloned ListTheme
  */
 public class ListThemeActivityPresenter_Impl extends AbstractPresenter implements ListThemeActivityPresenter,
-        CloneListTheme_Interactor.Callback {
+        RetrieveListTheme_Interactor.Callback {
 
     private ListThemeActivityPresenter.ListThemeActivityView mView;
     private ListThemeRepository mListThemeRepository;
@@ -38,7 +38,7 @@ public class ListThemeActivityPresenter_Impl extends AbstractPresenter implement
 
     @Override
     public void resume() {
-        mView.showProgress();
+        mView.showProgress("Retrieving Theme.");
         mRetrieveListTheme_InBackground.execute();
     }
 
@@ -63,13 +63,13 @@ public class ListThemeActivityPresenter_Impl extends AbstractPresenter implement
     }
 
     @Override
-    public void onListThemeCloned(ListTheme listTheme) {
+    public void onListThemeRetrieved(ListTheme listTheme) {
         mView.hideProgress();
-        mView.displayClonedListTheme(listTheme);
+        mView.displayRetrievedListTheme(listTheme);
     }
 
     @Override
-    public void onListThemeCloneFailed(String errorMessage) {
+    public void onListThemeRetrievalFailed(String errorMessage) {
         mView.hideProgress();
         onError(errorMessage);
     }
