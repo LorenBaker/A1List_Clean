@@ -18,9 +18,11 @@ import android.widget.EditText;
 
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
+import com.lbconsulting.a1list.utils.MyEvents;
+
+import org.greenrobot.eventbus.EventBus;
 
 import timber.log.Timber;
 
@@ -30,9 +32,9 @@ import timber.log.Timber;
  */
 public class dialogNewListTitle extends DialogFragment {
 
-    public static final int SOURCE_MAIN_ACTIVITY = 1;
-    public static final int SOURCE_MANAGE_LISTS_ACTIVITY = 2;
-    private static final String ARG_CALLING_ACTIVITY = "argCallingActivity";
+    //    public static final int SOURCE_MAIN_ACTIVITY = 1;
+//    public static final int SOURCE_MANAGE_LISTS_ACTIVITY = 2;
+//    private static final String ARG_CALLING_ACTIVITY = "argCallingActivity";
     private static final String ARG_LIST_THEME_UUID = "argListThemeUuid";
 
     private EditText txtListTitleName;
@@ -40,6 +42,7 @@ public class dialogNewListTitle extends DialogFragment {
 
     private AlertDialog mCreateListTitleDialog;
     private int mCallingActivity;
+    private ListTitleRepository_Impl mListTitleRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTheme mListTheme;
 
@@ -48,14 +51,14 @@ public class dialogNewListTitle extends DialogFragment {
     }
 
 
-    public static dialogNewListTitle newInstance(String listThemeUuid, int callingActivity) {
+    public static dialogNewListTitle newInstance() {
         Timber.i("newInstance()");
-        dialogNewListTitle frag = new dialogNewListTitle();
-        Bundle args = new Bundle();
-        args.putInt(ARG_CALLING_ACTIVITY, callingActivity);
-        args.putString(ARG_LIST_THEME_UUID, listThemeUuid);
-        frag.setArguments(args);
-        return frag;
+        return new dialogNewListTitle();
+//        Bundle args = new Bundle();
+//        args.putInt(ARG_CALLING_ACTIVITY, callingActivity);
+//        args.putString(ARG_LIST_THEME_UUID, listThemeUuid);
+//        frag.setArguments(args);
+//        return frag;
     }
 
     @Override
@@ -64,19 +67,20 @@ public class dialogNewListTitle extends DialogFragment {
         Timber.i("onCreate()");
 
         mListThemeRepository = new ListThemeRepository_Impl(getActivity());
+        mListTitleRepository = new ListTitleRepository_Impl(getActivity(), mListThemeRepository);
 
-        Bundle args = getArguments();
-        if (args.containsKey(ARG_CALLING_ACTIVITY)) {
-            mCallingActivity = args.getInt(ARG_CALLING_ACTIVITY);
-        }
-
-        if (args.containsKey(ARG_LIST_THEME_UUID)) {
-            String listThemeUuid = args.getString(ARG_LIST_THEME_UUID);
-            mListTheme = mListThemeRepository.getListThemeByUuid(listThemeUuid);
-            if (mListTheme == null) {
-                Timber.e("onCreate(): Unable to retrieve ListTheme with UUID = %s.", listThemeUuid);
-            }
-        }
+//        Bundle args = getArguments();
+//        if (args.containsKey(ARG_CALLING_ACTIVITY)) {
+//            mCallingActivity = args.getInt(ARG_CALLING_ACTIVITY);
+//        }
+//
+//        if (args.containsKey(ARG_LIST_THEME_UUID)) {
+//            String listThemeUuid = args.getString(ARG_LIST_THEME_UUID);
+//            mListTheme = mListThemeRepository.getListThemeByUuid(listThemeUuid);
+//            if (mListTheme == null) {
+//                Timber.e("onCreate(): Unable to retrieve ListTheme with UUID = %s.", listThemeUuid);
+//            }
+//        }
     }
 
     @Override
@@ -92,19 +96,9 @@ public class dialogNewListTitle extends DialogFragment {
                 positiveButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(final View v) {
-                        if (addNewList(txtListTitleName.getText().toString().trim())) {
-                            switch (mCallingActivity) {
-                                case SOURCE_MAIN_ACTIVITY:
-//                                    EventBus.getDefault().post(new MyEvents.startA1List(false));
-                                    // TODO: restart Main Activity
-                                    break;
-
-                                case SOURCE_MANAGE_LISTS_ACTIVITY:
-//                                    EventBus.getDefault().post(new MyEvents.updateListTitleUI());
-                                    // TODO: update ListTitle UI
-                                    break;
-                            }
-
+                        String proposedNewListTitleName = txtListTitleName.getText().toString().trim();
+                        if (okToCreateNewListTitle(proposedNewListTitleName)) {
+                            EventBus.getDefault().post(new MyEvents.createNewListTitle(proposedNewListTitleName, true));
                             dismiss();
                         }
                     }
@@ -117,8 +111,6 @@ public class dialogNewListTitle extends DialogFragment {
                     @Override
                     public void onClick(View v) {
                         // Cancel
-//                        EventBus.getDefault().post(new MyEvents.startA1List(false));
-                        // TODO: restart Main Activity upon save ???
                         dismiss();
                     }
                 });
@@ -128,7 +120,9 @@ public class dialogNewListTitle extends DialogFragment {
                 neutralButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(final View v) {
-                        if (addNewList(txtListTitleName.getText().toString().trim())) {
+                        String proposedNewListTitleName = txtListTitleName.getText().toString().trim();
+                        if (okToCreateNewListTitle(proposedNewListTitleName)) {
+                            EventBus.getDefault().post(new MyEvents.createNewListTitle(proposedNewListTitleName, false));
                             txtListTitleName.setText("");
                         }
                     }
@@ -137,22 +131,19 @@ public class dialogNewListTitle extends DialogFragment {
         });
     }
 
-    // This method
-    private boolean addNewList(String newListName) {
+    private boolean okToCreateNewListTitle(String newListName) {
         boolean result = false;
         if (newListName.isEmpty()) {
             String errorMsg = getActivity().getString(R.string.newListTitleName_isEmpty_error);
             txtListTitleName_input_layout.setError(errorMsg);
 
-        } else if (ListTitlesSqlTable.listExists(newListName)) {
+        } else if (!mListTitleRepository.isValidListTitleName(newListName)) {
             String errorMsg = String.format(getActivity()
                     .getString(R.string.newListTitleName_listExists_error), newListName);
             txtListTitleName_input_layout.setError(errorMsg);
 
         } else {
             // ok to create list
-            ListTitle newListTitle = ListTitle.newInstance(newListName, mListTheme);
-            // TODO: save newListTitle to the ListTitle Repository
             result = true;
         }
         return result;

@@ -234,7 +234,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                 newBackendlessListThemeCount++;
             }
 
-            final List<ListTheme> allListThemes = mListThemeRepository.getAllListThemes(false);
+            final List<ListTheme> allListThemes = mListThemeRepository.retrieveAllListThemes(false);
             String createdListThemeMessage;
             // check if we have failed to retrieve any ListThemes
             if (allListThemes == null) {
@@ -244,10 +244,10 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
             } else {
                 // we have created ListThemes. Notify the UI on the main thread.
                 if (allListThemes.size() != requestedListThemeCount) {
-                    createdListThemeMessage = String.format("Only %d out of %d requested ListThemes created in the SQLite db.", allListThemes.size(), requestedListThemeCount);
+                    createdListThemeMessage = String.format("Only %d out of %d requested Themes created in the local database.", allListThemes.size(), requestedListThemeCount);
 
                 } else {
-                    createdListThemeMessage = String.format("All %d ListThemes created in the SQLite db.", requestedListThemeCount);
+                    createdListThemeMessage = String.format("All %d Themes created in the local database.", requestedListThemeCount);
                 }
 
                 if (allListThemes.size() != newBackendlessListThemeCount) {

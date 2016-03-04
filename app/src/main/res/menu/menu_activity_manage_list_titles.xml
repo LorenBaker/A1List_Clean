@@ -1,0 +1,12 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ManageListsAndThemesActivity">
+
+    <item
+        android:id="@+id/action_listTitleSorting"
+        android:orderInCategory="105"
+        android:title="@string/action_listTitleSorting_title"
+        app:showAsAction="never" />
+
+</menu>

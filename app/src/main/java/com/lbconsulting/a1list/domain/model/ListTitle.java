@@ -21,9 +21,14 @@ public class ListTitle {
     private boolean listTitleDirty;
     private boolean markedForDeletion;
     private boolean sortListItemsAlphabetically;
+    private boolean struckOut;
     private long manualSortKey;
     private String listLockString;
+    private boolean listLocked;
     private boolean listPrivateToThisDevice;
+
+    private int firstVisiblePosition;
+    private int listViewTop;
 
     private Date updated;
     private Date created;
@@ -34,6 +39,12 @@ public class ListTitle {
 
     public static ListTitle newInstance(String name, ListTheme defaultListTheme){
         ListTitle newListTitle = new ListTitle();
+
+        String newUuid = UUID.randomUUID().toString();
+        // replace uuid "-" with "_" to distinguish it from Backendless objectId
+        newUuid = newUuid.replace("-", "_");
+        newListTitle.setUuid(newUuid);
+
         newListTitle.setName(name);
         newListTitle.setListTheme(defaultListTheme);
         newListTitle.setChecked(false);
@@ -42,12 +53,10 @@ public class ListTitle {
         newListTitle.setMarkedForDeletion(false);
         newListTitle.setManualSortKey(-1l);
         newListTitle.setSortListItemsAlphabetically(true);
-        String newUuid = UUID.randomUUID().toString();
-        // replace uuid "-" with "_" to distinguish it from Backendless objectId
-        newUuid = newUuid.replace("-", "_");
-        newListTitle.setUuid(newUuid);
         newListTitle.setListLockString(LIST_NOT_LOCK);
         newListTitle.setListPrivateToThisDevice(false);
+        newListTitle.setFirstVisiblePosition(-1);
+        newListTitle.setListViewTop(0);
 
         return newListTitle;
     }
@@ -133,6 +142,14 @@ public class ListTitle {
         this.sortListItemsAlphabetically = sortListItemsAlphabetically;
     }
 
+    public boolean isStruckOut() {
+        return struckOut;
+    }
+
+    public void setStruckOut(boolean struckOut) {
+        this.struckOut = struckOut;
+    }
+
     public String getUuid() {
         return uuid;
     }
@@ -149,12 +166,36 @@ public class ListTitle {
         this.listLockString = listLockString;
     }
 
+    public boolean isListLocked() {
+        return listLocked;
+    }
+
+    public void setListLocked(boolean listLocked) {
+        this.listLocked = listLocked;
+    }
+
     public boolean isListPrivateToThisDevice() {
         return listPrivateToThisDevice;
     }
 
     public void setListPrivateToThisDevice(boolean listPrivateToThisDevice) {
         this.listPrivateToThisDevice = listPrivateToThisDevice;
+    }
+
+    public int getFirstVisiblePosition() {
+        return firstVisiblePosition;
+    }
+
+    public void setFirstVisiblePosition(int firstVisiblePosition) {
+        this.firstVisiblePosition = firstVisiblePosition;
+    }
+
+    public int getListViewTop() {
+        return listViewTop;
+    }
+
+    public void setListViewTop(int listViewTop) {
+        this.listViewTop = listViewTop;
     }
 
     public Date getUpdated() {

@@ -8,6 +8,7 @@ import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.DeleteStruckOutListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
 import java.util.Date;
@@ -23,14 +24,18 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
 
     private final Callback mCallback;
     private final ListThemeRepository_interface mListThemeRepository;
+    private final ListTitleRepository_interface mListTitleRepository;
 
 
     public DeleteStruckOutListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                  Callback callback, ListThemeRepository_interface listThemeRepository) {
+                                                  Callback callback,
+                                                  ListThemeRepository_interface listThemeRepository,
+                                                  ListTitleRepository_interface listTitleRepository) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
         mListThemeRepository = listThemeRepository;
+        mListTitleRepository = listTitleRepository;
     }
 
 
@@ -54,12 +59,12 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
                         // Delete ListThemes from Backendless
                         try {
                             long timestamp = Backendless.Data.of(ListTheme.class).remove(listTheme);
-                            String msg = "\"" + listTheme.getName() +"\" removed at " + new Date(timestamp).toString();
+                            String msg = "\"" + listTheme.getName() + "\" removed at " + new Date(timestamp).toString();
                         } catch (BackendlessException e) {
                             Timber.e("DeleteStruckOutListThemes_InBackground(): BackendlessException: %s.", e.getMessage());
                         }
-                        // TODO: In the ListTitles Table, replace any ListTheme being deleted with the default ListTheme.
-                        // TODO: Update changed ListTitles in Backendless
+                        // Replace any ListTheme being deleted with the default ListTheme.
+                        mListTitleRepository.replaceListTheme(listTheme, defaultListTheme, true);
                         // TODO: Send ListTheme delete and ListTitle update messages to other devices
 
                     } else {
@@ -71,7 +76,8 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
                 for (ListTheme listTheme : struckOutListThemes) {
                     if (!listTheme.isDefaultTheme()) {
                         numberOfListThemesDeleted += mListThemeRepository.markDeleted(listTheme);
-                        // TODO: In the ListTitles Table, replace any ListTheme being deleted with the default ListTheme. Mark them dirty.
+                        // Replace any ListTheme being deleted with the default ListTheme.
+                        mListTitleRepository.replaceListTheme(listTheme, defaultListTheme, false);
                     } else {
                         Timber.e("DeleteStruckOutListThemes_InBackground: Aborted deleting the default ListTheme.");
                     }

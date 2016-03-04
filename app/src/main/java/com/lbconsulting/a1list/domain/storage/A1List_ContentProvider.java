@@ -33,8 +33,8 @@ public class A1List_ContentProvider extends ContentProvider {
         sURIMatcher.addURI(AUTHORITY, ListTitlesSqlTable.CONTENT_PATH, LIST_TITLES_MULTI_ROWS);
         sURIMatcher.addURI(AUTHORITY, ListTitlesSqlTable.CONTENT_PATH + "/#", LIST_TITLES_SINGLE_ROW);
 
-        sURIMatcher.addURI(AUTHORITY, ListThemeSqlTable.CONTENT_PATH, LIST_THEMES_MULTI_ROWS);
-        sURIMatcher.addURI(AUTHORITY, ListThemeSqlTable.CONTENT_PATH + "/#", LIST_THEMES_SINGLE_ROW);
+        sURIMatcher.addURI(AUTHORITY, ListThemesSqlTable.CONTENT_PATH, LIST_THEMES_MULTI_ROWS);
+        sURIMatcher.addURI(AUTHORITY, ListThemesSqlTable.CONTENT_PATH + "/#", LIST_THEMES_SINGLE_ROW);
 
     }
 
@@ -110,15 +110,15 @@ public class A1List_ContentProvider extends ContentProvider {
                     selection = "1";
                 }
                 // Perform the deletion
-                deleteCount = db.delete(ListThemeSqlTable.TABLE_LIST_THEMES, selection, selectionArgs);
+                deleteCount = db.delete(ListThemesSqlTable.TABLE_LIST_THEMES, selection, selectionArgs);
                 break;
 
             case LIST_THEMES_SINGLE_ROW:
                 // Limit deletion to a single row
                 rowId = uri.getLastPathSegment();
-                selection = ListThemeSqlTable.COL_ID + "=" + rowId;
+                selection = ListThemesSqlTable.COL_ID + "=" + rowId;
                 // Perform the deletion
-                deleteCount = db.delete(ListThemeSqlTable.TABLE_LIST_THEMES, selection, selectionArgs);
+                deleteCount = db.delete(ListThemesSqlTable.TABLE_LIST_THEMES, selection, selectionArgs);
                 break;
 
             default:
@@ -148,9 +148,9 @@ public class A1List_ContentProvider extends ContentProvider {
                 return ListTitlesSqlTable.CONTENT_ITEM_TYPE;
 
             case LIST_THEMES_MULTI_ROWS:
-                return ListThemeSqlTable.CONTENT_TYPE;
+                return ListThemesSqlTable.CONTENT_TYPE;
             case LIST_THEMES_SINGLE_ROW:
-                return ListThemeSqlTable.CONTENT_ITEM_TYPE;
+                return ListThemesSqlTable.CONTENT_ITEM_TYPE;
 
             default:
                 throw new IllegalArgumentException("Method getType. Unknown URI: " + uri);
@@ -206,12 +206,12 @@ public class A1List_ContentProvider extends ContentProvider {
                         "Illegal URI: Cannot insert a new row with a single row URI. " + uri);
 
             case LIST_THEMES_MULTI_ROWS:
-                newRowId = db.insertOrThrow(ListThemeSqlTable.TABLE_LIST_THEMES, nullColumnHack, values);
+                newRowId = db.insertOrThrow(ListThemesSqlTable.TABLE_LIST_THEMES, nullColumnHack, values);
                 if (newRowId > 0) {
                     // Construct and return the URI of the newly inserted row.
-                    Uri newRowUri = ContentUris.withAppendedId(ListThemeSqlTable.CONTENT_URI, newRowId);
+                    Uri newRowUri = ContentUris.withAppendedId(ListThemesSqlTable.CONTENT_URI, newRowId);
                     if (getContext() != null && getContext().getContentResolver() != null) {
-                        getContext().getContentResolver().notifyChange(ListThemeSqlTable.CONTENT_URI, null);
+                        getContext().getContentResolver().notifyChange(ListThemesSqlTable.CONTENT_URI, null);
                     }
 
                     return newRowUri;
@@ -255,12 +255,12 @@ public class A1List_ContentProvider extends ContentProvider {
                 break;
 
             case LIST_THEMES_MULTI_ROWS:
-                queryBuilder.setTables(ListThemeSqlTable.TABLE_LIST_THEMES);
+                queryBuilder.setTables(ListThemesSqlTable.TABLE_LIST_THEMES);
                 break;
 
             case LIST_THEMES_SINGLE_ROW:
-                queryBuilder.setTables(ListThemeSqlTable.TABLE_LIST_THEMES);
-                queryBuilder.appendWhere(ListThemeSqlTable.COL_ID + "=" + uri.getLastPathSegment());
+                queryBuilder.setTables(ListThemesSqlTable.TABLE_LIST_THEMES);
+                queryBuilder.appendWhere(ListThemesSqlTable.COL_ID + "=" + uri.getLastPathSegment());
                 break;
 
 
@@ -327,14 +327,14 @@ public class A1List_ContentProvider extends ContentProvider {
                 break;
 
             case LIST_THEMES_MULTI_ROWS:
-                updateCount = db.update(ListThemeSqlTable.TABLE_LIST_THEMES, values, selection,
+                updateCount = db.update(ListThemesSqlTable.TABLE_LIST_THEMES, values, selection,
                         selectionArgs);
                 break;
 
             case LIST_THEMES_SINGLE_ROW:
                 rowID = uri.getLastPathSegment();
-                selection = ListThemeSqlTable.COL_ID + "=" + rowID;
-                updateCount = db.update(ListThemeSqlTable.TABLE_LIST_THEMES, values, selection,
+                selection = ListThemesSqlTable.COL_ID + "=" + rowID;
+                updateCount = db.update(ListThemesSqlTable.TABLE_LIST_THEMES, values, selection,
                         selectionArgs);
                 break;
 

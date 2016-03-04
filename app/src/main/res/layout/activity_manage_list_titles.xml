@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".activities.MainActivity">
+    tools:context=".activities.ManageListTitlesActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -24,8 +24,8 @@
     <include layout="@layout/activity_progress_bar" />
 
     <include
-        android:id="@+id/manageListThemesActivityContent"
-        layout="@layout/content_manage_list_themes" />
+        android:id="@+id/manageListTitlesActivityContent"
+        layout="@layout/content_manage_list_titles" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"

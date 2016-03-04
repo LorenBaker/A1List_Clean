@@ -2,7 +2,6 @@ package com.lbconsulting.a1list.presentation.ui.adapters;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
@@ -19,12 +18,13 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ToggleListThemeBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.domain.storage.ListThemeSqlTable;
+import com.lbconsulting.a1list.domain.storage.ListThemesSqlTable;
 import com.lbconsulting.a1list.presentation.ui.activities.ListThemeActivity;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
@@ -37,7 +37,7 @@ import timber.log.Timber;
 /**
  * An ArrayAdapter for displaying a ListTheme.
  */
-public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
+public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
 
     private final Context mContext;
     private final ListView mListView;
@@ -51,7 +51,7 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
                                  View snackbarView) {
         super(context, 0);
         this.mContext = context;
-        this.mCallback = (ToggleListThemeBooleanField_InBackground.Callback)context;
+        this.mCallback = (ToggleListThemeBooleanField_InBackground.Callback) context;
         this.mListView = listView;
         this.mShowBtnEditThemeName = showBtnEditThemeName;
         mSnackbarView = snackbarView;
@@ -132,15 +132,15 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
             holder.tvThemeName.setPadding(horizontalPadding, verticalPadding,
                     horizontalPadding, verticalPadding);
 
-            if (mSelectedTheme.isTransparent()) {
-                holder.llRowThemeName.setBackgroundColor(Color.TRANSPARENT);
-                mListView.setDivider(null);
-                mListView.setDividerHeight(0);
-            } else {
+//            if (mSelectedTheme.isTransparent()) {
+//                holder.llRowThemeName.setBackgroundColor(Color.TRANSPARENT);
+//                mListView.setDivider(null);
+//                mListView.setDividerHeight(0);
+//            } else {
                 holder.llRowThemeName.setBackground(getBackgroundDrawable(mSelectedTheme.getStartColor(), mSelectedTheme.getEndColor()));
                 mListView.setDivider(new ColorDrawable(ContextCompat.getColor(mContext, R.color.greyLight3_50Transparent)));
                 mListView.setDividerHeight(1);
-            }
+//            }
 
             if (mSelectedTheme.isStruckOut()) {
                 setStrikeOut(holder.tvThemeName, mSelectedTheme.isBold());
@@ -160,8 +160,8 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
                     setNoStrikeOut((TextView) v, mSelectedTheme.isBold(), mSelectedTheme.getTextColor());
                 }
                 new ToggleListThemeBooleanField_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(),mCallback , mListThemeRepository,
-                        mSelectedTheme, ListThemeSqlTable.COL_STRUCK_OUT).execute();
+                        MainThreadImpl.getInstance(), mCallback, mListThemeRepository,
+                        mSelectedTheme, ListThemesSqlTable.COL_STRUCK_OUT).execute();
 
             }
         });
@@ -193,10 +193,12 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
     }
 
     private void startListThemeActivity(ListTheme selectedTheme) {
+        Gson gson = new Gson();
+        String listThemeJson = gson.toJson(selectedTheme);
         Intent listThemeActivityIntent = new Intent(mContext, ListThemeActivity.class);
-        listThemeActivityIntent.putExtra(ListThemeActivity.ARG_LIST_THEME_UUID, selectedTheme.getUuid());
+        listThemeActivityIntent.putExtra(ListThemeActivity.ARG_LIST_THEME_JSON, listThemeJson);
         listThemeActivityIntent.putExtra(ListThemeActivity.ARG_MODE, ListThemeActivity.EDIT_EXISTING_LIST_THEME);
-        mContext. startActivity(listThemeActivityIntent);
+        mContext.startActivity(listThemeActivityIntent);
     }
 
     private void setStrikeOut(TextView tv, boolean isBold) {

@@ -1,10 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!--ListTheme Plurals-->
     <plurals name="updatedListThemes">
         <item quantity="one">One ListTheme updated</item>
         <item quantity="other">%d ListThemes updated</item>
     </plurals>
 
+    <plurals name="deletingListThemes">
+        <item quantity="one">Deleting one ListTheme.</item>
+        <item quantity="other">Deleting %d ListThemes.</item>
+    </plurals>
+
+    <plurals name="deleteListThemesYesNoDialogTitle">
+        <item quantity="one">Delete Theme?</item>
+        <item quantity="other">Delete Themes?</item>
+    </plurals>
+
+    <plurals name="deleteListThemesYesNoDialogMessage">
+        <item quantity="one">Do you want to permanently delete 1 Theme?</item>
+        <item quantity="other">Do you want to permanently delete %d Themes?</item>
+    </plurals>
+
+
+    <!--ListTitle Plurals-->
+    <plurals name="updatedListTitles">
+        <item quantity="one">One ListTitle updated</item>
+        <item quantity="other">%d ListTitles updated</item>
+    </plurals>
+
+    <plurals name="deletingListTitles">
+        <item quantity="one">Deleting one ListTitle.</item>
+        <item quantity="other">Deleting %d ListTitles.</item>
+    </plurals>
+
+    <plurals name="deleteListTitlesYesNoDialogTitle">
+        <item quantity="one">Delete List?</item>
+        <item quantity="other">Delete Lists?</item>
+    </plurals>
+
+    <plurals name="deleteListTitlesYesNoDialogMessage">
+        <item quantity="one">Do you want to permanently delete 1 List?</item>
+        <item quantity="other">Do you want to permanently delete %d Lists?</item>
+    </plurals>
 
 </resources>

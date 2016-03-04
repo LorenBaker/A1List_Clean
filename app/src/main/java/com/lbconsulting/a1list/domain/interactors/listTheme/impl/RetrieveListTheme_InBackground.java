@@ -8,7 +8,7 @@ import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
 
 /**
- * An interactor that retrieves all ListThemes
+ * An interactor that retrieves a ListTheme with the provided uuid
  */
 public class RetrieveListTheme_InBackground extends AbstractInteractor implements RetrieveListTheme_Interactor {
 

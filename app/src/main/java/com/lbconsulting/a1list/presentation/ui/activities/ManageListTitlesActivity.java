@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -15,18 +16,17 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.impl.DeleteStruckOutListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ToggleListThemeBooleanField_InBackground;
-import com.lbconsulting.a1list.domain.model.ListTheme;
+import com.lbconsulting.a1list.domain.interactors.listTitle.impl.DeleteStruckOutListTitles_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTitle.impl.ToggleListTitleBooleanField_InBackground;
+import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
-import com.lbconsulting.a1list.presentation.presenters.impl.ListThemesPresenter_Impl;
-import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemesPresenter;
+import com.lbconsulting.a1list.presentation.presenters.impl.ListTitlesPresenter_Impl;
+import com.lbconsulting.a1list.presentation.presenters.interfaces.ListTitlesPresenter;
 import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;
-import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeArrayAdapter;
+import com.lbconsulting.a1list.presentation.ui.adapters.ListTitleArrayAdapter;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.CsvParser;
@@ -39,18 +39,18 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-public class ManageListThemesActivity extends AppCompatActivity implements ListThemesPresenter.ListThemeView,
-        DeleteStruckOutListThemes_InBackground.Callback, ToggleListThemeBooleanField_InBackground.Callback {
-    private static ListThemesPresenter_Impl mPresenter;
+public class ManageListTitlesActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView,
+        DeleteStruckOutListTitles_InBackground.Callback, ToggleListTitleBooleanField_InBackground.Callback {
+    private static ListTitlesPresenter_Impl mPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
-    @Bind(R.id.lvThemes)
-    ListView lvThemes;
+    @Bind(R.id.lvListTitles)
+    ListView lvListTitles;
 
-    @Bind(R.id.manageListThemesActivityContent)
-    View manageListThemesActivityContent;
+    @Bind(R.id.manageListTitlesActivityContent)
+    View manageListTitlesActivityContent;
 
     @Bind(R.id.activityProgressBar)
     ProgressBar mProgressBar;
@@ -59,31 +59,31 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     TextView tvProgressBarMessage;
 
 
-    private ListThemeArrayAdapter mListThemeAdapter;
-    private DeleteStruckOutListThemes_InBackground mDeleteStruckOutListThemes;
+    private ListTitleArrayAdapter mListTitleAdapter;
+    private DeleteStruckOutListTitles_InBackground mDeleteStruckOutListTitles;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
     // Note: these Toggle Methods run on the UI thread
-    // The update one field on one record in one SQLite table (ListThemesSqlTable)
-    // After the toggle method complete, querying the SQLite ListThemesSqlTable for all ListThemes
-    // is executed on a background thread. Upon its completion, the ListThemeArray adapter is notified
+    // The update one field on one record in one SQLite table (ListTitlesSqlTable)
+    // After the toggle method complete, querying the SQLite ListTitlesSqlTable for all ListTitles
+    // is executed on a background thread. Upon its completion, the ListTitleArray adapter is notified
     // of a data change.
     //
     // The app seemed more responsive running on the UI thread as opposed to running both the Toggle
-    // Methods and ListThemesSqlTable query on background threads.
-    private int mNumberOfStruckOutListThemes;
+    // Methods and ListTitlesSqlTable query on background threads.
+    private int mNumberOfStruckOutListTitles;
 
     //region Toggle Methods
-    private DialogInterface.OnClickListener deleteListThemesDialogClickListener = new DialogInterface.OnClickListener() {
+    private DialogInterface.OnClickListener deleteListTitlesDialogClickListener = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
                     //Yes button clicked
-                    mDeleteStruckOutListThemes.execute();
+                    mDeleteStruckOutListTitles.execute();
                     if (CommonMethods.isNetworkAvailable()) {
                         String deletingThemeMessage = getResources().getQuantityString(
-                                R.plurals.deletingListThemes, mNumberOfStruckOutListThemes, mNumberOfStruckOutListThemes);
+                                R.plurals.deletingListTitles, mNumberOfStruckOutListTitles, mNumberOfStruckOutListTitles);
                         showProgress(deletingThemeMessage);
                     }
                     break;
@@ -105,12 +105,12 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
-        setContentView(R.layout.activity_manage_list_themes);
+        setContentView(R.layout.activity_manage_list_titles);
 
         ButterKnife.bind(this);
 
-        mListThemeAdapter = new ListThemeArrayAdapter(this, lvThemes, true, mFab);
-        lvThemes.setAdapter(mListThemeAdapter);
+        mListTitleAdapter = new ListTitleArrayAdapter(this, lvListTitles, true, mFab);
+        lvListTitles.setAdapter(mListTitleAdapter);
 
         //region Messaging
 /*        MESSAGE_CHANNEL = MySettings.getActiveUserID();
@@ -151,13 +151,13 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         mListThemeRepository = new ListThemeRepository_Impl(this);
         mListTitleRepository = new ListTitleRepository_Impl(this, mListThemeRepository);
 
-        mPresenter = new ListThemesPresenter_Impl(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListThemeRepository);
+        mPresenter = new ListTitlesPresenter_Impl(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, mListTitleRepository);
 
-        mDeleteStruckOutListThemes = new DeleteStruckOutListThemes_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListThemeRepository, mListTitleRepository);
+        mDeleteStruckOutListTitles = new DeleteStruckOutListTitles_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, mListTitleRepository);
 
-        mNumberOfStruckOutListThemes = mListThemeRepository.getNumberOfStruckOutListThemes();
+        mNumberOfStruckOutListTitles = mListTitleRepository.getNumberOfStruckOutListTitles();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -168,19 +168,18 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
 
     @OnClick(R.id.fab)
     public void fab() {
-        String message = "Create New ListTheme action button clicked.";
-        ListTheme defaultListTheme = mListThemeRepository.retrieveDefaultListTheme();
-        ListTheme newListTheme = ListTheme.newInstance(defaultListTheme);
-        Gson gson = new Gson();
-        String listThemeJson = gson.toJson(newListTheme);
+        String message = "Create New ListTitle action button clicked.";
+//        ListTitle newListTitle = ListTitle.newInstance(defaultListTitle);
+//        Gson gson = new Gson();
+//        String listTitleJson = gson.toJson(newListTitle);
+//
+//        Intent listTitleActivityIntent = new Intent(this, ListTitleActivity.class);
+////        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_LIST_THEME_UUID, newListTitle.getUuid());
+//        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_LIST_THEME_JSON, listTitleJson);
+//        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_MODE, ListTitleActivity.CREATE_NEW_LIST_THEME);
+//        startActivity(listTitleActivityIntent);
 
-        Intent listThemeActivityIntent = new Intent(this, ListThemeActivity.class);
-//        listThemeActivityIntent.putExtra(ListThemeActivity.ARG_LIST_THEME_UUID, newListTheme.getUuid());
-        listThemeActivityIntent.putExtra(ListThemeActivity.ARG_LIST_THEME_JSON, listThemeJson);
-        listThemeActivityIntent.putExtra(ListThemeActivity.ARG_MODE, ListThemeActivity.CREATE_NEW_LIST_THEME);
-        startActivity(listThemeActivityIntent);
-
-//        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
+        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
     }
 
     @Override
@@ -189,7 +188,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         mProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
         tvProgressBarMessage.setVisibility(View.VISIBLE);
-        manageListThemesActivityContent.setVisibility(View.GONE);
+        manageListTitlesActivityContent.setVisibility(View.GONE);
     }
 
     @Override
@@ -197,7 +196,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         Timber.i("hideProgress()");
         mProgressBar.setVisibility(View.GONE);
         tvProgressBarMessage.setVisibility(View.GONE);
-        manageListThemesActivityContent.setVisibility(View.VISIBLE);
+        manageListTitlesActivityContent.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -213,10 +212,10 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     }
 
     @Override
-    public void displayAllListThemes(List<ListTheme> allListThemes) {
+    public void displayAllListTitles(List<ListTitle> allListTitles) {
         // mPresenter's results
-        mListThemeAdapter.setData(allListThemes);
-        mListThemeAdapter.notifyDataSetChanged();
+        mListTitleAdapter.setData(allListTitles);
+        mListTitleAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -239,7 +238,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_manage_list_theme_activity, menu);
+        getMenuInflater().inflate(R.menu.menu_activity_manage_list_titles, menu);
         return true;
     }
 
@@ -251,19 +250,19 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_deleteListThemeStrikeouts) {
-//            Toast.makeText(this, "deleteStruckOutListThemes Clicked", Toast.LENGTH_SHORT).show();
-            if (mNumberOfStruckOutListThemes == 0) {
+        if (id == R.id.action_deleteListTitleStrikeouts) {
+//            Toast.makeText(this, "deleteStruckOutListTitles Clicked", Toast.LENGTH_SHORT).show();
+            if (mNumberOfStruckOutListTitles == 0) {
                 String title = "";
                 String msg = "No Themes selected for deletion.";
                 CommonMethods.showOkDialog(this, title, msg);
 
             } else {
-                String title = getResources().getQuantityString(R.plurals.deleteListThemesYesNoDialogTitle,
-                        mNumberOfStruckOutListThemes, mNumberOfStruckOutListThemes);
-                String msg = getResources().getQuantityString(R.plurals.deleteListThemesYesNoDialogMessage,
-                        mNumberOfStruckOutListThemes, mNumberOfStruckOutListThemes);
-                showDeleteListThemesYesNoDialog(title, msg);
+                String title = getResources().getQuantityString(R.plurals.deleteListTitlesYesNoDialogTitle,
+                        mNumberOfStruckOutListTitles, mNumberOfStruckOutListTitles);
+                String msg = getResources().getQuantityString(R.plurals.deleteListTitlesYesNoDialogMessage,
+                        mNumberOfStruckOutListTitles, mNumberOfStruckOutListTitles);
+                showDeleteListTitlesYesNoDialog(title, msg);
             }
 
             return true;
@@ -272,13 +271,13 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         return super.onOptionsItemSelected(item);
     }
 
-    private void showDeleteListThemesYesNoDialog(String title, String message) {
+    private void showDeleteListTitlesYesNoDialog(String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder
                 .setTitle(title)
                 .setMessage(message)
-                .setPositiveButton("Yes", deleteListThemesDialogClickListener)
-                .setNegativeButton("No", deleteListThemesDialogClickListener)
+                .setPositiveButton("Yes", deleteListTitlesDialogClickListener)
+                .setNegativeButton("No", deleteListTitlesDialogClickListener)
                 .show();
     }
 
@@ -288,7 +287,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
 //        mProgressBar.setVisibility(View.VISIBLE);
 //        tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
 //        tvProgressBarMessage.setVisibility(View.VISIBLE);
-//        manageListThemesActivityContent.setVisibility(View.GONE);
+//        manageListTitlesActivityContent.setVisibility(View.GONE);
 //
 //
 //
@@ -313,25 +312,25 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     }
 
     @Override
-    public void onStruckOutListThemesDeleted(String successMessage) {
-        Timber.i("onStruckOutListThemesDeleted(): %s.", successMessage);
-        mNumberOfStruckOutListThemes = 0;
+    public void onStruckOutListTitlesDeleted(String successMessage) {
+        Timber.i("onStruckOutListTitlesDeleted(): %s.", successMessage);
+        mNumberOfStruckOutListTitles = 0;
         mPresenter.resume();
         hideProgress();
     }
 
     @Override
-    public void onStruckOutListThemesDeletionFailed(String errorMessage) {
-        Timber.e("onStruckOutListThemesDeleted(): %s.", errorMessage);
-        mNumberOfStruckOutListThemes = mListThemeRepository.getNumberOfStruckOutListThemes();
+    public void onStruckOutListTitlesDeletionFailed(String errorMessage) {
+        Timber.e("onStruckOutListTitlesDeleted(): %s.", errorMessage);
+        mNumberOfStruckOutListTitles = mListTitleRepository.getNumberOfStruckOutListTitles();
         mPresenter.resume();
         hideProgress();
     }
 
     @Override
-    public void onListThemeBooleanFieldToggled(int toggleValue) {
-        mNumberOfStruckOutListThemes += toggleValue;
-//        Timber.i("onListThemeBooleanFieldToggled(): Number of struck out ListThemes = %d.", mNumberOfStruckOutListThemes);
+    public void onListTitleBooleanFieldToggled(int toggleValue) {
+        mNumberOfStruckOutListTitles += toggleValue;
+//        Timber.i("onListTitleBooleanFieldToggled(): Number of struck out ListTitles = %d.", mNumberOfStruckOutListTitles);
     }
 
     private class MessagePayload {

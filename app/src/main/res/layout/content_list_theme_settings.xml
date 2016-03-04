@@ -4,55 +4,38 @@
     android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/llContentListTheme"
+        android:id="@+id/llContentListThemeSettings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="visible">
 
+        <!--style="?android:attr/borderlessButtonStyle"-->
         <Button
             android:id="@+id/btnThemeName"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
             android:text="Theme Name: " />
 
         <CheckBox
             android:id="@+id/ckIsDefaultTheme"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
             android:text="Set as default" />
-
-        <!--<RadioGroup-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:orientation="vertical">-->
-
-        <!--<RadioButton-->
-        <!--android:id="@+id/rbAlphabetical"-->
-        <!--style="?android:attr/borderlessButtonStyle"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="Sort List Alphabetically" />-->
-
-        <!--<RadioButton-->
-        <!--android:id="@+id/rbManual"-->
-        <!--style="?android:attr/borderlessButtonStyle"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:text="Sort List Manually" />-->
-
-        <!--</RadioGroup>-->
 
         <Button
             android:id="@+id/btnStartColor"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
-            android:paddingLeft="12dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
             android:text="Start Color" />
 
         <Button
@@ -60,12 +43,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
-            android:paddingLeft="12dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
             android:text="End Color" />
 
         <Button
             android:id="@+id/btnTextSize"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
@@ -75,7 +58,6 @@
 
         <Button
             android:id="@+id/btnTextColor"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
@@ -85,7 +67,6 @@
 
         <Button
             android:id="@+id/btnTextStyle"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
@@ -95,26 +76,29 @@
 
         <CheckBox
             android:id="@+id/ckItemBackgroundTransparent"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
             android:text="Item background transparent" />
 
         <Button
             android:id="@+id/btnHorizontalMargin"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
             android:text="Horizontal Padding:" />
 
         <Button
             android:id="@+id/btnVerticalMargin"
-            style="?android:attr/borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
             android:text="Vertical Padding:" />
 
     </LinearLayout>

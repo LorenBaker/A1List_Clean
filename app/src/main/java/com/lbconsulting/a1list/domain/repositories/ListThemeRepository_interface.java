@@ -18,7 +18,7 @@ public interface ListThemeRepository_interface {
     //region Read
     ListTheme getListThemeByUuid(String uuid);
 
-    List<ListTheme> getAllListThemes(boolean isMarkedForDeletion);
+    List<ListTheme> retrieveAllListThemes(boolean isMarkedForDeletion);
 
     ListTheme retrieveDefaultListTheme();
     List<ListTheme> retrieveStruckOutListThemes();

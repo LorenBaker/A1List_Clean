@@ -3,11 +3,9 @@ package com.lbconsulting.a1list.presentation.ui.activities;
 
 import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -21,16 +19,17 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ApplyTextSizeAndMarginsToAllListThemes_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.CreateNewListTheme_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.UpdateListTheme_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTextSizeAndMarginsToAllListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateNewListTheme_Interactor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.UpdateListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.presentation.presenters.impl.ListThemeActivityPresenter_Impl;
-import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemeActivityPresenter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogColorPicker;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListThemeName;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogNumberPicker;
@@ -48,21 +47,33 @@ import timber.log.Timber;
 
 
 public class ListThemeActivity extends AppCompatActivity implements View.OnClickListener,
-        ListThemeActivityPresenter.ListThemeActivityView, UpdateListTheme_Interactor.Callback,
-        ApplyTextSizeAndMarginsToAllListThemes_Interactor.Callback{
+        UpdateListTheme_Interactor.Callback, CreateNewListTheme_Interactor.Callback,
+        ApplyTextSizeAndMarginsToAllListThemes_Interactor.Callback {
 
-    public static final String ARG_LIST_THEME_UUID = "argListThemeUuid";
+    public static final String ARG_LIST_THEME_JSON = "argListThemeJson";
     public static final String ARG_MODE = "argMode";
     public static final int EDIT_EXISTING_LIST_THEME = 1;
     public static final int CREATE_NEW_LIST_THEME = 2;
-    private static ListThemeActivityPresenter_Impl mListThemePresenter;
-    @Bind(R.id.llListTheme)
-    CoordinatorLayout llListTheme;
 
+    //region Activity Views
+
+    @Bind(R.id.toolbar)
+    Toolbar mToolbar;
+
+    //@layout/activity_progress_bar
+    @Bind(R.id.activityProgressBar)
+    ProgressBar mProgressBar;
+    @Bind(R.id.tvActivityProgressBarMessage)
+    TextView tvProgressBarMessage;
+
+    //@layout/content_list_theme
     @Bind(R.id.llContentListTheme)
     LinearLayout llContentListTheme;
-    @Bind(R.id.llCancelNewSave)
-    LinearLayout llCancelNewSave;
+
+    //@layout/content_list_theme_settings
+
+    @Bind(R.id.llContentListThemeSettings)
+    LinearLayout llContentListThemeSettings;
     @Bind(R.id.btnThemeName)
     Button btnThemeName;
     @Bind(R.id.ckIsDefaultTheme)
@@ -71,12 +82,10 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     Button btnStartColor;
     @Bind(R.id.btnEndColor)
     Button btnEndColor;
-
-    @Bind((R.id.btnTextColor))
-    Button btnTextColor;
     @Bind(R.id.btnTextSize)
     Button btnTextSize;
-
+    @Bind(R.id.btnTextColor)
+    Button btnTextColor;
     @Bind(R.id.btnTextStyle)
     Button btnTextStyle;
     @Bind(R.id.ckItemBackgroundTransparent)
@@ -86,31 +95,21 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     @Bind(R.id.btnVerticalMargin)
     Button btnVerticalMargin;
 
+    //@layout/content_cancel_save_buttons
     @Bind(R.id.ckApplyTextSizeAndMarginsToAllListThemes)
     CheckBox ckApplyTextSizeAndMarginsToAllListThemes;
+    @Bind(R.id.llCancelNewSave)
+    LinearLayout llCancelNewSave;
     @Bind(R.id.btnCancel)
     Button btnCancel;
     @Bind(R.id.btnSaveTheme)
     Button btnSaveTheme;
-
-
-    @Bind(R.id.listThemeActivityContent)
-    View listThemeActivityContent;
-
-    @Bind(R.id.activityProgressBar)
-    ProgressBar mProgressBar;
-
-    @Bind(R.id.tvActivityProgressBarMessage)
-    TextView tvProgressBarMessage;
-
-
-    @Bind(R.id.toolbar)
-    Toolbar mToolbar;
-
+    //endregion
 
     private int mMode;
     private ListTheme mListTheme;
     private ListThemeRepository_Impl mListThemeRepository;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,23 +123,27 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         setContentView(R.layout.activity_list_theme);
-
         ButterKnife.bind(this);
         EventBus.getDefault().register(this);
 
         Bundle args = getIntent().getExtras();
-        String originalListThemeUuid = null;
-        if (args.containsKey(ARG_LIST_THEME_UUID)) {
-            originalListThemeUuid = args.getString(ARG_LIST_THEME_UUID);
-        }
-        mListThemeRepository = new ListThemeRepository_Impl(this);
 
-        mListThemePresenter = new ListThemeActivityPresenter_Impl(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListThemeRepository, originalListThemeUuid);
+        if (args.containsKey(ARG_LIST_THEME_JSON)) {
+            String listThemeJson = args.getString(ARG_LIST_THEME_JSON);
+            Gson gson = new Gson();
+            mListTheme = gson.fromJson(listThemeJson, ListTheme.class);
+            if (mListTheme == null) {
+                Timber.e("onCreate(): FAILED to parse json string to ListTheme.");
+            }
+        } else {
+            Timber.e("onCreate(): FAILED to retrieve json string from intent extras.");
+        }
 
         mMode = EDIT_EXISTING_LIST_THEME;
         if (args.containsKey(ARG_MODE)) {
             mMode = args.getInt(ARG_MODE);
+        } else {
+            Timber.e("onCreate(): FAILED to retrieve mMode.");
         }
 
         switch (mMode) {
@@ -155,6 +158,8 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
                 break;
         }
 
+        mListThemeRepository = new ListThemeRepository_Impl(this);
+
         setSupportActionBar(mToolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -162,8 +167,8 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         }
 
         // set button OnClickListeners
-        for (int i = 0; i < llContentListTheme.getChildCount(); i++) {
-            View v = llContentListTheme.getChildAt(i);
+        for (int i = 0; i < llContentListThemeSettings.getChildCount(); i++) {
+            View v = llContentListThemeSettings.getChildAt(i);
             if (v instanceof Button) {
                 Button b = (Button) v;
                 b.setOnClickListener(this);
@@ -179,7 +184,7 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
-    //region onEvent
+    //region Events
     @Subscribe
     public void onEvent(MyEvents.setListThemeName event) {
         mListTheme.setName(event.getName());
@@ -189,37 +194,37 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     @Subscribe
     public void onEvent(MyEvents.setListThemeStartColor event) {
         mListTheme.setStartColor(event.getColor());
-        displayTheme(mListTheme);
+        updateUI(mListTheme);
     }
 
     @Subscribe
     public void onEvent(MyEvents.setListThemeEndColor event) {
         mListTheme.setEndColor(event.getColor());
-        displayTheme(mListTheme);
+        updateUI(mListTheme);
     }
 
     @Subscribe
     public void onEvent(MyEvents.setListThemeTextColor event) {
         mListTheme.setTextColor(event.getColor());
-        displayTheme(mListTheme);
+        updateUI(mListTheme);
     }
 
     @Subscribe
     public void onEvent(MyEvents.setListThemeTextSize event) {
         mListTheme.setTextSize(event.getTextSize());
-        displayTheme(mListTheme);
+        updateUI(mListTheme);
     }
 
     @Subscribe
     public void onEvent(MyEvents.setListThemeHorizontalPadding event) {
         mListTheme.setHorizontalPaddingInDp(event.getHorizontalPadding());
-        displayTheme(mListTheme);
+        updateUI(mListTheme);
     }
 
     @Subscribe
     public void onEvent(MyEvents.setListThemeVerticalPadding event) {
         mListTheme.setVerticalPaddingInDp(event.getVerticalPadding());
-        displayTheme(mListTheme);
+        updateUI(mListTheme);
     }
     //endregion
 
@@ -227,7 +232,17 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     protected void onResume() {
         super.onResume();
         Timber.i("onResume()");
-        mListThemePresenter.resume();
+        if (mListTheme != null) {
+            updateUI(mListTheme);
+        } else {
+            Timber.e("onResume(): Unable to display ListTheme. mListTheme is null!");
+        }
+
+        if (mMode == CREATE_NEW_LIST_THEME) {
+            FragmentManager fm = getSupportFragmentManager();
+            dialogEditListThemeName dialog = dialogEditListThemeName.newInstance("", mListTheme.getUuid(), mMode);
+            dialog.show(fm, "dialogEditListThemeName");
+        }
     }
 
     @Override
@@ -257,7 +272,6 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         return super.onOptionsItemSelected(item);
     }
 
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -275,7 +289,7 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.btnThemeName:
                 dialogEditListThemeName editListAttributesNameDialog
-                        = dialogEditListThemeName.newInstance(mListTheme.getName(), mListTheme.getUuid());
+                        = dialogEditListThemeName.newInstance(mListTheme.getName(), mListTheme.getUuid(),mMode);
                 editListAttributesNameDialog.show(fm, "dialogEditListThemeName");
                 break;
 
@@ -309,12 +323,12 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.btnTextStyle:
                 mListTheme.setBold(!mListTheme.isBold());
-                displayTheme(mListTheme);
+                updateUI(mListTheme);
                 break;
 
             case R.id.ckItemBackgroundTransparent:
                 mListTheme.setTransparent(ckItemBackgroundTransparent.isChecked());
-                displayTheme(mListTheme);
+                updateUI(mListTheme);
                 break;
 
             case R.id.btnHorizontalMargin:
@@ -333,23 +347,31 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
                 finish();
                 break;
 
-
             case R.id.btnSaveTheme:
                 saveTheme();
-//                finish();
                 break;
         }
     }
 
     private void saveTheme() {
+
         if (ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
             showProgress("Saving Themes.");
-        }else{
+        } else {
             showProgress("Saving Theme.");
         }
 
-        new UpdateListTheme_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListThemeRepository, mListTheme).execute();
+        switch (mMode) {
+            case EDIT_EXISTING_LIST_THEME:
+                new UpdateListTheme_InBackground(ThreadExecutor.getInstance(),
+                        MainThreadImpl.getInstance(), this, mListThemeRepository, mListTheme).execute();
+                break;
+
+            case CREATE_NEW_LIST_THEME:
+                new CreateNewListTheme_InBackground(ThreadExecutor.getInstance(),
+                        MainThreadImpl.getInstance(), this, mListThemeRepository, mListTheme).execute();
+                break;
+        }
 
         if (ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
             new ApplyTextSizeAndMarginsToAllListThemes_InBackground(ThreadExecutor.getInstance(),
@@ -357,20 +379,28 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
+
+    //region Background Implementation Overrides
     @Override
-    public void displayRetrievedListTheme(ListTheme listTheme) {
-        Timber.i("displayRetrievedListTheme()");
-        mListTheme = listTheme;
-        displayTheme(listTheme);
-        if (mMode == CREATE_NEW_LIST_THEME) {
-            // TODO: show enter them name dialog
+    public void onListThemeCreated(ListTheme newListTheme) {
+        Timber.i("onListThemeCreated(): \"%s\" created.", newListTheme.getName());
+        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
+            finish();
+        }
+    }
+
+    @Override
+    public void onListThemeCreationFailed(String errorMessage) {
+        Timber.e("onListThemeCreationFailed(): \"%s\"", errorMessage);
+        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
+            finish();
         }
     }
 
     @Override
     public void onListThemeUpdated(String message) {
         Timber.i("onListThemeUpdated(): %s", message);
-        if(!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()){
+        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
             finish();
         }
     }
@@ -378,41 +408,55 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     @Override
     public void onListThemeUpdateFailed(String errorMessage) {
         Timber.e("onListThemeUpdateFailed(): %s.", errorMessage);
-        if(!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()){
+        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
             finish();
         }
     }
 
-    private void displayTheme(ListTheme listTheme) {
+    @Override
+    public void onTextSizeAndMarginsApplied(String successMessage) {
+        Timber.i("onTextSizeAndMarginsApplied(): %s.", successMessage);
+        hideProgress();
+        finish();
+    }
+
+    @Override
+    public void onApplyTextSizeAndMarginsFailure(String errorMessage) {
+        Timber.e("onTextSizeAndMarginsApplied(): %s.", errorMessage);
+        hideProgress();
+        finish();
+    }
+    //endregion
+
+    //region UI updates
+    private void updateUI(ListTheme listTheme) {
 
         Resources res = getResources();
 
+        // get backgroundDrawable and padding values
+        Drawable backgroundDrawable = CommonMethods.getBackgroundDrawable(listTheme.getStartColor(), listTheme.getEndColor());
+        int horizontalPadding = CommonMethods.convertDpToPixel(listTheme.getHorizontalPaddingInDp());
+        int verticalPadding = CommonMethods.convertDpToPixel(listTheme.getVerticalPaddingInDp());
+
         // set backgrounds
-        Drawable backgroundDrawable = listTheme.getBackgroundDrawable();
-        llListTheme.setBackground(backgroundDrawable);
+        CommonMethods.setBackgroundDrawable(llContentListTheme, listTheme.getStartColor(), listTheme.getEndColor());
         llCancelNewSave.setBackground(backgroundDrawable);
 
-        if (listTheme.isTransparent()) {
-            btnTextColor.setBackgroundColor(Color.TRANSPARENT);
-            btnTextSize.setBackgroundColor(Color.TRANSPARENT);
-            btnTextStyle.setBackgroundColor(Color.TRANSPARENT);
-        } else {
-            btnTextColor.setBackground(backgroundDrawable);
-            btnTextSize.setBackground(backgroundDrawable);
-            btnTextStyle.setBackground(backgroundDrawable);
-        }
-
-        // set views' text color
-        for (int i = 0; i < llContentListTheme.getChildCount(); i++) {
-            View v = llContentListTheme.getChildAt(i);
+        // set views' attributes
+        for (int i = 0; i < llContentListThemeSettings.getChildCount(); i++) {
+            View v = llContentListThemeSettings.getChildAt(i);
             // Note: Switches and CheckBoxes are "Buttons"
             if (v instanceof Button) {
                 Button b = (Button) v;
                 b.setTextColor(listTheme.getTextColor());
-                if (listTheme.isTransparent()) {
-                    b.setBackgroundColor(Color.TRANSPARENT);
+                b.setTextSize(listTheme.getTextSize());
+                b.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
+                b.setBackground(backgroundDrawable);
+
+                if (listTheme.isBold()) {
+                    b.setTypeface(null, Typeface.BOLD);
                 } else {
-                    b.setBackground(backgroundDrawable);
+                    b.setTypeface(null, Typeface.NORMAL);
                 }
             }
         }
@@ -428,7 +472,6 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         ckApplyTextSizeAndMarginsToAllListThemes.setTextColor(listTheme.getTextColor());
         ckApplyTextSizeAndMarginsToAllListThemes.setBackground(backgroundDrawable);
 
-
         // show the attributes values in their respective Buttons
         btnThemeName.setText(String.format(getString(R.string.btnThemeName_text),
                 listTheme.getName()));
@@ -437,77 +480,29 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         btnStartColor.setBackgroundColor(listTheme.getStartColor());
         btnEndColor.setBackgroundColor(listTheme.getEndColor());
 
-        if (listTheme.isBold()) {
-            btnTextStyle.setText(R.string.btnTextStyle_text_bold);
-            btnTextColor.setTypeface(null, Typeface.BOLD);
-            btnTextSize.setTypeface(null, Typeface.BOLD);
-            btnTextStyle.setTypeface(null, Typeface.BOLD);
-        } else {
-            btnTextStyle.setText(R.string.btnTextStyle_text_normal);
-            btnTextColor.setTypeface(null, Typeface.NORMAL);
-            btnTextSize.setTypeface(null, Typeface.NORMAL);
-            btnTextStyle.setTypeface(null, Typeface.NORMAL);
-        }
-
-
-        // set Text Size
-        btnTextSize.setText(res.getString(R.string.btnTextSize_text, listTheme.getTextSize()));
-        btnTextColor.setTextSize(listTheme.getTextSize());
-        btnTextStyle.setTextSize(listTheme.getTextSize());
-        btnTextSize.setTextSize(listTheme.getTextSize());
-
-        // set transparent check box
-        ckItemBackgroundTransparent.setChecked(listTheme.isTransparent());
-
-
-        // set margins
         btnHorizontalMargin.setText(res.getString(R.string.btnHorizontalMargin_text,
                 (long) listTheme.getHorizontalPaddingInDp()));
         btnVerticalMargin.setText(res.getString(R.string.btnVerticalMargin_text,
                 (long) listTheme.getVerticalPaddingInDp()));
-        int horizontalPadding = CommonMethods.convertDpToPixel(listTheme.getHorizontalPaddingInDp());
-        int verticalPadding = CommonMethods.convertDpToPixel(listTheme.getVerticalPaddingInDp());
-        btnTextColor.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
-        btnTextStyle.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
-        btnTextSize.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
+
+        ckItemBackgroundTransparent.setChecked(listTheme.isTransparent());
 
     }
 
-    @Override
-    public void showProgress(String waitMessage) {
+    private void showProgress(String waitMessage) {
         Timber.i("showProgress()");
         mProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
         tvProgressBarMessage.setVisibility(View.VISIBLE);
-        listThemeActivityContent.setVisibility(View.GONE);
+        llContentListTheme.setVisibility(View.GONE);
     }
 
-    @Override
-    public void hideProgress() {
+    private void hideProgress() {
         Timber.i("hideProgress()");
         mProgressBar.setVisibility(View.GONE);
         tvProgressBarMessage.setVisibility(View.GONE);
-        listThemeActivityContent.setVisibility(View.VISIBLE);
+        llContentListTheme.setVisibility(View.VISIBLE);
     }
-
-    @Override
-    public void showError(String message) {
-        Timber.e("showError(): %s.", message);
-    }
-
-
-    @Override
-    public void onTextSizeAndMarginsApplied(String successMessage) {
-        Timber.i("onTextSizeAndMarginsApplied(): %s.", successMessage);
-        hideProgress();
-        finish();
-    }
-
-    @Override
-    public void onApplyTextSizeAndMarginsFailure(String errorMessage) {
-        Timber.e("onTextSizeAndMarginsApplied(): %s.", errorMessage);
-        hideProgress();
-        finish();
-    }
+    //endregion
 }
 

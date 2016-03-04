@@ -18,7 +18,6 @@ public class RetrieveAllListThemes_InBackground extends AbstractInteractor imple
 
     private final RetrieveAllListThemes_Interactor.Callback mCallback;
     private final ListThemeRepository_interface mListThemeRepository;
-    private String mAction = NONE;
     private ListTheme mSelectedListTheme;
 
     public RetrieveAllListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
@@ -34,7 +33,7 @@ public class RetrieveAllListThemes_InBackground extends AbstractInteractor imple
     public void run() {
 
         // retrieve all ListThemes that are not marked for deletion
-        final List<ListTheme> allListThemes = mListThemeRepository.getAllListThemes(false);
+        final List<ListTheme> allListThemes = mListThemeRepository.retrieveAllListThemes(false);
         // check if we have failed to retrieve any ListThemes
         if (allListThemes == null || allListThemes.size() == 0) {
             // notify the failure on the main thread

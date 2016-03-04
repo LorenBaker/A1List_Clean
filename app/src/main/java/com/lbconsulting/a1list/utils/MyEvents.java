@@ -5,8 +5,37 @@ package com.lbconsulting.a1list.utils;
  */
 public class MyEvents {
 
+    public static class createNewListTitle {
+        private final String mName;
+        private final boolean mShowProgress;
+
+        public createNewListTitle(String listTitleName, boolean showProgress) {
+            mName = listTitleName;
+            mShowProgress = showProgress;
+        }
+
+        public String getName() {
+            return mName;
+        }
+        public boolean showProgress() {
+            return mShowProgress;
+        }
+    }
+
+    public static class setListTitleName {
+        private final String mName;
+
+        public setListTitleName(String name) {
+            mName = name;
+        }
+
+        public String getName() {
+            return mName;
+        }
+    }
 
 
+    //region ListTheme Events
     public static class setListThemeName {
         private final String mName;
 
@@ -90,18 +119,9 @@ public class MyEvents {
             return mVerticalPadding;
         }
     }
+    //endregion
 
-//    public static class setListTheme {
-//        private final String mAttributeUuid;
-//
-//        public setListTheme(String attributeUuid) {
-//            mAttributeUuid = attributeUuid;
-//        }
-//
-//        public String getAttributeUuid() {
-//            return mAttributeUuid;
-//        }
-//    }
+
 }
 
 

@@ -49,6 +49,7 @@
     <string name="editListThemesNameDialog_title">Edit Theme Name</string>
     <string name="txtListThemeName_hint">Theme Name</string>
     <string name="dialogSelectTheme_title">Select a Theme</string>
+    <string name="createListThemeNameDialog_title">New Theme Name</string>
     <string name="editListThemeNameDialog_title">Edit Theme Name</string>
 
 
@@ -71,4 +72,9 @@
     <string name="numberPickerDialog_select_horizontal_padding_title">Select Horizontal Padding</string>
     <string name="numberPickerDialog_select_text_size_title">Select Text Size</string>
     <string name="numberPickerDialog_select_vertical_padding_title">Select Vertical Padding</string>
+
+<!--Strings related to ManageListTitlesActivity-->
+    <string name="action_listTitleSorting_title">List Sorting</string>
+    <string name="btnLockList_contentDescription">Lock List</string>
+    <string name="btnEditListTitle_contentDescription">Edit List Title</string>
 </resources>

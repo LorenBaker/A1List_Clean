@@ -25,14 +25,15 @@ public class A1List_DatabaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase database) {
         A1List_DatabaseHelper.dBase = database;
         Timber.i("onCreate()");
-        ListThemeSqlTable.onCreate(database, mContext);
-
+        ListThemesSqlTable.onCreate(database, mContext);
+        ListTitlesSqlTable.onCreate(database, mContext);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
         Timber.i("onUpgrade()");
-        ListItemsSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
+        ListThemesSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
+        ListTitlesSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
 
     }
 

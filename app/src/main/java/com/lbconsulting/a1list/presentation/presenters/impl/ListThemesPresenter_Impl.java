@@ -41,7 +41,7 @@ public class ListThemesPresenter_Impl extends AbstractPresenter implements ListT
 
     @Override
     public void resume() {
-        mView.showProgress("Retrieving all themes.");
+        mView.showProgress("Retrieving all Themes.");
         mRetrieveAllListThemes_inBackground.execute();
     }
 
@@ -79,27 +79,27 @@ public class ListThemesPresenter_Impl extends AbstractPresenter implements ListT
 
 
 //    public void toggleBold(ListTheme listTheme) {
-//        mListThemeRepository.toggle(listTheme, ListThemeSqlTable.COL_BOLD, true);
+//        mListThemeRepository.toggle(listTheme, ListThemesSqlTable.COL_BOLD, true);
 //        resume();
 //    }
 //
 //    public void toggleChecked(ListTheme listTheme) {
-//        mListThemeRepository.toggle(listTheme, ListThemeSqlTable.COL_CHECKED, true);
+//        mListThemeRepository.toggle(listTheme, ListThemesSqlTable.COL_CHECKED, true);
 //        resume();
 //    }
 //
 //    public void toggleDefaultTheme(ListTheme listTheme) {
-//        mListThemeRepository.toggle(listTheme, ListThemeSqlTable.COL_DEFAULT_THEME, true);
+//        mListThemeRepository.toggle(listTheme, ListThemesSqlTable.COL_DEFAULT_THEME, true);
 //        resume();
 //    }
 //
 //    public void toggleMarkedForDeletion(ListTheme listTheme) {
-//        mListThemeRepository.toggle(listTheme, ListThemeSqlTable.COL_MARKED_FOR_DELETION, true);
+//        mListThemeRepository.toggle(listTheme, ListThemesSqlTable.COL_MARKED_FOR_DELETION, true);
 //        resume();
 //    }
 //
 //    public void toggleTransparent(ListTheme listTheme) {
-//        mListThemeRepository.toggle(listTheme, ListThemeSqlTable.COL_TRANSPARENT, true);
+//        mListThemeRepository.toggle(listTheme, ListThemesSqlTable.COL_TRANSPARENT, true);
 //        resume();
 //    }
 }

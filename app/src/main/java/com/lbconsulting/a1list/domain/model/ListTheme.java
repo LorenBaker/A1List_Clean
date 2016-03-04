@@ -1,8 +1,5 @@
 package com.lbconsulting.a1list.domain.model;
 
-import android.graphics.drawable.GradientDrawable;
-
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.UUID;
 
@@ -67,6 +64,28 @@ public class ListTheme {
         return newTheme;
     }
 
+    public static ListTheme newInstance(ListTheme defaultListTheme) {
+        ListTheme newTheme = new ListTheme();
+        newTheme.setName("");
+        newTheme.setStartColor(defaultListTheme.getStartColor());
+        newTheme.setEndColor(defaultListTheme.getEndColor());
+        newTheme.setTextColor(defaultListTheme.getTextColor());
+        newTheme.setTextSize(defaultListTheme.getTextSize());
+        newTheme.setHorizontalPaddingInDp(defaultListTheme.getHorizontalPaddingInDp());
+        newTheme.setVerticalPaddingInDp(defaultListTheme.getVerticalPaddingInDp());
+        newTheme.setBold(defaultListTheme.isBold());
+        newTheme.setChecked(false);
+        newTheme.setDefaultTheme(false);
+        newTheme.setMarkedForDeletion(false);
+        newTheme.setTransparent(defaultListTheme.isTransparent());
+        String newUuid = UUID.randomUUID().toString();
+        // replace uuid "-" with "_" to distinguish it from Backendless objectId
+        newUuid = newUuid.replace("-", "_");
+        newTheme.setUuid(newUuid);
+
+        return newTheme;
+    }
+
     //region Getters and Setters
     public int getEndColor() {
         return endColor;
@@ -80,14 +99,6 @@ public class ListTheme {
     public float getHorizontalPaddingInDp() {
         return horizontalPaddingInDp;
     }
-
-//    public int getHorizontalPaddingPx() {
-//        return CommonMethods.convertDpToPixel(getInt(HORIZONTAL_PADDING_DP));
-//    }
-//
-//    private int getHorizontalPaddingDp() {
-//        return getInt(HORIZONTAL_PADDING_DP);
-//    }
 
     public void setHorizontalPaddingInDp(float horizontalPaddingInDp) {
         setThemeDirty(true);
@@ -242,35 +253,12 @@ public class ListTheme {
     }
 
 
-    public GradientDrawable getBackgroundDrawable() {
-        int colors[] = {getStartColor(), getEndColor()};
-        return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);
-    }
-
     //endregion
 
     @Override
     public String toString() {
-        DateFormat mDateFormat = DateFormat.getDateTimeInstance();
-        String result = "Name: " + getName();
-/*        String result = "Name: " + getName() + "\n"
-                + "ObjectId = " + getObjectId() + "\n"
-                + "Uuid = " + getUuid() + "\n"
-                + "Start Color = " + getStartColor() + "\n"
-                + "End Color = " + getEndColor() + "\n"
-                + "Text Color = " + getTextColor() + "\n"
-                + "Text Size = " + getTextSize() + "\n"
-                + "horizontalPaddingInDp = " + getHorizontalPaddingInDp() + "\n"
-                + "verticalPaddingInDp = " + getVerticalPaddingInDp() + "\n"
-                + "dirty = " + isThemeDirty() + "\n"
-                + "bold = " + isBold() + "\n"
-                + "checked = " + isChecked() + "\n"
-                + "defaultTheme = " + isDefaultTheme() + "\n"
-                + "markedForDeletion = " + isMarkedForDeletion() + "\n"
-                + "transparent = " + isTransparent() + "\n"
-                + "date/time modified = " + mDateFormat.format(getUpdated()) + "\n\n";*/
-
-        return result;
+        return getName();
     }
+
 
 }

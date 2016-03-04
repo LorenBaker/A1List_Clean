@@ -5,6 +5,11 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
+import android.graphics.LinearGradient;
+import android.graphics.Shader;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RectShape;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.design.widget.Snackbar;
@@ -25,6 +30,23 @@ import timber.log.Timber;
  */
 public class CommonMethods {
 
+
+    public static GradientDrawable getBackgroundDrawable(int startColor, int endColor) {
+        int colors[] = new int[]{startColor, endColor};
+        GradientDrawable drawable = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);
+        drawable.setCornerRadius(0f);
+        return drawable;
+
+    }
+
+    public static void setBackgroundDrawable(View v, int startColor, int endColor) {
+        int h = v.getHeight();
+        int[] colors = new int[]{startColor, endColor};
+        ShapeDrawable drawable = new ShapeDrawable(new RectShape());
+        drawable.getPaint().setShader(new LinearGradient(0, 0, 0, h, colors, null, Shader.TileMode.REPEAT));
+        v.setBackground(drawable);
+    }
+
     public static void changePasswordRequest(final Context context, final String email) {
         if (isNetworkAvailable()) {
             if (!email.equals(MySettings.NOT_AVAILABLE)) {
@@ -32,10 +54,10 @@ public class CommonMethods {
 //                Backendless.UserService.restorePassword(email, new AsyncCallback<Void>()
 //                {
 //                    public void handleResponse(Void response) {
-                        String msg = "TODO:An email has been sent to " + email + " with a link to change your password.";
+                String msg = "TODO:An email has been sent to " + email + " with a link to change your password.";
 //                        String title = "Change Password Request";
 //                        CommonMethods.showOkDialog(context, title, msg);
-                        Timber.i("changePasswordRequest(): %s", msg);
+                Timber.i("changePasswordRequest(): %s", msg);
 //                    }
 //
 //                    public void handleFault(BackendlessFault fault) {
