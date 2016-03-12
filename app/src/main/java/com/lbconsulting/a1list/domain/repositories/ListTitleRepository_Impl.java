@@ -8,8 +8,10 @@ import android.net.Uri;
 
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
+import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.storage.AppSettingsSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
@@ -28,11 +30,14 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
     private final int FALSE = 0;
     private final int TRUE = 1;
     private final Context mContext;
+    private final AppSettingsRepository_Impl mAppSettingsRepository;
     private final ListThemeRepository_Impl mListThemeRepository;
 
-    public ListTitleRepository_Impl(Context context, ListThemeRepository_Impl listThemeRepository) {
+    public ListTitleRepository_Impl(Context context, AppSettingsRepository_Impl appSettingsRepository,
+                                    ListThemeRepository_Impl listThemeRepository) {
         // private constructor
         this.mContext = context;
+        this.mAppSettingsRepository = appSettingsRepository;
         this.mListThemeRepository = listThemeRepository;
     }
 
@@ -88,6 +93,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
             if (CommonMethods.isNetworkAvailable()) {
                 // save listTitle to Backendless
                 backendlessResponse = saveListTitleToBackendless(listTitle);
+                saveAppSettingsToBackendless();
                 // TODO: send message to Backendless to notify other devices of the new ListTitle
             }
 
@@ -96,6 +102,45 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
             Timber.e("insert(): ListTitleRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listTitle.getName());
         }
         return backendlessResponse;
+    }
+
+    private void saveAppSettingsToBackendless() {
+        AppSettings appSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
+        if (appSettings != null) {
+            try {
+                AppSettings response = Backendless.Data.of(AppSettings.class).save(appSettings);
+                Timber.i("saveAppSettingsToBackendless(): successfully saved AppSettings to Backendless.");
+
+                // Update the SQLite db: set dirty to false, and updated date and time
+                ContentValues cv = new ContentValues();
+                Date updatedDate = response.getUpdated();
+                if (updatedDate == null) {
+                    updatedDate = response.getCreated();
+                }
+                if (updatedDate != null) {
+                    long updated = updatedDate.getTime();
+                    cv.put(AppSettingsSqlTable.COL_UPDATED, updated);
+                }
+                cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, FALSE);
+                int numberOfRecordsUpdated = 0;
+                try {
+                    Uri uri = AppSettingsSqlTable.CONTENT_URI;
+                    String selection = AppSettingsSqlTable.COL_UUID + " = ?";
+                    String[] selectionArgs = new String[]{appSettings.getUuid()};
+                    ContentResolver cr = mContext.getContentResolver();
+                    numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
+
+                } catch (Exception e) {
+                    Timber.e("saveAppSettingsToBackendless(): Exception: %s.", e.getMessage());
+                }
+                if (numberOfRecordsUpdated != 1) {
+                    Timber.e("saveAppSettingsToBackendless(): Error updating AppSettings with uuid = %s", appSettings.getUuid());
+                }
+
+            } catch (BackendlessException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private ListTitle saveListTitleToBackendless(ListTitle listTitle) {
@@ -364,7 +409,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
 
     @Override
     public long retrieveListItemNextSortKey() {
-                ListTitle listTitle = null;
+        ListTitle listTitle = null;
         long listItemNextSortKey = 0;
 
         Cursor cursor = getListTitleCursorByUuid(listTitle.getUuid());

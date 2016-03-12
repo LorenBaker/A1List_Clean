@@ -46,7 +46,8 @@ import timber.log.Timber;
 
 
 public class ListThemeActivity extends AppCompatActivity implements View.OnClickListener,
-        UpdateListTheme_Interactor.Callback, CreateNewListTheme_Interactor.Callback,
+        UpdateListTheme_Interactor.Callback,
+        CreateNewListTheme_Interactor.Callback,
         ApplyTextSizeAndMarginsToAllListThemes_Interactor.Callback {
 
     public static final String ARG_LIST_THEME_JSON = "argListThemeJson";
@@ -238,8 +239,10 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
         if (mMode == CREATE_NEW_LIST_THEME) {
             FragmentManager fm = getSupportFragmentManager();
-            dialogEditListThemeName dialog = dialogEditListThemeName.newInstance("", mListTheme.getUuid(), mMode);
-            dialog.show(fm, "dialogEditListThemeName");
+            Gson gson = new Gson();
+            String listThemeJson = gson.toJson(mListTheme);
+            dialogEditListThemeName existingListTitleDialog = dialogEditListThemeName.newInstance(listThemeJson);
+            existingListTitleDialog.show(fm, "dialogEditListThemeName");
         }
     }
 
@@ -286,9 +289,10 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         switch (v.getId()) {
 
             case R.id.btnThemeName:
-                dialogEditListThemeName editListThemeNameDialog
-                        = dialogEditListThemeName.newInstance(mListTheme.getName(), mListTheme.getUuid(),mMode);
-                editListThemeNameDialog.show(fm, "dialogEditListThemeName");
+                Gson gson = new Gson();
+                String listThemeJson = gson.toJson(mListTheme);
+                dialogEditListThemeName existingListTitleDialog = dialogEditListThemeName.newInstance(listThemeJson);
+                existingListTitleDialog.show(fm, "dialogEditListThemeName");
                 break;
 
             case R.id.ckIsDefaultTheme:
@@ -478,6 +482,15 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         btnStartColor.setBackgroundColor(listTheme.getStartColor());
         btnEndColor.setBackgroundColor(listTheme.getEndColor());
 
+        btnTextSize.setText(res.getString(R.string.btnTextSize_text,
+                (float) listTheme.getTextSize()));
+
+        if(listTheme.isBold()){
+            btnTextStyle.setText(res.getString(R.string.btnTextStyle_text_bold));
+        }else{
+            btnTextStyle.setText(res.getString(R.string.btnTextStyle_text_normal));
+        }
+
         btnHorizontalMargin.setText(res.getString(R.string.btnHorizontalMargin_text,
                 (long) listTheme.getHorizontalPaddingInDp()));
         btnVerticalMargin.setText(res.getString(R.string.btnVerticalMargin_text,
@@ -491,15 +504,14 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         Timber.i("showProgress()");
         listActivityProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
-//        tvProgressBarMessage.setVisibility(View.VISIBLE);
         llContentListTheme.setVisibility(View.GONE);
     }
 
     private void hideProgress() {
         Timber.i("hideProgress()");
         listActivityProgressBar.setVisibility(View.GONE);
-//        tvProgressBarMessage.setVisibility(View.GONE);
         llContentListTheme.setVisibility(View.VISIBLE);
+
     }
     //endregion
 }

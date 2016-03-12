@@ -21,14 +21,15 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveAllListThemes_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes_Interactor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.CreateNewListTitle_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.UpdateListTitle_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
-import com.lbconsulting.a1list.presentation.presenters.impl.ListThemesPresenter_Impl;
-import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemesPresenter;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeSpinnerArrayAdapter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
@@ -46,7 +47,8 @@ import timber.log.Timber;
 
 
 public class ListTitleActivity extends AppCompatActivity implements View.OnClickListener,
-        ListThemesPresenter.ListThemeView,
+//        ListThemesPresenter.ListThemeView,
+        RetrieveAllListThemes_Interactor.Callback,
         UpdateListTitle_InBackground.Callback,
         CreateNewListTitle_InBackground.Callback {
 
@@ -103,9 +105,10 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 
     private int mMode;
     private ListTitle mListTitle;
+    private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
-    private ListThemesPresenter_Impl mListThemesPresenter;
+    //    private ListThemesPresenter_Impl mListThemesPresenter;
     private ListThemeSpinnerArrayAdapter mListThemeSpinnerArrayAdapter;
 
 
@@ -171,11 +174,11 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
                 break;
         }
 
-//        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
+        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
         mListThemeRepository = new ListThemeRepository_Impl(this);
-        mListTitleRepository = new ListTitleRepository_Impl(this, mListThemeRepository);
-        mListThemesPresenter = new ListThemesPresenter_Impl(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListThemeRepository);
+        mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository ,mListThemeRepository);
+//        mListThemesPresenter = new ListThemesPresenter_Impl(ThreadExecutor.getInstance(),
+//                MainThreadImpl.getInstance(), this, mListThemeRepository);
 
         mListThemeSpinnerArrayAdapter = new ListThemeSpinnerArrayAdapter(this, spnListTitles);
         spnListTitles.setAdapter(mListThemeSpinnerArrayAdapter);
@@ -223,7 +226,8 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         super.onResume();
         Timber.i("onResume()");
         if (mListTitle != null) {
-            mListThemesPresenter.resume();
+            new RetrieveAllListThemes_InBackground(ThreadExecutor.getInstance(),
+                    MainThreadImpl.getInstance(), this, mListThemeRepository).execute();
         } else {
             Timber.e("onResume(): Unable to display ListTitle. mListTitle is null!");
         }
@@ -259,20 +263,27 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         switch (v.getId()) {
 
             case R.id.btnListTitleName:
-
                 Gson gson = new Gson();
                 String listTitleJson = gson.toJson(mListTitle);
                 dialogEditListTitleName existingListTitleDialog = dialogEditListTitleName.newInstance(listTitleJson);
                 existingListTitleDialog.show(fm, "dialogEditListTitleName");
+                break;
 
             case R.id.btnCancel:
                 finish();
                 break;
 
             case R.id.btnSaveTheme:
-                mListTitle.setSortListItemsAlphabetically(rbSortAlphabetically.isChecked());
-                mListTitle.setListPrivateToThisDevice(rbPrivateList.isChecked());
-                saveListTitle(mListTitle);
+                if (!mListTitle.getName().equals(dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME)) {
+                    mListTitle.setSortListItemsAlphabetically(rbSortAlphabetically.isChecked());
+                    mListTitle.setListPrivateToThisDevice(rbPrivateList.isChecked());
+                    saveListTitle(mListTitle);
+                } else {
+                    // the list name is the default name
+                    String title = "Unable to Save List";
+                    String msg = String.format("List name cannot be \"%s\"",dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME);
+                    CommonMethods.showOkDialog(this,title,msg);
+                }
                 break;
         }
     }
@@ -429,19 +440,34 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         listTitlesActivityContent.setVisibility(View.VISIBLE);
     }
 
-    @Override
-    public void showError(String message) {
+//    @Override
+//    public void showError(String message) {
+//
+//    }
 
-    }
+//    @Override
+//    public void displayAllListThemes(List<ListTheme> allListThemes) {
+//        mListThemeSpinnerArrayAdapter.setData(allListThemes);
+//        mListThemeSpinnerArrayAdapter.notifyDataSetChanged();
+//
+//        int position = mListThemeSpinnerArrayAdapter.getPosition(mListTitle.getListTheme());
+//        spnListTitles.setSelection(position);
+//        updateUI(mListTitle);
+//    }
 
     @Override
-    public void displayAllListThemes(List<ListTheme> allListThemes) {
-        mListThemeSpinnerArrayAdapter.setData(allListThemes);
+    public void onAllListThemesRetrieved(List<ListTheme> listThemes) {
+        mListThemeSpinnerArrayAdapter.setData(listThemes);
         mListThemeSpinnerArrayAdapter.notifyDataSetChanged();
 
         int position = mListThemeSpinnerArrayAdapter.getPosition(mListTitle.getListTheme());
         spnListTitles.setSelection(position);
         updateUI(mListTitle);
+    }
+
+    @Override
+    public void onRetrievalFailed(String errorMessage) {
+        Timber.e("onRetrievalFailed(): %s.", errorMessage);
     }
 
 

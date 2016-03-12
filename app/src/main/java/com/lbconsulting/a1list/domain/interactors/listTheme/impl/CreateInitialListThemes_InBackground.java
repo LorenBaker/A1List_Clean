@@ -11,7 +11,6 @@ import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
@@ -55,7 +54,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
             }
 
 
-            // create initial ListThemes
+            //region create initial ListThemes
             int requestedListThemeCount = 0;
             int newBackendlessListThemeCount = 0;
 
@@ -251,9 +250,11 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
             if (response != null) {
                 newBackendlessListThemeCount++;
             }
+            //endregion
 
 
             // TODO: Remove List Creation
+/*
             ListTitle newListTitle = ListTitle.newInstance("List A", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
             mListTitleRepository.insert(newListTitle);
 
@@ -316,6 +317,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
             newListTitle = ListTitle.newInstance("List P", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
             mListTitleRepository.insert(newListTitle);
 
+*/
 
             final List<ListTheme> allListThemes = mListThemeRepository.retrieveAllListThemes(false);
             String createdListThemeMessage;

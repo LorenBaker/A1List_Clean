@@ -29,6 +29,7 @@ import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListTitlesPresenter_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListTitlesPresenter;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListTitleArrayAdapter;
+import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
@@ -57,6 +58,8 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
     TextView tvProgressBarMessage;
     private ListTitleArrayAdapter mListTitleAdapter;
     private DeleteStruckOutListTitles_InBackground mDeleteStruckOutListTitles;
+
+    private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
     private int mNumberOfStruckOutListTitles;
@@ -144,8 +147,9 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
         );*/
         //endregion
 
+        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
         mListThemeRepository = new ListThemeRepository_Impl(this);
-        mListTitleRepository = new ListTitleRepository_Impl(this, mListThemeRepository);
+        mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository ,mListThemeRepository);
 
         mPresenter = new ListTitlesPresenter_Impl(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, mListTitleRepository);
@@ -166,12 +170,10 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
 
     @OnClick(R.id.fab)
     public void fab() {
-//        String message = "Create New ListTitle action button clicked.";
-//        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
-
         ListTheme defaultListTheme = mListThemeRepository.retrieveDefaultListTheme();
         AppSettingsRepository appSettingsRepository = new AppSettingsRepository_Impl(this);
-        ListTitle newListTitle = ListTitle.newInstance("NewList", defaultListTheme, appSettingsRepository);
+        ListTitle newListTitle = ListTitle.newInstance(
+                dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME, defaultListTheme, appSettingsRepository);
         startListTitleActivity(newListTitle);
     }
 

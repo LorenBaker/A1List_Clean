@@ -18,14 +18,19 @@ import com.backendless.Subscription;
 import com.backendless.async.callback.AsyncCallback;
 import com.backendless.exceptions.BackendlessFault;
 import com.backendless.messaging.Message;
+import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.CreateInitialListThemes_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes_Interactor;
+import com.lbconsulting.a1list.domain.model.ListTheme;
+import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;
+import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.CsvParser;
@@ -125,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
 
         mAppSettingsRepository = new AppSettingsRepository_Impl(this);
         mListThemeRepository = new ListThemeRepository_Impl(this);
-        mListTitleRepository = new ListTitleRepository_Impl(this, mListThemeRepository);
+        mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository, mListThemeRepository);
         showActiveUser();
     }
 
@@ -325,10 +330,21 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     }
 
     private void createNewList() {
-        Toast.makeText(this, "createNewList clicked", Toast.LENGTH_SHORT).show();
-
+        ListTheme defaultListTheme = mListThemeRepository.retrieveDefaultListTheme();
+        AppSettingsRepository appSettingsRepository = new AppSettingsRepository_Impl(this);
+        ListTitle newListTitle = ListTitle.newInstance(
+                dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME, defaultListTheme, appSettingsRepository);
+        startListTitleActivity(newListTitle);
     }
 
+    private void startListTitleActivity(ListTitle newListTitle) {
+        Gson gson = new Gson();
+        String listTitleJson = gson.toJson(newListTitle);
+        Intent listTitleActivityIntent = new Intent(this, ListTitleActivity.class);
+        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_LIST_TITLE_JSON, listTitleJson);
+        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_MODE, ListTitleActivity.CREATE_NEW_LIST_TITLE);
+        startActivity(listTitleActivityIntent);
+    }
     private void showListSortingDialogue() {
         Toast.makeText(this, "showListSortingDialogue clicked", Toast.LENGTH_SHORT).show();
 

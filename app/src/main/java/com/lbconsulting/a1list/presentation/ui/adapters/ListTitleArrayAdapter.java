@@ -23,6 +23,7 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.ToggleListTitleBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
@@ -45,6 +46,7 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
     private final boolean mShowBtnEditListTitleName;
     private final View mSnackbarView;
     private ListTitle mSelectedListTitle;
+    private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
     private ToggleListTitleBooleanField_InBackground.Callback mCallback;
@@ -57,8 +59,9 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
         this.mListView = listView;
         this.mShowBtnEditListTitleName = showBtnEditListTitleName;
         mSnackbarView = snackbarView;
+        mAppSettingsRepository = new AppSettingsRepository_Impl(context);
         mListThemeRepository = new ListThemeRepository_Impl(context);
-        mListTitleRepository = new ListTitleRepository_Impl(context, mListThemeRepository);
+        mListTitleRepository = new ListTitleRepository_Impl(context,mAppSettingsRepository, mListThemeRepository);
         Timber.i("ListTitleArrayAdapter(): Initialized");
     }
 

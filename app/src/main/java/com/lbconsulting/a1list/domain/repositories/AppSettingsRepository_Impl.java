@@ -248,7 +248,17 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository {
         if (cursor != null && !cursor.isClosed()) {
             cursor.close();
         }
-        setListTitleLastSortKey(appSettings, listTitleNextSortKey);
+        // save listTitleNextSortKey to the SQLite db
+        // the appSettings will be saved to Backendless when the ListTitle is saved in its repository.
+        ContentValues cv = new ContentValues();
+        cv.put(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY, listTitleNextSortKey);
+        cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, TRUE);
+        int numberOfRecordsUpdated = updateSQLiteDb(appSettings, cv);
+        if(numberOfRecordsUpdated!=1){
+            Timber.e("retrieveListTitleNextSortKey(): number of AppSettings records updated does not equal 1.");
+        }
+
+//        setListTitleLastSortKey(appSettings, listTitleNextSortKey);
         return listTitleNextSortKey;
     }
 
@@ -257,6 +267,28 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository {
         ContentValues cv = new ContentValues();
         cv.put(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY, sortKey);
         update(appSettings, cv);
+    }
+
+    @Override
+    public AppSettings retrieveDirtyAppSettings() {
+        AppSettings appSettings = null;
+
+        try {
+            Cursor cursor = getAllAppSettingsCursor();
+            if (cursor != null && cursor.getCount() > 0) {
+                cursor.moveToFirst();
+                boolean isDirty = cursor.getInt(cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY))>0;
+                if(isDirty){
+                    appSettings = appSettingsFromCursor(cursor);
+                }
+            }
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+        } catch (IllegalArgumentException e) {
+            Timber.e("retrieveDirtyAppSettings(): Exception: %s.", e.getMessage());
+        }
+        return appSettings;
     }
 
 //    @Override

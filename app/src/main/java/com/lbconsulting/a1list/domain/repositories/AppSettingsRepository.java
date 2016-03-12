@@ -23,4 +23,5 @@ public interface AppSettingsRepository {
 
     void setListTitleLastSortKey(AppSettings appSettings,long sortKey);
 
+    AppSettings retrieveDirtyAppSettings();
 }

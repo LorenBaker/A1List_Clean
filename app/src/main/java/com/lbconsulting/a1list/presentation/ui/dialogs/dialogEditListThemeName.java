@@ -17,6 +17,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
@@ -32,31 +33,26 @@ import timber.log.Timber;
  * A dialog where the user edits the ListTheme's name
  */
 public class dialogEditListThemeName extends DialogFragment {
-
-    private static final String ARG_LIST_THEME_NAME = "argListThemeName";
-    private static final String ARG_ORIGINAL_LIST_THEME_UUID = "argOriginalListThemeUuid";
-    private static final String ARG_MODE = "argMode";
+    public static final String DEFAULT_LIST_THEME_NAME = "*#*#NewThemeName*#*#";
+    private static final String ARG_LIST_THEME_JSON = "argListThemeJson";
 
     private EditText txtListThemeName;
     private TextInputLayout txtListThemeName_input_layout;
+
     private ListTheme mListTheme;
-    private String mListThemeName;
     private AlertDialog mEditListThemeNameDialog;
     private ListThemeRepository_Impl mListThemeRepository;
-    private String mDialogTitle;
 
     public dialogEditListThemeName() {
         // Empty constructor required for DialogFragment
     }
 
 
-    public static dialogEditListThemeName newInstance(String listThemeName, String originalListThemeUuid, int mode) {
+    public static dialogEditListThemeName newInstance(String listThemeJson) {
         Timber.i("newInstance()");
         dialogEditListThemeName frag = new dialogEditListThemeName();
         Bundle args = new Bundle();
-        args.putString(ARG_LIST_THEME_NAME, listThemeName);
-        args.putString(ARG_ORIGINAL_LIST_THEME_UUID, originalListThemeUuid);
-        args.putInt(ARG_MODE, mode);
+        args.putString(ARG_LIST_THEME_JSON, listThemeJson);
         frag.setArguments(args);
         return frag;
     }
@@ -70,27 +66,13 @@ public class dialogEditListThemeName extends DialogFragment {
         mListThemeRepository = new ListThemeRepository_Impl(getActivity());
         int mode = ListThemeActivity.EDIT_EXISTING_LIST_THEME;
 
-        if (args.containsKey(ARG_LIST_THEME_NAME)) {
-            mListThemeName = args.getString(ARG_LIST_THEME_NAME);
-            listThemeUuid = args.getString(ARG_ORIGINAL_LIST_THEME_UUID);
-            mListTheme = mListThemeRepository.getListThemeByUuid(listThemeUuid);
-            mode = args.getInt(ARG_MODE);
-            switch (mode) {
-                case ListThemeActivity.CREATE_NEW_LIST_THEME:
-                    mDialogTitle = getActivity().getResources().getString(R.string.createListThemeNameDialog_title);
-                    break;
-
-                case ListThemeActivity.EDIT_EXISTING_LIST_THEME:
-                    mDialogTitle = getActivity().getResources().getString(R.string.editListThemeNameDialog_title);
-                    break;
+        if (args.containsKey(ARG_LIST_THEME_JSON)) {
+            String listThemeJson = args.getString(ARG_LIST_THEME_JSON);
+            Gson gson = new Gson();
+            mListTheme = gson.fromJson(listThemeJson, ListTheme.class);
+            if (mListTheme == null) {
+                Timber.e("onCreate(): FAILED to retrieve ListTheme");
             }
-        }
-        if (mListThemeName == null || (mListThemeName.isEmpty() && mode != ListThemeActivity.CREATE_NEW_LIST_THEME)) {
-            Timber.e("onCreate(): ListTheme name not provided!");
-        }
-
-        if (mListTheme == null) {
-            Timber.e("onCreate(): ListTheme with UUID = %s could not found!", listThemeUuid);
         }
     }
 
@@ -108,19 +90,7 @@ public class dialogEditListThemeName extends DialogFragment {
                     @Override
                     public void onClick(final View v) {
                         String themeProposedName = txtListThemeName.getText().toString().trim();
-
-                        if (themeProposedName.isEmpty()) {
-                            String errorMsg = getActivity().getString(R.string.themeProposedName_isEmpty_error);
-                            txtListThemeName_input_layout.setError(errorMsg);
-
-                        } else if (!mListThemeRepository.isValidThemeName(mListTheme, themeProposedName)) {
-                            txtListThemeName.setText(mListTheme.getName());
-                            String errorMsg = String.format(getActivity()
-                                            .getString(R.string.themeProposedName_invalidName_error),
-                                    themeProposedName);
-                            txtListThemeName_input_layout.setError(errorMsg);
-
-                        } else {
+                        if (okToReviseThemeName(themeProposedName)) {
                             EventBus.getDefault().post(new MyEvents.setListThemeName(themeProposedName));
                             dismiss();
                         }
@@ -141,6 +111,33 @@ public class dialogEditListThemeName extends DialogFragment {
         });
     }
 
+    private boolean okToReviseThemeName(String themeProposedName) {
+        boolean result = false;
+
+        if (themeProposedName.isEmpty()) {
+            String errorMsg = getActivity().getString(R.string.themeProposedName_isEmpty_error);
+            txtListThemeName_input_layout.setError(errorMsg);
+
+        } else if(themeProposedName.equals(DEFAULT_LIST_THEME_NAME)){
+            String errorMsg = String.format(getActivity()
+                            .getString(R.string.themeProposedName_isDefault_error),
+                    DEFAULT_LIST_THEME_NAME);
+            txtListThemeName_input_layout.setError(errorMsg);
+
+        } else if (!mListThemeRepository.isValidThemeName(mListTheme, themeProposedName)) {
+            txtListThemeName.setText(mListTheme.getName());
+            String errorMsg = String.format(getActivity()
+                            .getString(R.string.themeProposedName_invalidName_error),
+                    themeProposedName);
+            txtListThemeName_input_layout.setError(errorMsg);
+
+        } else {
+            // ok to revise Theme name.
+            mListTheme.setName(themeProposedName);
+            result = true;
+        }
+        return result;
+    }
 
     @NonNull
     @Override
@@ -153,9 +150,12 @@ public class dialogEditListThemeName extends DialogFragment {
 
         // find the dialog's views
         txtListThemeName = (EditText) view.findViewById(R.id.txtName);
-        if (mListTheme != null) {
-            txtListThemeName.setText(mListTheme.getName());
+
+        String listThemeName = mListTheme.getName();
+        if (listThemeName.equals(DEFAULT_LIST_THEME_NAME)) {
+            listThemeName = "";
         }
+        txtListThemeName.setText(listThemeName);
         txtListThemeName_input_layout = (TextInputLayout) view.findViewById(R.id.txtName_input_layout);
         txtListThemeName_input_layout.setHint(getActivity().getString(R.string.txtListThemeName_hint));
         txtListThemeName.addTextChangedListener(new TextWatcher() {
@@ -177,7 +177,7 @@ public class dialogEditListThemeName extends DialogFragment {
 
         // build the dialog
         mEditListThemeNameDialog = new AlertDialog.Builder(getActivity())
-                .setTitle(mDialogTitle)
+                .setTitle(" ")
                 .setView(view)
                 .setPositiveButton(R.string.btnSave_title, null)
                 .setNegativeButton(R.string.btnCancel_title, null)

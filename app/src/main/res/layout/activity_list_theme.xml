@@ -30,11 +30,15 @@
 
         <include layout="@layout/activity_progress_bar"
             android:id="@+id/activityProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:visibility="gone"/>
 
         <include
             layout="@layout/content_list_theme"
             android:layout_width="match_parent"
+            android:visibility="visible"
             android:layout_height="0dp"
             android:layout_weight="1" />
 

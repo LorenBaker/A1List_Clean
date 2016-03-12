@@ -20,6 +20,7 @@ import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.DeleteStruckOutListThemes_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ToggleListThemeBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListThemesPresenter_Impl;
@@ -60,6 +61,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
 
     private ListThemeArrayAdapter mListThemeAdapter;
     private DeleteStruckOutListThemes_InBackground mDeleteStruckOutListThemes;
+    private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
     // Note: these Toggle Methods run on the UI thread
@@ -146,9 +148,9 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
                 }
         );*/
         //endregion
-
+        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
         mListThemeRepository = new ListThemeRepository_Impl(this);
-        mListTitleRepository = new ListTitleRepository_Impl(this, mListThemeRepository);
+        mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository, mListThemeRepository);
 
         mPresenter = new ListThemesPresenter_Impl(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, mListThemeRepository);

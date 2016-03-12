@@ -20,6 +20,7 @@ import android.widget.EditText;
 import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.utils.MyEvents;
@@ -33,10 +34,8 @@ import timber.log.Timber;
  * A dialog where the user edits an existing ListTitle Name
  */
 public class dialogEditListTitleName extends DialogFragment {
-
+    public static final String DEFAULT_LIST_TITLE_NAME = "*#*#NewList*#*#";
     private static final String ARG_LIST_TITLE_JSON = "argListTitleJson";
-
-
 
     private EditText txtListTitleName;
     private TextInputLayout txtListTitleName_input_layout;
@@ -64,8 +63,9 @@ public class dialogEditListTitleName extends DialogFragment {
         super.onCreate(savedInstanceState);
         Timber.i("onCreate()");
 
+        AppSettingsRepository_Impl appSettingsRepository = new AppSettingsRepository_Impl(getActivity());
         ListThemeRepository_Impl listThemeRepository = new ListThemeRepository_Impl(getActivity());
-        mListTitleRepository = new ListTitleRepository_Impl(getActivity(), listThemeRepository);
+        mListTitleRepository = new ListTitleRepository_Impl(getActivity(),appSettingsRepository, listThemeRepository);
 
         Bundle args = getArguments();
         if (args.containsKey(ARG_LIST_TITLE_JSON)) {
@@ -92,7 +92,7 @@ public class dialogEditListTitleName extends DialogFragment {
                     @Override
                     public void onClick(final View v) {
                         String proposedListTitleName = txtListTitleName.getText().toString().trim();
-                        if (reviseListName(proposedListTitleName)) {
+                        if (okToReviseListName(proposedListTitleName)) {
                             EventBus.getDefault().post(new MyEvents.setListTitleName(proposedListTitleName));
                             dismiss();
                         }
@@ -114,14 +114,19 @@ public class dialogEditListTitleName extends DialogFragment {
         });
     }
 
-    private boolean reviseListName(String proposedListTitleName) {
+    private boolean okToReviseListName(String proposedListTitleName) {
         boolean result = false;
-        // TODO: implement reviseListName
         if (proposedListTitleName.isEmpty()) {
             String errorMsg = getActivity().getString(R.string.newListTitleName_isEmpty_error);
             txtListTitleName_input_layout.setError(errorMsg);
 
-        } else if (!mListTitleRepository.isValidListTitleName(mListTitle,proposedListTitleName)) {
+        } else if(proposedListTitleName.equals(DEFAULT_LIST_TITLE_NAME)){
+            String errorMsg = String.format(getActivity()
+                            .getString(R.string.newListTitleName_isDefault_error),
+                    DEFAULT_LIST_TITLE_NAME);
+            txtListTitleName_input_layout.setError(errorMsg);
+
+        } else if (!mListTitleRepository.isValidListTitleName(mListTitle, proposedListTitleName)) {
             String errorMsg = String.format(getActivity()
                     .getString(R.string.newListTitleName_listExists_error), proposedListTitleName);
             txtListTitleName_input_layout.setError(errorMsg);
@@ -142,12 +147,16 @@ public class dialogEditListTitleName extends DialogFragment {
 
         // inflate the xml layout
         LayoutInflater inflater = getActivity().getLayoutInflater();
-//        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.dialog_single_edit_text, null, false);
-        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.dialog_single_edit_text, null);
+        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.dialog_single_edit_text, null, false);
 
         // find the dialog's views
         txtListTitleName = (EditText) view.findViewById(R.id.txtName);
-        txtListTitleName.setText(mListTitle.getName());
+
+        String listTitleName = mListTitle.getName();
+        if (listTitleName.equals(DEFAULT_LIST_TITLE_NAME)) {
+            listTitleName = "";
+        }
+        txtListTitleName.setText(listTitleName);
         txtListTitleName_input_layout = (TextInputLayout) view.findViewById(R.id.txtName_input_layout);
         txtListTitleName_input_layout.setHint(getActivity().getString(R.string.txtListTitleName_hint));
         txtListTitleName.addTextChangedListener(new TextWatcher() {
