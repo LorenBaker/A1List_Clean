@@ -7,8 +7,8 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.DeleteStruckOutListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
 import java.util.Date;
@@ -23,14 +23,14 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
 
 
     private final Callback mCallback;
-    private final ListThemeRepository_interface mListThemeRepository;
-    private final ListTitleRepository_interface mListTitleRepository;
+    private final ListThemeRepository mListThemeRepository;
+    private final ListTitleRepository mListTitleRepository;
 
 
     public DeleteStruckOutListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
                                                   Callback callback,
-                                                  ListThemeRepository_interface listThemeRepository,
-                                                  ListTitleRepository_interface listTitleRepository) {
+                                                  ListThemeRepository listThemeRepository,
+                                                  ListTitleRepository listTitleRepository) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
@@ -64,7 +64,7 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
                             Timber.e("DeleteStruckOutListThemes_InBackground(): BackendlessException: %s.", e.getMessage());
                         }
                         // Replace any ListTheme being deleted with the default ListTheme.
-                        mListTitleRepository.replaceListTheme(listTheme, defaultListTheme, true);
+                        mListTitleRepository.replaceListTheme(listTheme, defaultListTheme);
                         // TODO: Send ListTheme delete and ListTitle update messages to other devices
 
                     } else {
@@ -77,7 +77,7 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
                     if (!listTheme.isDefaultTheme()) {
                         numberOfListThemesDeleted += mListThemeRepository.markDeleted(listTheme);
                         // Replace any ListTheme being deleted with the default ListTheme.
-                        mListTitleRepository.replaceListTheme(listTheme, defaultListTheme, false);
+                        mListTitleRepository.replaceListTheme(listTheme, defaultListTheme);
                     } else {
                         Timber.e("DeleteStruckOutListThemes_InBackground: Aborted deleting the default ListTheme.");
                     }

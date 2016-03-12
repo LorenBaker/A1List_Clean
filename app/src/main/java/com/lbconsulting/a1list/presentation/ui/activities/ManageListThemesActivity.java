@@ -12,7 +12,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -53,7 +52,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     View manageListThemesActivityContent;
 
     @Bind(R.id.activityProgressBar)
-    ProgressBar mProgressBar;
+    View manageListThemesActivityProgressBar;
 
     @Bind(R.id.tvActivityProgressBarMessage)
     TextView tvProgressBarMessage;
@@ -163,6 +162,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Manage Themes");
         }
     }
 
@@ -186,17 +186,17 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     @Override
     public void showProgress(String waitMessage) {
         Timber.i("showProgress()");
-        mProgressBar.setVisibility(View.VISIBLE);
+        manageListThemesActivityProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
-        tvProgressBarMessage.setVisibility(View.VISIBLE);
+//        tvProgressBarMessage.setVisibility(View.VISIBLE);
         manageListThemesActivityContent.setVisibility(View.GONE);
     }
 
     @Override
     public void hideProgress() {
         Timber.i("hideProgress()");
-        mProgressBar.setVisibility(View.GONE);
-        tvProgressBarMessage.setVisibility(View.GONE);
+        manageListThemesActivityProgressBar.setVisibility(View.GONE);
+//        tvProgressBarMessage.setVisibility(View.GONE);
         manageListThemesActivityContent.setVisibility(View.VISIBLE);
     }
 
@@ -239,7 +239,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_manage_list_theme_activity, menu);
+        getMenuInflater().inflate(R.menu.menu_activity_manage_list_theme, menu);
         return true;
     }
 
@@ -285,14 +285,14 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
 
 //    private void showProgressBar() {
 //        Timber.i("showProgressBar()");
-//        mProgressBar.setVisibility(View.VISIBLE);
+//        mainActivityProgressBar.setVisibility(View.VISIBLE);
 //        tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
 //        tvProgressBarMessage.setVisibility(View.VISIBLE);
 //        manageListThemesActivityContent.setVisibility(View.GONE);
 //
 //
 //
-//        mProgressBar.setVisibility(View.VISIBLE);
+//        mainActivityProgressBar.setVisibility(View.VISIBLE);
 //        tvProgressBarMessage.setVisibility(View.VISIBLE);
 //        lvThemes.setVisibility(View.GONE);
 //        // TODO: hide menus
@@ -300,7 +300,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
 //
 //    private void hideProgressBar() {
 //        Timber.i("hideProgressBar()");
-//        mProgressBar.setVisibility(View.GONE);
+//        mainActivityProgressBar.setVisibility(View.GONE);
 //        tvProgressBarMessage.setVisibility(View.GONE);
 //        lvThemes.setVisibility(View.VISIBLE);
 //        // TODO: show menus

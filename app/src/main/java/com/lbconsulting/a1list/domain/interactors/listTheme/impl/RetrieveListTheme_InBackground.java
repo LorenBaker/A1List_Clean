@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
 /**
  * An interactor that retrieves a ListTheme with the provided uuid
@@ -13,11 +13,11 @@ import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface
 public class RetrieveListTheme_InBackground extends AbstractInteractor implements RetrieveListTheme_Interactor {
 
     private final Callback mCallback;
-    private final ListThemeRepository_interface mListThemeRepository;
+    private final ListThemeRepository mListThemeRepository;
     private final String mListThemeUuid;
 
     public RetrieveListTheme_InBackground(Executor threadExecutor, MainThread mainThread,
-                                          Callback callback, ListThemeRepository_interface listThemeRepository,
+                                          Callback callback, ListThemeRepository listThemeRepository,
                                           String listThemeUuid) {
         super(threadExecutor, mainThread);
 

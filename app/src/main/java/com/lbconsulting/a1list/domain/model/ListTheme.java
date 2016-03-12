@@ -19,7 +19,7 @@ public class ListTheme {
     private float textSize; //float
     private float horizontalPaddingInDp; //float dp. Need to convert to float px
     private float verticalPaddingInDp; //float dp. Need to convert to float px
-    private boolean themeDirty;
+//    private boolean themeDirty;
     private boolean bold;
     private boolean checked;
     private boolean defaultTheme;
@@ -92,7 +92,7 @@ public class ListTheme {
     }
 
     public void setEndColor(int endColor) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.endColor = endColor;
     }
 
@@ -101,7 +101,7 @@ public class ListTheme {
     }
 
     public void setHorizontalPaddingInDp(float horizontalPaddingInDp) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.horizontalPaddingInDp = horizontalPaddingInDp;
     }
 
@@ -110,24 +110,24 @@ public class ListTheme {
     }
 
     public void setVerticalPaddingInDp(float verticalPaddingInDp) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.verticalPaddingInDp = verticalPaddingInDp;
     }
 
-    public boolean isThemeDirty() {
-        return themeDirty;
-    }
-
-    public void setThemeDirty(boolean themeDirty) {
-        this.themeDirty = themeDirty;
-    }
+//    public boolean isThemeDirty() {
+//        return themeDirty;
+//    }
+//
+//    public void setThemeDirty(boolean themeDirty) {
+//        this.themeDirty = themeDirty;
+//    }
 
     public boolean isBold() {
         return bold;
     }
 
     public void setBold(boolean isBold) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.bold = isBold;
     }
 
@@ -136,7 +136,7 @@ public class ListTheme {
     }
 
     public void setChecked(boolean isChecked) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.checked = isChecked;
     }
 
@@ -145,7 +145,7 @@ public class ListTheme {
     }
 
     public void setDefaultTheme(boolean isDefaultTheme) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.defaultTheme = isDefaultTheme;
     }
 
@@ -154,7 +154,7 @@ public class ListTheme {
     }
 
     public void setMarkedForDeletion(boolean isMarkedForDeletion) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.markedForDeletion = isMarkedForDeletion;
     }
 
@@ -171,7 +171,7 @@ public class ListTheme {
     }
 
     public void setTransparent(boolean isTransparent) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.transparent = isTransparent;
     }
 
@@ -180,7 +180,7 @@ public class ListTheme {
     }
 
     public void setName(String name) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.name = name;
     }
 
@@ -205,7 +205,7 @@ public class ListTheme {
     }
 
     public void setStartColor(int startColor) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.startColor = startColor;
     }
 
@@ -214,7 +214,7 @@ public class ListTheme {
     }
 
     public void setTextColor(int textColor) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.textColor = textColor;
     }
 
@@ -223,7 +223,7 @@ public class ListTheme {
     }
 
     public void setTextSize(float textSize) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.textSize = textSize;
     }
 
@@ -232,7 +232,7 @@ public class ListTheme {
     }
 
     public void setUuid(String uuid) {
-        setThemeDirty(true);
+        // setThemeDirty(true);
         this.uuid = uuid;
     }
 

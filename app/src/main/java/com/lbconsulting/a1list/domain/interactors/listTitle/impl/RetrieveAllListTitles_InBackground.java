@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.RetrieveAllListTitles_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 
 import java.util.List;
 
@@ -15,11 +15,11 @@ import java.util.List;
 public class RetrieveAllListTitles_InBackground extends AbstractInteractor implements RetrieveAllListTitles_Interactor {
 
     private final Callback mCallback;
-    private final ListTitleRepository_interface mListTitleRepository;
+    private final ListTitleRepository mListTitleRepository;
     private ListTitle mSelectedListTitle;
 
     public RetrieveAllListTitles_InBackground(Executor threadExecutor, MainThread mainThread,
-                                              Callback callback, ListTitleRepository_interface listTitleRepository) {
+                                              Callback callback, ListTitleRepository listTitleRepository) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;

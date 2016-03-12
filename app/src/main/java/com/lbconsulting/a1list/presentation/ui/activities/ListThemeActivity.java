@@ -16,7 +16,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -62,7 +61,7 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
     //@layout/activity_progress_bar
     @Bind(R.id.activityProgressBar)
-    ProgressBar mProgressBar;
+    View listActivityProgressBar;
     @Bind(R.id.tvActivityProgressBarMessage)
     TextView tvProgressBarMessage;
 
@@ -71,7 +70,6 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     LinearLayout llContentListTheme;
 
     //@layout/content_list_theme_settings
-
     @Bind(R.id.llContentListThemeSettings)
     LinearLayout llContentListThemeSettings;
     @Bind(R.id.btnThemeName)
@@ -288,9 +286,9 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         switch (v.getId()) {
 
             case R.id.btnThemeName:
-                dialogEditListThemeName editListAttributesNameDialog
+                dialogEditListThemeName editListThemeNameDialog
                         = dialogEditListThemeName.newInstance(mListTheme.getName(), mListTheme.getUuid(),mMode);
-                editListAttributesNameDialog.show(fm, "dialogEditListThemeName");
+                editListThemeNameDialog.show(fm, "dialogEditListThemeName");
                 break;
 
             case R.id.ckIsDefaultTheme:
@@ -491,16 +489,16 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
     private void showProgress(String waitMessage) {
         Timber.i("showProgress()");
-        mProgressBar.setVisibility(View.VISIBLE);
+        listActivityProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
-        tvProgressBarMessage.setVisibility(View.VISIBLE);
+//        tvProgressBarMessage.setVisibility(View.VISIBLE);
         llContentListTheme.setVisibility(View.GONE);
     }
 
     private void hideProgress() {
         Timber.i("hideProgress()");
-        mProgressBar.setVisibility(View.GONE);
-        tvProgressBarMessage.setVisibility(View.GONE);
+        listActivityProgressBar.setVisibility(View.GONE);
+//        tvProgressBarMessage.setVisibility(View.GONE);
         llContentListTheme.setVisibility(View.VISIBLE);
     }
     //endregion

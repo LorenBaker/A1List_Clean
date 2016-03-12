@@ -18,15 +18,20 @@ public class A1List_ContentProvider extends ContentProvider {
 
     public static final String AUTHORITY = "com.lbconsulting.a1list";
     // UriMatcher switch constants
-    private static final int LIST_ITEMS_MULTI_ROWS = 10;
-    private static final int LIST_ITEMS_SINGLE_ROW = 11;
-    private static final int LIST_TITLES_MULTI_ROWS = 20;
-    private static final int LIST_TITLES_SINGLE_ROW = 21;
-    private static final int LIST_THEMES_MULTI_ROWS = 30;
-    private static final int LIST_THEMES_SINGLE_ROW = 31;
+    private static final int APP_SETTINGS_MULTI_ROWS = 10;
+    private static final int APP_SETTINGS_SINGLE_ROW = 11;
+    private static final int LIST_ITEMS_MULTI_ROWS = 20;
+    private static final int LIST_ITEMS_SINGLE_ROW = 21;
+    private static final int LIST_TITLES_MULTI_ROWS = 30;
+    private static final int LIST_TITLES_SINGLE_ROW = 31;
+    private static final int LIST_THEMES_MULTI_ROWS = 40;
+    private static final int LIST_THEMES_SINGLE_ROW = 41;
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     static {
+        sURIMatcher.addURI(AUTHORITY, AppSettingsSqlTable.CONTENT_PATH, APP_SETTINGS_MULTI_ROWS);
+        sURIMatcher.addURI(AUTHORITY, AppSettingsSqlTable.CONTENT_PATH + "/#", APP_SETTINGS_SINGLE_ROW);
+
         sURIMatcher.addURI(AUTHORITY, ListItemsSqlTable.CONTENT_PATH, LIST_ITEMS_MULTI_ROWS);
         sURIMatcher.addURI(AUTHORITY, ListItemsSqlTable.CONTENT_PATH + "/#", LIST_ITEMS_SINGLE_ROW);
 
@@ -35,7 +40,6 @@ public class A1List_ContentProvider extends ContentProvider {
 
         sURIMatcher.addURI(AUTHORITY, ListThemesSqlTable.CONTENT_PATH, LIST_THEMES_MULTI_ROWS);
         sURIMatcher.addURI(AUTHORITY, ListThemesSqlTable.CONTENT_PATH + "/#", LIST_THEMES_SINGLE_ROW);
-
     }
 
     private A1List_DatabaseHelper database = null;
@@ -66,6 +70,24 @@ public class A1List_ContentProvider extends ContentProvider {
 
         int uriType = sURIMatcher.match(uri);
         switch (uriType) {
+
+            case APP_SETTINGS_MULTI_ROWS:
+                // To return the number of deleted items you must specify a where clause.
+                // To delete all rows and return a value pass in "1".
+                if (selection == null) {
+                    selection = "1";
+                }
+                // Perform the deletion
+                deleteCount = db.delete(ListItemsSqlTable.TABLE_LIST_ITEMS, selection, selectionArgs);
+                break;
+
+            case APP_SETTINGS_SINGLE_ROW:
+                // Limit deletion to a single row
+                rowId = uri.getLastPathSegment();
+                selection = ListItemsSqlTable.COL_ID + "=" + rowId;
+                // Perform the deletion
+                deleteCount = db.delete(ListItemsSqlTable.TABLE_LIST_ITEMS, selection, selectionArgs);
+                break;
 
             case LIST_ITEMS_MULTI_ROWS:
                 // To return the number of deleted items you must specify a where clause.
@@ -137,6 +159,11 @@ public class A1List_ContentProvider extends ContentProvider {
         int uriType = sURIMatcher.match(uri);
         switch (uriType) {
 
+            case APP_SETTINGS_MULTI_ROWS:
+                return AppSettingsSqlTable.CONTENT_TYPE;
+            case APP_SETTINGS_SINGLE_ROW:
+                return AppSettingsSqlTable.CONTENT_ITEM_TYPE;
+
             case LIST_ITEMS_MULTI_ROWS:
                 return ListItemsSqlTable.CONTENT_TYPE;
             case LIST_ITEMS_SINGLE_ROW:
@@ -169,6 +196,24 @@ public class A1List_ContentProvider extends ContentProvider {
 
         int uriType = sURIMatcher.match(uri);
         switch (uriType) {
+
+            case APP_SETTINGS_MULTI_ROWS:
+                newRowId = db.insertOrThrow(AppSettingsSqlTable.TABLE_APP_SETTINGS, nullColumnHack, values);
+                if (newRowId > 0) {
+                    // Construct and return the URI of the newly inserted row.
+                    Uri newRowUri = ContentUris.withAppendedId(AppSettingsSqlTable.CONTENT_URI, newRowId);
+
+                    if (getContext() != null && getContext().getContentResolver() != null) {
+                        getContext().getContentResolver().notifyChange(AppSettingsSqlTable.CONTENT_URI, null);
+                    }
+
+                    return newRowUri;
+                }
+                return null;
+
+            case APP_SETTINGS_SINGLE_ROW:
+                throw new IllegalArgumentException(
+                        "Illegal URI: Cannot insert a new row with a single row URI. " + uri);
 
             case LIST_ITEMS_MULTI_ROWS:
                 newRowId = db.insertOrThrow(ListItemsSqlTable.TABLE_LIST_ITEMS, nullColumnHack, values);
@@ -235,6 +280,15 @@ public class A1List_ContentProvider extends ContentProvider {
 
         int uriType = sURIMatcher.match(uri);
         switch (uriType) {
+
+            case APP_SETTINGS_MULTI_ROWS:
+                queryBuilder.setTables(AppSettingsSqlTable.TABLE_APP_SETTINGS);
+                break;
+
+            case APP_SETTINGS_SINGLE_ROW:
+                queryBuilder.setTables(AppSettingsSqlTable.TABLE_APP_SETTINGS);
+                queryBuilder.appendWhere(AppSettingsSqlTable.COL_ID + "=" + uri.getLastPathSegment());
+                break;
 
             case LIST_ITEMS_MULTI_ROWS:
                 queryBuilder.setTables(ListItemsSqlTable.TABLE_LIST_ITEMS);
@@ -305,6 +359,16 @@ public class A1List_ContentProvider extends ContentProvider {
 
         int uriType = sURIMatcher.match(uri);
         switch (uriType) {
+
+            case APP_SETTINGS_MULTI_ROWS:
+                updateCount = db.update(AppSettingsSqlTable.TABLE_APP_SETTINGS, values, selection, selectionArgs);
+                break;
+
+            case APP_SETTINGS_SINGLE_ROW:
+                rowID = uri.getLastPathSegment();
+                selection = AppSettingsSqlTable.COL_ID + "=" + rowID;
+                updateCount = db.update(AppSettingsSqlTable.TABLE_APP_SETTINGS, values, selection, selectionArgs);
+                break;
 
             case LIST_ITEMS_MULTI_ROWS:
                 updateCount = db.update(ListItemsSqlTable.TABLE_LIST_ITEMS, values, selection, selectionArgs);

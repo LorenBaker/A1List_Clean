@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateNewListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
 /**
  * An interactor that creates a new ListTheme
@@ -13,11 +13,11 @@ import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface
 public class CreateNewListTheme_InBackground extends AbstractInteractor implements CreateNewListTheme_Interactor {
 
     private final Callback mCallback;
-    private final ListThemeRepository_interface mListThemeRepository;
+    private final ListThemeRepository mListThemeRepository;
     private final ListTheme mListTheme;
 
     public CreateNewListTheme_InBackground(Executor threadExecutor, MainThread mainThread,
-                                           Callback callback, ListThemeRepository_interface listThemeRepository,
+                                           Callback callback, ListThemeRepository listThemeRepository,
                                            ListTheme listTheme) {
         super(threadExecutor, mainThread);
 

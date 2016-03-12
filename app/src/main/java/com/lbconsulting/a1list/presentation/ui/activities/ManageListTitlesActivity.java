@@ -6,32 +6,32 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.DeleteStruckOutListTitles_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.ToggleListTitleBooleanField_InBackground;
+import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListTitlesPresenter_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListTitlesPresenter;
-import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListTitleArrayAdapter;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
-import com.lbconsulting.a1list.utils.CsvParser;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.Bind;
@@ -41,6 +41,7 @@ import timber.log.Timber;
 
 public class ManageListTitlesActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView,
         DeleteStruckOutListTitles_InBackground.Callback, ToggleListTitleBooleanField_InBackground.Callback {
+
     private static ListTitlesPresenter_Impl mPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
@@ -48,21 +49,18 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
     Toolbar mToolbar;
     @Bind(R.id.lvListTitles)
     ListView lvListTitles;
-
     @Bind(R.id.manageListTitlesActivityContent)
     View manageListTitlesActivityContent;
-
     @Bind(R.id.activityProgressBar)
-    ProgressBar mProgressBar;
-
+    View manageListTitlesActivityProgressBar;
     @Bind(R.id.tvActivityProgressBarMessage)
     TextView tvProgressBarMessage;
-
-
     private ListTitleArrayAdapter mListTitleAdapter;
     private DeleteStruckOutListTitles_InBackground mDeleteStruckOutListTitles;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
+    private int mNumberOfStruckOutListTitles;
+
     // Note: these Toggle Methods run on the UI thread
     // The update one field on one record in one SQLite table (ListTitlesSqlTable)
     // After the toggle method complete, querying the SQLite ListTitlesSqlTable for all ListTitles
@@ -71,7 +69,6 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
     //
     // The app seemed more responsive running on the UI thread as opposed to running both the Toggle
     // Methods and ListTitlesSqlTable query on background threads.
-    private int mNumberOfStruckOutListTitles;
 
     //region Toggle Methods
     private DialogInterface.OnClickListener deleteListTitlesDialogClickListener = new DialogInterface.OnClickListener() {
@@ -106,7 +103,6 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         setContentView(R.layout.activity_manage_list_titles);
-
         ButterKnife.bind(this);
 
         mListTitleAdapter = new ListTitleArrayAdapter(this, lvListTitles, true, mFab);
@@ -163,39 +159,45 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Manage Lists");
         }
+
     }
 
     @OnClick(R.id.fab)
     public void fab() {
-        String message = "Create New ListTitle action button clicked.";
-//        ListTitle newListTitle = ListTitle.newInstance(defaultListTitle);
-//        Gson gson = new Gson();
-//        String listTitleJson = gson.toJson(newListTitle);
-//
-//        Intent listTitleActivityIntent = new Intent(this, ListTitleActivity.class);
-////        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_LIST_THEME_UUID, newListTitle.getUuid());
-//        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_LIST_THEME_JSON, listTitleJson);
-//        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_MODE, ListTitleActivity.CREATE_NEW_LIST_THEME);
-//        startActivity(listTitleActivityIntent);
+//        String message = "Create New ListTitle action button clicked.";
+//        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
 
-        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
+        ListTheme defaultListTheme = mListThemeRepository.retrieveDefaultListTheme();
+        AppSettingsRepository appSettingsRepository = new AppSettingsRepository_Impl(this);
+        ListTitle newListTitle = ListTitle.newInstance("NewList", defaultListTheme, appSettingsRepository);
+        startListTitleActivity(newListTitle);
+    }
+
+    private void startListTitleActivity(ListTitle newListTitle) {
+        Gson gson = new Gson();
+        String listTitleJson = gson.toJson(newListTitle);
+        Intent listTitleActivityIntent = new Intent(this, ListTitleActivity.class);
+        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_LIST_TITLE_JSON, listTitleJson);
+        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_MODE, ListTitleActivity.CREATE_NEW_LIST_TITLE);
+        startActivity(listTitleActivityIntent);
     }
 
     @Override
     public void showProgress(String waitMessage) {
         Timber.i("showProgress()");
-        mProgressBar.setVisibility(View.VISIBLE);
+        manageListTitlesActivityProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
-        tvProgressBarMessage.setVisibility(View.VISIBLE);
+//        tvProgressBarMessage.setVisibility(View.VISIBLE);
         manageListTitlesActivityContent.setVisibility(View.GONE);
     }
 
     @Override
     public void hideProgress() {
         Timber.i("hideProgress()");
-        mProgressBar.setVisibility(View.GONE);
-        tvProgressBarMessage.setVisibility(View.GONE);
+        manageListTitlesActivityProgressBar.setVisibility(View.GONE);
+//        tvProgressBarMessage.setVisibility(View.GONE);
         manageListTitlesActivityContent.setVisibility(View.VISIBLE);
     }
 
@@ -254,7 +256,7 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
 //            Toast.makeText(this, "deleteStruckOutListTitles Clicked", Toast.LENGTH_SHORT).show();
             if (mNumberOfStruckOutListTitles == 0) {
                 String title = "";
-                String msg = "No Themes selected for deletion.";
+                String msg = "No Lists selected for deletion.";
                 CommonMethods.showOkDialog(this, title, msg);
 
             } else {
@@ -266,6 +268,8 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
             }
 
             return true;
+        } else if (id == R.id.action_listTitleSorting) {
+            Toast.makeText(this, "action_listTitleSorting Clicked.", Toast.LENGTH_SHORT).show();
         }
 
         return super.onOptionsItemSelected(item);
@@ -284,14 +288,14 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
 
 //    private void showProgressBar() {
 //        Timber.i("showProgressBar()");
-//        mProgressBar.setVisibility(View.VISIBLE);
+//        mainActivityProgressBar.setVisibility(View.VISIBLE);
 //        tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
 //        tvProgressBarMessage.setVisibility(View.VISIBLE);
 //        manageListTitlesActivityContent.setVisibility(View.GONE);
 //
 //
 //
-//        mProgressBar.setVisibility(View.VISIBLE);
+//        mainActivityProgressBar.setVisibility(View.VISIBLE);
 //        tvProgressBarMessage.setVisibility(View.VISIBLE);
 //        lvThemes.setVisibility(View.GONE);
 //        // TODO: hide menus
@@ -299,17 +303,17 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
 //
 //    private void hideProgressBar() {
 //        Timber.i("hideProgressBar()");
-//        mProgressBar.setVisibility(View.GONE);
+//        mainActivityProgressBar.setVisibility(View.GONE);
 //        tvProgressBarMessage.setVisibility(View.GONE);
 //        lvThemes.setVisibility(View.VISIBLE);
 //        // TODO: show menus
 //    }
 
-    private void startLoginActivity() {
-        Intent intent = new Intent(this, BackendlessLoginActivity.class);
-        startActivity(intent);
-        finish();
-    }
+//    private void startLoginActivity() {
+//        Intent intent = new Intent(this, BackendlessLoginActivity.class);
+//        startActivity(intent);
+//        finish();
+//    }
 
     @Override
     public void onStruckOutListTitlesDeleted(String successMessage) {
@@ -333,45 +337,45 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
 //        Timber.i("onListTitleBooleanFieldToggled(): Number of struck out ListTitles = %d.", mNumberOfStruckOutListTitles);
     }
 
-    private class MessagePayload {
-        private String mCreationTime;
-        private String mAction;
-        private String mTableName;
-        private String mObjectUuid;
-
-        public MessagePayload(String action, String tableName, String objectUuid) {
-            this.mAction = action;
-            this.mTableName = tableName;
-            this.mObjectUuid = objectUuid;
-            mCreationTime = String.valueOf(System.currentTimeMillis());
-        }
-
-        public MessagePayload(String csvDataString) {
-            ArrayList<ArrayList<String>> records = CsvParser.CreateRecordAndFieldLists(csvDataString);
-            if (records.size() > 0) {
-                // load the first (and only) record.
-                ArrayList<String> record = records.get(0);
-                this.mAction = record.get(0);
-                this.mTableName = record.get(1);
-                this.mObjectUuid = record.get(2);
-                mCreationTime = record.get(3);
-            } else {
-                Timber.e("MessagePayload(): Unable to create MessagePayload. No data records found!");
-            }
-        }
-
-        @Override
-        public String toString() {
-            return String.valueOf(mAction + ": " + mTableName + ": " + mObjectUuid + "\n>> " + mCreationTime);
-        }
-
-        public String toCsvString() {
-            ArrayList<String> payload = new ArrayList<>();
-            payload.add(mAction);
-            payload.add(mTableName);
-            payload.add(mObjectUuid);
-            payload.add(mCreationTime);
-            return CsvParser.toCSVString(payload);
-        }
-    }
+//    private class MessagePayload {
+//        private String mCreationTime;
+//        private String mAction;
+//        private String mTableName;
+//        private String mObjectUuid;
+//
+//        public MessagePayload(String action, String tableName, String objectUuid) {
+//            this.mAction = action;
+//            this.mTableName = tableName;
+//            this.mObjectUuid = objectUuid;
+//            mCreationTime = String.valueOf(System.currentTimeMillis());
+//        }
+//
+//        public MessagePayload(String csvDataString) {
+//            ArrayList<ArrayList<String>> records = CsvParser.CreateRecordAndFieldLists(csvDataString);
+//            if (records.size() > 0) {
+//                // load the first (and only) record.
+//                ArrayList<String> record = records.get(0);
+//                this.mAction = record.get(0);
+//                this.mTableName = record.get(1);
+//                this.mObjectUuid = record.get(2);
+//                mCreationTime = record.get(3);
+//            } else {
+//                Timber.e("MessagePayload(): Unable to create MessagePayload. No data records found!");
+//            }
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return String.valueOf(mAction + ": " + mTableName + ": " + mObjectUuid + "\n>> " + mCreationTime);
+//        }
+//
+//        public String toCsvString() {
+//            ArrayList<String> payload = new ArrayList<>();
+//            payload.add(mAction);
+//            payload.add(mTableName);
+//            payload.add(mObjectUuid);
+//            payload.add(mCreationTime);
+//            return CsvParser.toCSVString(payload);
+//        }
+//    }
 }

@@ -1,6 +1,7 @@
 package com.lbconsulting.a1list.presentation.ui.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
@@ -17,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.ToggleListTitleBooleanField_InBackground;
@@ -24,6 +26,7 @@ import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
+import com.lbconsulting.a1list.presentation.ui.activities.ListTitleActivity;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
@@ -201,12 +204,12 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
     }
 
     private void startListTitleActivity(ListTitle selectedListTitle) {
-//        Gson gson = new Gson();
-//        String listTitleJson = gson.toJson(selectedListTitle);
-//        Intent listTitleActivityIntent = new Intent(mContext, ListTitleActivity.class);
-//        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_LIST_LISTTITLE_JSON, listTitleJson);
-//        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_MODE, ListTitleActivity.EDIT_EXISTING_LIST_LISTTITLE);
-//        mContext.startActivity(listTitleActivityIntent);
+        Gson gson = new Gson();
+        String listTitleJson = gson.toJson(selectedListTitle);
+        Intent listTitleActivityIntent = new Intent(mContext, ListTitleActivity.class);
+        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_LIST_TITLE_JSON, listTitleJson);
+        listTitleActivityIntent.putExtra(ListTitleActivity.ARG_MODE, ListTitleActivity.EDIT_EXISTING_LIST_TITLE);
+        mContext.startActivity(listTitleActivityIntent);
     }
 
     private void setStrikeOut(TextView tv, boolean isBold) {

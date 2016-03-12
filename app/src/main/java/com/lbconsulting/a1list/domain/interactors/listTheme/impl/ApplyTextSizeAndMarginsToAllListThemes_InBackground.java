@@ -7,7 +7,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTextSizeAndMarginsToAllListThemes_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
 /**
  * This is an interactor toggles a ListTheme's strikeout attribute.
@@ -15,13 +15,13 @@ import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface
  */
 public class ApplyTextSizeAndMarginsToAllListThemes_InBackground extends AbstractInteractor implements ApplyTextSizeAndMarginsToAllListThemes_Interactor {
 
-    private final ListThemeRepository_interface mListThemeRepository;
+    private final ListThemeRepository mListThemeRepository;
     private final Callback mCallback;
     private ListTheme mListTheme;
 
     public ApplyTextSizeAndMarginsToAllListThemes_InBackground(Executor threadExecutor,
                                                                MainThread mainThread, Callback callback,
-                                                               ListThemeRepository_interface listThemeRepository,
+                                                               ListThemeRepository listThemeRepository,
                                                                ListTheme listTheme) {
         super(threadExecutor, mainThread);
         mListThemeRepository = listThemeRepository;
@@ -32,7 +32,7 @@ public class ApplyTextSizeAndMarginsToAllListThemes_InBackground extends Abstrac
     @Override
     public void run() {
         // TODO: Implement this with your business logic
-        int numberOfListThemesUpdated = mListThemeRepository.applyTextSizeAndMarginsToAllListThemes(mListTheme, true);
+        int numberOfListThemesUpdated = mListThemeRepository.applyTextSizeAndMarginsToAllListThemes(mListTheme);
         String successMessage = AndroidApplication.getContext().getResources().getQuantityString(R.plurals.updatedListThemes, numberOfListThemesUpdated, numberOfListThemesUpdated);
         postSuccessResult(successMessage);
     }

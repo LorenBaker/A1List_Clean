@@ -4,10 +4,8 @@ import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.CreateNewListTitle_Interactor;
-import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 
 /**
  * An interactor that creates a new ListTitle
@@ -15,55 +13,43 @@ import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface
 public class CreateNewListTitle_InBackground extends AbstractInteractor implements CreateNewListTitle_Interactor {
 
     private final Callback mCallback;
-    private final ListTitleRepository_interface mListTitleRepository;
-    private final ListThemeRepository_interface mListThemeRepository;
-    private final String mNewListTitleName;
-    private final boolean mHideProgressBar;
+//    private final AppSettingsRepository mAppSettingsRepository;
+    private final ListTitleRepository mListTitleRepository;
+//    private final ListThemeRepository mListThemeRepository;
+    private final ListTitle mNewListTitle;
+//    private final boolean mHideProgressBar;
 
     public CreateNewListTitle_InBackground(Executor threadExecutor, MainThread mainThread,
-                                           Callback callback, String newListTitleName,
-                                           ListTitleRepository_interface listTitleRepository,
-                                           ListThemeRepository_interface listThemeRepository,
-                                           boolean hideProgressBar) {
+                                           Callback callback, ListTitle newListTitle,
+                                           ListTitleRepository listTitleRepository) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
-        mNewListTitleName = newListTitleName;
+        mNewListTitle = newListTitle;
+//        mAppSettingsRepository = appSettingsRepository;
         mListTitleRepository = listTitleRepository;
-        mListThemeRepository = listThemeRepository;
-        mHideProgressBar = hideProgressBar;
+//        mListThemeRepository = listThemeRepository;
+//        mHideProgressBar = hideProgressBar;
     }
 
 
     @Override
     public void run() {
 
-        if (mNewListTitleName == null || mNewListTitleName.isEmpty()) {
-            notifyError("FAILED to create ListTitle. No ListTitle name provided!");
-            return;
-        }
-
-        ListTheme defaultListTheme = mListThemeRepository.retrieveDefaultListTheme();
-        if (defaultListTheme == null) {
-            notifyError(String.format("FAILED to create ListTitle \"%s\". Failed to retrieve default ListTheme!", mNewListTitleName));
-            return;
-        }
-        ListTitle proposedListTitle = ListTitle.newInstance(mNewListTitleName,defaultListTheme);
-
         // insert the new ListTitle in the SQLite db and to Backendless.
-        ListTitle newListTitle = mListTitleRepository.insert(proposedListTitle);
+        ListTitle newListTitle = mListTitleRepository.insert(mNewListTitle);
         if (newListTitle != null) {
-            postListTitleCreated(newListTitle,mHideProgressBar);
+            postListTitleCreated(newListTitle);
         } else {
-            notifyError(String.format("FAILED to create ListTitle \"%s\".", mNewListTitleName));
+            notifyError(String.format("FAILED to create ListTitle \"%s\".", mNewListTitle));
         }
     }
 
-    private void postListTitleCreated(final ListTitle newListTitle, final boolean hideProgressBar) {
+    private void postListTitleCreated(final ListTitle newListTitle) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListTitleCreated(newListTitle,hideProgressBar);
+                mCallback.onListTitleCreated(newListTitle);
             }
         });
     }

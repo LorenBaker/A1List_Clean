@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.ToggleListTitleBooleanField_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 
 /**
  * This is an interactor toggles the provided boolean field attribute for the given ListTitle.
@@ -13,14 +13,14 @@ import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface
  */
 public class ToggleListTitleBooleanField_InBackground extends AbstractInteractor implements ToggleListTitleBooleanField_Interactor {
 
-    private final ListTitleRepository_interface mListTitleRepository;
+    private final ListTitleRepository mListTitleRepository;
     private final Callback mCallback;
     private ListTitle mListTitle;
     private String mListTitleBooleanField;
 
     public ToggleListTitleBooleanField_InBackground(Executor threadExecutor,
                                                     MainThread mainThread, Callback callback,
-                                                    ListTitleRepository_interface listTitleRepository,
+                                                    ListTitleRepository listTitleRepository,
                                                     ListTitle listTitle, String listTitleBooleanField) {
         super(threadExecutor, mainThread);
         mListTitleRepository = listTitleRepository;
@@ -31,7 +31,7 @@ public class ToggleListTitleBooleanField_InBackground extends AbstractInteractor
 
     @Override
     public void run() {
-        int toggleResult = mListTitleRepository.toggle(mListTitle, mListTitleBooleanField, true);
+        int toggleResult = mListTitleRepository.toggle(mListTitle, mListTitleBooleanField);
         postToggleResult(toggleResult);
     }
 

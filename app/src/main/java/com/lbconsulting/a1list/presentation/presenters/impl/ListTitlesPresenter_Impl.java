@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.RetrieveAllListTitles_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.RetrieveAllListTitles_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListTitlesPresenter;
 
@@ -20,7 +20,7 @@ public class ListTitlesPresenter_Impl extends AbstractPresenter implements ListT
         RetrieveAllListTitles_Interactor.Callback {
 
     private final ListTitleView mView;
-    private final ListTitleRepository_interface mListTitleRepository;
+    private final ListTitleRepository mListTitleRepository;
 
     private ListTitle mListTitle;
     private String mAction;
@@ -29,7 +29,7 @@ public class ListTitlesPresenter_Impl extends AbstractPresenter implements ListT
     public ListTitlesPresenter_Impl(Executor executor,
                                     MainThread mainThread,
                                     ListTitleView view,
-                                    ListTitleRepository_interface listTitleRepository) {
+                                    ListTitleRepository listTitleRepository) {
         super(executor, mainThread);
         mView = view;
         mListTitleRepository = listTitleRepository;

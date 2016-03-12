@@ -11,7 +11,7 @@ public interface CreateNewListTitle_Interactor extends Interactor {
     interface Callback {
 
         // interactor callback methods
-        void onListTitleCreated(ListTitle newListTitle, boolean hideProgressBar);
+        void onListTitleCreated(ListTitle newListTitle);
 
         void onListTitleCreationFailed(String errorMessage);
 

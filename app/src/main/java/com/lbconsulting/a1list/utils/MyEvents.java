@@ -1,5 +1,7 @@
 package com.lbconsulting.a1list.utils;
 
+import com.lbconsulting.a1list.domain.model.ListTheme;
+
 /**
  * EventBus events.
  */
@@ -17,6 +19,7 @@ public class MyEvents {
         public String getName() {
             return mName;
         }
+
         public boolean showProgress() {
             return mShowProgress;
         }
@@ -117,6 +120,19 @@ public class MyEvents {
 
         public int getVerticalPadding() {
             return mVerticalPadding;
+        }
+    }
+
+
+    public static class updateListTitleActivityUI {
+        private ListTheme mSelectedListTheme;
+
+        public updateListTitleActivityUI(ListTheme listTheme) {
+            mSelectedListTheme = listTheme;
+        }
+
+        public ListTheme getSelectedListTheme() {
+            return mSelectedListTheme;
         }
     }
     //endregion

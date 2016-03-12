@@ -24,7 +24,7 @@ import timber.log.Timber;
  * This class provided CRUD operations for ListTheme
  * NOTE: All CRUD operations should run on a background thread
  */
-public class ListThemeRepository_Impl implements ListThemeRepository_interface {
+public class ListThemeRepository_Impl implements ListThemeRepository {
 
     private final int FALSE = 0;
     private final int TRUE = 1;
@@ -33,7 +33,6 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
     public ListThemeRepository_Impl(Context context) {
         // private constructor
         this.mContext = context;
-
     }
 
     // CRUD operations
@@ -44,7 +43,6 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
         // insert new listTheme into SQLite db
         ListTheme backendlessResponse = null;
         long newThemeSqlId = -1;
-        listTheme.setThemeDirty(true);
 
         Uri uri = ListThemesSqlTable.CONTENT_URI;
         ContentValues cv = new ContentValues();
@@ -58,7 +56,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
         cv.put(ListThemesSqlTable.COL_HORIZONTAL_PADDING_IN_DP, listTheme.getHorizontalPaddingInDp());
         cv.put(ListThemesSqlTable.COL_VERTICAL_PADDING_IN_DP, listTheme.getVerticalPaddingInDp());
 
-        cv.put(ListThemesSqlTable.COL_THEME_DIRTY, (listTheme.isThemeDirty()) ? TRUE : FALSE);
+        cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
         cv.put(ListThemesSqlTable.COL_BOLD, (listTheme.isBold()) ? TRUE : FALSE);
         cv.put(ListThemesSqlTable.COL_CHECKED, (listTheme.isChecked()) ? TRUE : FALSE);
         cv.put(ListThemesSqlTable.COL_DEFAULT_THEME, (listTheme.isDefaultTheme()) ? TRUE : FALSE);
@@ -120,30 +118,49 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
                 cv.put(ListThemesSqlTable.COL_OBJECT_ID, response.getObjectId());
             }
             // update the SQLite db ... but don't send changes to Backendless
-            update(response, cv, false);
+            updateSQLiteDb(response, cv);
 
         } catch (BackendlessException e) {
-            listTheme.setThemeDirty(true);
             Timber.e("saveListThemeToBackendless(): FAILED to save \"%s\" to Backendless. BackendlessException: Code: %s; Message: %s.",
                     listTheme.getName(), e.getCode(), e.getMessage());
             // Set dirty flag to true in SQLite db
-            setSQLiteDirtyFlag(listTheme, TRUE);
+            ContentValues cv = new ContentValues();
+            cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
+            updateSQLiteDb(response, cv);
 
         }
         return response;
     }
 
-    private void setSQLiteDirtyFlag(ListTheme listTheme, int dirtyFlag) {
-        ContentValues cv = new ContentValues();
-        cv.put(ListThemesSqlTable.COL_THEME_DIRTY, dirtyFlag);
-        update(listTheme, cv, false);
+    private int updateSQLiteDb(ListTheme listTheme, ContentValues cv) {
+        int numberOfRecordsUpdated = 0;
+        try {
+            Uri uri = ListThemesSqlTable.CONTENT_URI;
+            ContentResolver cr = mContext.getContentResolver();
+            String selection = ListThemesSqlTable.COL_UUID + " = ?";
+            String[] selectionArgs = new String[]{listTheme.getUuid()};
+            numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
+
+        } catch (Exception e) {
+            Timber.e("updateSQLiteDb(): Exception: %s.", e.getMessage());
+        }
+        if (numberOfRecordsUpdated != 1) {
+            Timber.e("updateSQLiteDb(): Error updating AppSettings with uuid = %s", listTheme.getUuid());
+        }
+        return numberOfRecordsUpdated;
     }
 
-    private void setSQLiteMarkForDeletionFlag(ListTheme listTheme, int markedForDeletionFlag) {
-        ContentValues cv = new ContentValues();
-        cv.put(ListThemesSqlTable.COL_MARKED_FOR_DELETION, markedForDeletionFlag);
-        update(listTheme, cv, false);
-    }
+//    private void setSQLiteDirtyFlag(ListTheme listTheme, int dirtyFlag) {
+//        ContentValues cv = new ContentValues();
+//        cv.put(ListThemesSqlTable.COL_THEME_DIRTY, dirtyFlag);
+//        update(listTheme, cv, false);
+//    }
+//
+//    private void setSQLiteMarkForDeletionFlag(ListTheme listTheme, int markedForDeletionFlag) {
+//        ContentValues cv = new ContentValues();
+//        cv.put(ListThemesSqlTable.COL_MARKED_FOR_DELETION, markedForDeletionFlag);
+//        update(listTheme, cv, false);
+//    }
 
     //endregion
 
@@ -170,9 +187,6 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
         long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_UPDATED));
         Date updated = new Date(dateMillis);
         listTheme.setUpdated(updated);
-        // since above set methods set themeDirty to true, this statement must be last set statement
-        // so that the cursor's themeDirty prevails
-        listTheme.setThemeDirty(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_THEME_DIRTY)) > 0);
 
         return listTheme;
     }
@@ -464,32 +478,13 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
 
     //region Update
     @Override
-    public boolean update(ListTheme listTheme, ContentValues contentValues, boolean updateBackendless) {
+    public boolean update(ListTheme listTheme, ContentValues cv) {
         boolean result = false;
         try {
-            Uri uri = ListThemesSqlTable.CONTENT_URI;
-            String selection = ListThemesSqlTable.COL_UUID + " = ?";
-            String[] selectionArgs = new String[]{listTheme.getUuid()};
-            ContentResolver cr = mContext.getContentResolver();
+            cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
+            int numberOfRecordsUpdated = updateSQLiteDb(listTheme, cv);
 
-            if (contentValues.containsKey(ListThemesSqlTable.COL_THEME_DIRTY)) {
-                // If contentValues more than one key/value pair,
-                // make sure that the theme dirty field is set to true.
-                if (contentValues.size() > 1) {
-                    contentValues.remove(ListThemesSqlTable.COL_THEME_DIRTY);
-                    contentValues.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
-                }
-                // If contentValues has only one key/value pair (e.g. the theme dirty field,
-                // then don't change the theme dirty field.
-            } else {
-                // contentValues do not contain the theme dirty field ... so add it
-                contentValues.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
-            }
-
-            int numberOfRecordsUpdated = cr.update(uri, contentValues, selection, selectionArgs);
-            if (numberOfRecordsUpdated < 1) {
-                Timber.e("update(): Error trying to update SQLite db: %s", listTheme.toString());
-            } else if (updateBackendless && CommonMethods.isNetworkAvailable()) {
+            if (numberOfRecordsUpdated == 1 && CommonMethods.isNetworkAvailable()) {
                 result = true;
                 saveListThemeToBackendless(listTheme);
                 // TODO: Send update message to other devices
@@ -499,10 +494,11 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
         }
 
         return result;
+
     }
 
     @Override
-    public boolean update(ListTheme listTheme, boolean updateBackendless) {
+    public boolean update(ListTheme listTheme) {
         ContentValues cv = new ContentValues();
 
         cv.put(ListThemesSqlTable.COL_NAME, listTheme.getName());
@@ -519,40 +515,40 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
         cv.put(ListThemesSqlTable.COL_STRUCK_OUT, (listTheme.isStruckOut()) ? TRUE : FALSE);
         cv.put(ListThemesSqlTable.COL_TRANSPARENT, (listTheme.isTransparent()) ? TRUE : FALSE);
 
-        return update(listTheme, cv, updateBackendless);
+        return update(listTheme, cv);
     }
 
-    public void update(ListTheme listTheme, String FieldName, boolean value, boolean updateBackendless) {
+    public void update(ListTheme listTheme, String FieldName, boolean value) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(FieldName, value);
-        update(listTheme, contentValues, updateBackendless);
+        update(listTheme, contentValues);
     }
 
-    public void update(ListTheme listTheme, String FieldName, float value, boolean updateBackendless) {
+    public void update(ListTheme listTheme, String FieldName, float value) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(FieldName, value);
-        update(listTheme, contentValues, updateBackendless);
+        update(listTheme, contentValues);
     }
 
-    public void update(ListTheme listTheme, String FieldName, int value, boolean updateBackendless) {
+    public void update(ListTheme listTheme, String FieldName, int value) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(FieldName, value);
-        update(listTheme, contentValues, updateBackendless);
+        update(listTheme, contentValues);
     }
 
-    public void update(ListTheme listTheme, String FieldName, long value, boolean updateBackendless) {
+    public void update(ListTheme listTheme, String FieldName, long value) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(FieldName, value);
-        update(listTheme, contentValues, updateBackendless);
+        update(listTheme, contentValues);
     }
 
-    public void update(ListTheme listTheme, String FieldName, String value, boolean updateBackendless) {
+    public void update(ListTheme listTheme, String FieldName, String value) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(FieldName, value);
-        update(listTheme, contentValues, updateBackendless);
+        update(listTheme, contentValues);
     }
 
-    public int toggle(ListTheme listTheme, String fieldName, boolean updateBackendless) {
+    public int toggle(ListTheme listTheme, String fieldName) {
         int result = 0;
         ListTheme currentListTheme = getListThemeByUuid(listTheme.getUuid());
         if (currentListTheme == null) {
@@ -571,7 +567,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
                     result--;
                 }
                 cv.put(ListThemesSqlTable.COL_BOLD, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListThemesSqlTable.COL_CHECKED:
@@ -582,7 +578,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
                     result--;
                 }
                 cv.put(ListThemesSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListThemesSqlTable.COL_DEFAULT_THEME:
@@ -593,18 +589,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
                     result--;
                 }
                 cv.put(ListThemesSqlTable.COL_DEFAULT_THEME, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
-                break;
-
-            case ListThemesSqlTable.COL_THEME_DIRTY:
-                newValue = !currentListTheme.isThemeDirty();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListThemesSqlTable.COL_MARKED_FOR_DELETION:
@@ -615,7 +600,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
                     result--;
                 }
                 cv.put(ListThemesSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListThemesSqlTable.COL_TRANSPARENT:
@@ -626,7 +611,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
                     result--;
                 }
                 cv.put(ListThemesSqlTable.COL_TRANSPARENT, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListThemesSqlTable.COL_STRUCK_OUT:
@@ -637,7 +622,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
                     result--;
                 }
                 cv.put(ListThemesSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             default:
@@ -665,7 +650,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
     }
 
     @Override
-    public int applyTextSizeAndMarginsToAllListThemes(ListTheme sourceListTheme, boolean updateBackendless) {
+    public int applyTextSizeAndMarginsToAllListThemes(ListTheme sourceListTheme) {
         int numberOfUpdatedListThemes = 0;
         // retrieve all ListThemes
         List<ListTheme> allListThemes = retrieveAllListThemes(false);
@@ -689,7 +674,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository_interface {
         listTheme.setHorizontalPaddingInDp(sourceListTheme.getHorizontalPaddingInDp());
         listTheme.setVerticalPaddingInDp(sourceListTheme.getVerticalPaddingInDp());
 
-        if (update(listTheme, cv, true)) {
+        if (update(listTheme, cv)) {
             result++;
         }
         return result;

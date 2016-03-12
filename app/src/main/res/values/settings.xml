@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="syncDurationTitles">
+        <item>Always</item>
+        <item>Never</item>
+        <item>1-hour</item>
+        <item>2-hours</item>
+        <item>4-hours</item>
+        <item>6-hours</item>
+        <item>24-hours</item>
+    </string-array>
+
+    <string-array name="syncDurationValues">
+        <item>0</item>
+        <item>-1</item>
+        <item>3600000</item>
+        <item>7200000</item>
+        <item>14400000</item>
+        <item>21600000</item>
+        <item>172800000</item>
+    </string-array>
+
+
+</resources>

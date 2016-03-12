@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveListTheme_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemeActivityPresenter;
 
@@ -18,14 +18,14 @@ public class ListThemeActivityPresenter_Impl extends AbstractPresenter implement
         RetrieveListTheme_Interactor.Callback {
 
     private ListThemeActivityPresenter.ListThemeActivityView mView;
-    private ListThemeRepository_interface mListThemeRepository;
+    private ListThemeRepository mListThemeRepository;
 
     private RetrieveListTheme_InBackground mRetrieveListTheme_InBackground;
 
     public ListThemeActivityPresenter_Impl(Executor executor,
                                            MainThread mainThread,
                                            ListThemeActivityPresenter.ListThemeActivityView view,
-                                           ListThemeRepository_interface listThemeRepository,
+                                           ListThemeRepository listThemeRepository,
                                            String listThemeUuid) {
         super(executor, mainThread);
         mView = view;

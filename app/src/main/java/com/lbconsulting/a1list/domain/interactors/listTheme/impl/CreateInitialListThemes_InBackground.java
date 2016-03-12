@@ -9,8 +9,12 @@ import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes_Interactor;
+import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
+import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 
 import java.util.List;
 
@@ -22,21 +26,35 @@ import timber.log.Timber;
 public class CreateInitialListThemes_InBackground extends AbstractInteractor implements CreateInitialListThemes_Interactor {
 
     private final Callback mCallback;
-    private final ListThemeRepository_interface mListThemeRepository;
+    private final AppSettingsRepository mAppSettingsRepository;
+    private final ListThemeRepository mListThemeRepository;
+    private final ListTitleRepository mListTitleRepository;
     private final Context mContext;
 
     public CreateInitialListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                Callback callback, ListThemeRepository_interface listThemeRepository,
+                                                Callback callback, AppSettingsRepository appSettingsRepository,
+                                                ListThemeRepository listThemeRepository,
+                                                ListTitleRepository listTitleRepository,
                                                 Context context) {
         super(threadExecutor, mainThread);
         mCallback = callback;
+        mAppSettingsRepository = appSettingsRepository;
         mListThemeRepository = listThemeRepository;
+        mListTitleRepository = listTitleRepository;
         mContext = context;
     }
 
     @Override
     public void run() {
         try {
+            // create app settings
+            AppSettings appSettings = AppSettings.newInstance();
+            AppSettings appSettingsResponse = mAppSettingsRepository.insert(appSettings);
+            if (appSettingsResponse == null) {
+                Timber.e("run(): FAILED to create AppSettings!");
+            }
+
+
             // create initial ListThemes
             int requestedListThemeCount = 0;
             int newBackendlessListThemeCount = 0;
@@ -47,7 +65,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
             newListTheme = ListTheme.newInstance("Genoa",
                     Color.parseColor("#4c898e"), Color.parseColor("#125156"),
                     ContextCompat.getColor(mContext, R.color.white),
-                    17f, 10f, 10f, false, false, true);
+                    17f, 10f, 10f, false, false, false);
             requestedListThemeCount++;
             ListTheme response = mListThemeRepository.insert(newListTheme);
             if (response != null) {
@@ -233,6 +251,71 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
             if (response != null) {
                 newBackendlessListThemeCount++;
             }
+
+
+            // TODO: Remove List Creation
+            ListTitle newListTitle = ListTitle.newInstance("List A", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+            newListTitle = ListTitle.newInstance("List B", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List C", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List D", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List E", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List F", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List G", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List H", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List I", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List J", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List K", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List L", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List M", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List N", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List O", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
+
+            newListTitle = ListTitle.newInstance("List P", mListThemeRepository.retrieveDefaultListTheme(), mAppSettingsRepository);
+            mListTitleRepository.insert(newListTitle);
+
 
             final List<ListTheme> allListThemes = mListThemeRepository.retrieveAllListThemes(false);
             String createdListThemeMessage;

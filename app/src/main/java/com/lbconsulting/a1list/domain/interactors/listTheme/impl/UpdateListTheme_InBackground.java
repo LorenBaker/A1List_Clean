@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.UpdateListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
 /**
  * An interactor that retrieves all ListThemes
@@ -13,11 +13,11 @@ import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface
 public class UpdateListTheme_InBackground extends AbstractInteractor implements UpdateListTheme_Interactor {
 
     private final Callback mCallback;
-    private final ListThemeRepository_interface mListThemeRepository;
+    private final ListThemeRepository mListThemeRepository;
     private final ListTheme mListTheme;
 
     public UpdateListTheme_InBackground(Executor threadExecutor, MainThread mainThread,
-                                        Callback callback, ListThemeRepository_interface listThemeRepository,
+                                        Callback callback, ListThemeRepository listThemeRepository,
                                         ListTheme listTheme) {
         super(threadExecutor, mainThread);
 
@@ -36,7 +36,7 @@ public class UpdateListTheme_InBackground extends AbstractInteractor implements 
         }
 
         // update the provided ListThem in the SQLite db
-        if (mListThemeRepository.update(mListTheme, true)) {
+        if (mListThemeRepository.update(mListTheme)) {
             String msg = String.format("\"%s\" successfully updated.", mListTheme.getName());
             postRetrievedListTheme(msg);
         } else {

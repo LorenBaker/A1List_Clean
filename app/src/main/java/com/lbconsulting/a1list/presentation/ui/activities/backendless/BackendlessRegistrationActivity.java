@@ -108,6 +108,11 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
         txtEmail.setText(extras.getString("email"));
         txtPassword.setText(extras.getString("password"));
 
+        // TODO: Remove hard coded name and password
+        txtFirstName.setText("Loren");
+        txtLastName.setText("Baker");
+        txtReenteredPassword.setText("BEprmbaker5493");
+
         Button mRegistrationButton = (Button) findViewById(R.id.email_register_button);
         mRegistrationButton.setOnClickListener(new OnClickListener() {
             @Override

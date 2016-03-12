@@ -7,7 +7,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.DeleteStruckOutListTitles_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
 import java.util.Date;
@@ -22,11 +22,11 @@ public class DeleteStruckOutListTitles_InBackground extends AbstractInteractor i
 
 
     private final Callback mCallback;
-    private final ListTitleRepository_interface mListTitleRepository;
+    private final ListTitleRepository mListTitleRepository;
 
 
     public DeleteStruckOutListTitles_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                  Callback callback, ListTitleRepository_interface listTitleRepository) {
+                                                  Callback callback, ListTitleRepository listTitleRepository) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;

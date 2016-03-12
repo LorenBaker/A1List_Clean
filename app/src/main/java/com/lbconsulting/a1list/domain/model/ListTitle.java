@@ -1,5 +1,7 @@
 package com.lbconsulting.a1list.domain.model;
 
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -18,7 +20,6 @@ public class ListTitle {
     private ListTheme listTheme;
     private boolean checked;
     private boolean forceViewInflation;
-    private boolean listTitleDirty;
     private boolean markedForDeletion;
     private boolean sortListItemsAlphabetically;
     private boolean struckOut;
@@ -26,6 +27,7 @@ public class ListTitle {
     private String listLockString;
     private boolean listLocked;
     private boolean listPrivateToThisDevice;
+    private long listItemLastSortKey;
 
     private int firstVisiblePosition;
     private int listViewTop;
@@ -37,7 +39,7 @@ public class ListTitle {
         // A default constructor.
     }
 
-    public static ListTitle newInstance(String name, ListTheme defaultListTheme){
+    public static ListTitle newInstance(String name, ListTheme defaultListTheme, AppSettingsRepository appSettings){
         ListTitle newListTitle = new ListTitle();
 
         String newUuid = UUID.randomUUID().toString();
@@ -49,12 +51,12 @@ public class ListTitle {
         newListTitle.setListTheme(defaultListTheme);
         newListTitle.setChecked(false);
         newListTitle.setForceViewInflation(false);
-        newListTitle.setListTitleDirty(true);
         newListTitle.setMarkedForDeletion(false);
-        newListTitle.setManualSortKey(-1l);
+        newListTitle.setManualSortKey(appSettings.retrieveListTitleNextSortKey());
         newListTitle.setSortListItemsAlphabetically(true);
         newListTitle.setListLockString(LIST_NOT_LOCK);
         newListTitle.setListPrivateToThisDevice(false);
+        newListTitle.setListItemLastSortKey(0);
         newListTitle.setFirstVisiblePosition(-1);
         newListTitle.setListViewTop(0);
 
@@ -108,14 +110,6 @@ public class ListTitle {
 
     public void setForceViewInflation(boolean forceViewInflation) {
         this.forceViewInflation = forceViewInflation;
-    }
-
-    public boolean isListTitleDirty() {
-        return listTitleDirty;
-    }
-
-    public void setListTitleDirty(boolean listTitleDirty) {
-        this.listTitleDirty = listTitleDirty;
     }
 
     public boolean isMarkedForDeletion() {
@@ -172,6 +166,14 @@ public class ListTitle {
 
     public void setListLocked(boolean listLocked) {
         this.listLocked = listLocked;
+    }
+
+    public long getListItemLastSortKey() {
+        return listItemLastSortKey;
+    }
+
+    public void setListItemLastSortKey(long listItemLastSortKey) {
+        this.listItemLastSortKey = listItemLastSortKey;
     }
 
     public boolean isListPrivateToThisDevice() {

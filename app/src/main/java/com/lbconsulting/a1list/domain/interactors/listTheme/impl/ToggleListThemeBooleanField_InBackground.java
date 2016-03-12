@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ToggleListThemeBooleanField_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
 /**
  * This is an interactor toggles a ListTheme's strikeout attribute.
@@ -13,14 +13,14 @@ import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_interface
  */
 public class ToggleListThemeBooleanField_InBackground extends AbstractInteractor implements ToggleListThemeBooleanField_Interactor {
 
-    private final ListThemeRepository_interface mListThemeRepository;
+    private final ListThemeRepository mListThemeRepository;
     private ListTheme mListTheme;
     private String mListThemeBooleanField;
     private final Callback mCallback;
 
     public ToggleListThemeBooleanField_InBackground(Executor threadExecutor,
                                                     MainThread mainThread,Callback callback,
-                                                    ListThemeRepository_interface listThemeRepository,
+                                                    ListThemeRepository listThemeRepository,
                                                     ListTheme listTheme, String listThemeBooleanField) {
         super(threadExecutor, mainThread);
         mListThemeRepository = listThemeRepository;
@@ -32,7 +32,7 @@ public class ToggleListThemeBooleanField_InBackground extends AbstractInteractor
     @Override
     public void run() {
         // TODO: Implement this with your business logic
-      int toggleResult=  mListThemeRepository.toggle(mListTheme, mListThemeBooleanField, true);
+      int toggleResult=  mListThemeRepository.toggle(mListTheme, mListThemeBooleanField);
         postToggleResult(toggleResult);
     }
 

@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.UpdateListTitle_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 
 /**
  * An interactor that updates the provided ListTitle in the SQLite. All ListTitle fields are updated.
@@ -13,11 +13,11 @@ import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_interface
 public class UpdateListTitle_InBackground extends AbstractInteractor implements UpdateListTitle_Interactor {
 
     private final Callback mCallback;
-    private final ListTitleRepository_interface mListTitleRepository;
+    private final ListTitleRepository mListTitleRepository;
     private final ListTitle mListTitle;
 
     public UpdateListTitle_InBackground(Executor threadExecutor, MainThread mainThread,
-                                        Callback callback, ListTitleRepository_interface listTitleRepository,
+                                        Callback callback, ListTitleRepository listTitleRepository,
                                         ListTitle listTitle) {
         super(threadExecutor, mainThread);
 
@@ -31,7 +31,7 @@ public class UpdateListTitle_InBackground extends AbstractInteractor implements 
     public void run() {
 
         // update the provided ListThem in the SQLite db
-        if (mListTitleRepository.update(mListTitle, true)) {
+        if (mListTitleRepository.update(mListTitle)) {
             String msg = String.format("\"%s\" successfully updated.", mListTitle.getName());
             postListTitleUpdated(msg);
         } else {

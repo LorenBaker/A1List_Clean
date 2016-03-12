@@ -5,13 +5,11 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,21 +22,14 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.CreateInitialListThemes_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes_Interactor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.impl.CreateNewListTitle_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.CreateNewListTitle_Interactor;
-import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;
-import com.lbconsulting.a1list.presentation.ui.dialogs.dialogNewListTitle;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.CsvParser;
-import com.lbconsulting.a1list.utils.MyEvents;
 import com.lbconsulting.a1list.utils.MySettings;
-
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,8 +39,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity implements CreateInitialListThemes_Interactor.Callback,
-        CreateNewListTitle_Interactor.Callback {
+public class MainActivity extends AppCompatActivity implements CreateInitialListThemes_Interactor.Callback {
     @Bind(R.id.fab)
     FloatingActionButton mFab;
 
@@ -63,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     View mainActivityContent;
 
     @Bind(R.id.activityProgressBar)
-    ProgressBar mProgressBar;
+    View mainActivityProgressBar;
 
     @Bind(R.id.tvActivityProgressBarMessage)
     TextView tvProgressBarMessage;
@@ -71,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     private String MESSAGE_CHANNEL = "";
     private Subscription mSubscription;
 
+    private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
 
@@ -89,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
-        EventBus.getDefault().register(this);
+//        EventBus.getDefault().register(this);
 
 
 //        Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -132,21 +123,22 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         );
         //endregion
 
+        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
         mListThemeRepository = new ListThemeRepository_Impl(this);
         mListTitleRepository = new ListTitleRepository_Impl(this, mListThemeRepository);
         showActiveUser();
     }
 
-    @Subscribe
-    public void onEvent(MyEvents.createNewListTitle event) {
-        if (event.showProgress()) {
-            showProgressBar("Creating new List.");
-        }
-
-        new CreateNewListTitle_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(),  this, event.getName(),
-                mListTitleRepository, mListThemeRepository, event.showProgress()).execute();
-    }
+//    @Subscribe
+//    public void onEvent(MyEvents.createNewListTitle event) {
+//        if (event.showProgress()) {
+//            showProgressBar("Creating new List.");
+//        }
+//
+//        new CreateNewListTitle_InBackground(ThreadExecutor.getInstance(),
+//                MainThreadImpl.getInstance(),  this, event.getName(),mAppSettingsRepository,
+//                mListTitleRepository, mListThemeRepository, event.showProgress()).execute();
+//    }
 
 
     private void updateUI(boolean hideProgressBar) {
@@ -157,17 +149,17 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     }
 
 
-    @Override
-    public void onListTitleCreated(ListTitle newListTitle, boolean hideProgressBar) {
-        Timber.i("onListTitleCreated(): %s.", newListTitle.getName());
-        updateUI(hideProgressBar);
-    }
-
-    @Override
-    public void onListTitleCreationFailed(String errorMessage) {
-        Timber.e("onListTitleCreationFailed(): %s.", errorMessage);
-
-    }
+//    @Override
+//    public void onListTitleCreated(ListTitle newListTitle, boolean hideProgressBar) {
+//        Timber.i("onListTitleCreated(): %s.", newListTitle.getName());
+//        updateUI(hideProgressBar);
+//    }
+//
+//    @Override
+//    public void onListTitleCreationFailed(String errorMessage) {
+//        Timber.e("onListTitleCreationFailed(): %s.", errorMessage);
+//
+//    }
 
     @OnClick(R.id.fab)
     public void fab() {
@@ -199,7 +191,8 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         Timber.i("initializeApp()");
         showProgressBar("Loading initial Themes.");
         new CreateInitialListThemes_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListThemeRepository, this).execute();
+                MainThreadImpl.getInstance(), this, mAppSettingsRepository,
+                mListThemeRepository,mListTitleRepository, this).execute();
     }
 
     @Override
@@ -217,17 +210,17 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     }
 
     private void showProgressBar(String waitMessage) {
-        mProgressBar.setVisibility(View.VISIBLE);
+        mainActivityProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
-        tvProgressBarMessage.setVisibility(View.VISIBLE);
+//        tvProgressBarMessage.setVisibility(View.VISIBLE);
         mainActivityContent.setVisibility(View.GONE);
         // TODO: hide menus
     }
 
     private void hideProgressBar() {
         Timber.i("hideProgressBar()");
-        mProgressBar.setVisibility(View.GONE);
-        tvProgressBarMessage.setVisibility(View.GONE);
+        mainActivityProgressBar.setVisibility(View.GONE);
+//        tvProgressBarMessage.setVisibility(View.GONE);
         mainActivityContent.setVisibility(View.VISIBLE);
         // TODO: show menus
     }
@@ -243,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     protected void onDestroy() {
         super.onDestroy();
         Timber.i("onDestroy()");
-        EventBus.getDefault().unregister(this);
+//        EventBus.getDefault().unregister(this);
 
     }
 
@@ -332,10 +325,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     }
 
     private void createNewList() {
-        FragmentManager fm = getSupportFragmentManager();
-        dialogNewListTitle dialog = dialogNewListTitle.newInstance();
-        dialog.show(fm, "dialogNewListTitle");
-//        Toast.makeText(this, "createNewList clicked", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "createNewList clicked", Toast.LENGTH_SHORT).show();
 
     }
 
@@ -350,8 +340,9 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     }
 
     private void showManageListActivity() {
-        Toast.makeText(this, "showManageListActivity clicked", Toast.LENGTH_SHORT).show();
-
+//        Toast.makeText(this, "showManageListActivity clicked", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, ManageListTitlesActivity.class);
+        startActivity(intent);
     }
 
     private void showManageListThemesActivity() {

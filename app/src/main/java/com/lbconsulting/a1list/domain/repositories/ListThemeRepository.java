@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Repository interface for ListTheme
  */
-public interface ListThemeRepository_interface {
+public interface ListThemeRepository {
 
     //region Create
     ListTheme insert(ListTheme listTheme);
@@ -27,11 +27,11 @@ public interface ListThemeRepository_interface {
 
 
     //region Update
-    boolean update(ListTheme listTheme, ContentValues contentValues, boolean updateBackendless);
-    boolean update(ListTheme listTheme, boolean updateBackendless);
-    int toggle(ListTheme listTheme, String fieldName, boolean updateBackendless);
+    boolean update(ListTheme listTheme, ContentValues contentValues);
+    boolean update(ListTheme listTheme);
+    int toggle(ListTheme listTheme, String fieldName);
     void clearDefaultFlag();
-    int applyTextSizeAndMarginsToAllListThemes(ListTheme listTheme, boolean updateBackendless);
+    int applyTextSizeAndMarginsToAllListThemes(ListTheme listTheme);
 
     //endregion
 

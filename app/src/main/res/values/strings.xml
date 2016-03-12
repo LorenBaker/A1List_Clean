@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">A1List</string>
+    <string name="app_name">A1ListClean</string>
 
     <string name="action_settings">Settings</string>
     <string name="action_logout">Logout</string>
@@ -28,11 +28,13 @@
     <string name="action_deleteListThemeStrikeouts_title">Delete Struck Out List Themes</string>
 
 <!--Strings of button titles-->
+    <string name="btnListTitleName_text">"List Name: %1$s"</string>
     <string name="btnThemeName_text">"Theme Name: %1$s"</string>
     <string name="btnCancel_title">Cancel</string>
     <string name="btnHorizontalMargin_text">"Horizontal Margin: %d"</string>
     <string name="btnOk_title">OK</string>
     <string name="btnApply_title">Apply</string>
+    <string name="btnEnter_title">Enter</string>
     <string name="btnSave_title">Save</string>
     <string name="btnSaveNew_title">Save/New</string>
     <string name="btnSelect_title">Select</string>
@@ -51,7 +53,7 @@
     <string name="dialogSelectTheme_title">Select a Theme</string>
     <string name="createListThemeNameDialog_title">New Theme Name</string>
     <string name="editListThemeNameDialog_title">Edit Theme Name</string>
-
+    <string name="tvListThemeName_text">Theme: %s</string>
 
     <!--Strings related to new or edit ListTitles-->
     <string name="newListITitleDialog_title">Create New List</string>
@@ -77,4 +79,6 @@
     <string name="action_listTitleSorting_title">List Sorting</string>
     <string name="btnLockList_contentDescription">Lock List</string>
     <string name="btnEditListTitle_contentDescription">Edit List Title</string>
+
+
 </resources>

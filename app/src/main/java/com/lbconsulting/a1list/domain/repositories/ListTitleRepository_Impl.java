@@ -23,7 +23,7 @@ import timber.log.Timber;
  * This class provided CRUD operations for ListTitle
  * NOTE: All CRUD operations should run on a background thread
  */
-public class ListTitleRepository_Impl implements ListTitleRepository_interface {
+public class ListTitleRepository_Impl implements ListTitleRepository {
 
     private final int FALSE = 0;
     private final int TRUE = 1;
@@ -44,7 +44,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
         // insert new listTitle into SQLite db
         ListTitle backendlessResponse = null;
         long newListTitleSqlId = -1;
-        listTitle.setListTitleDirty(true);
 
         Uri uri = ListTitlesSqlTable.CONTENT_URI;
         ContentValues cv = new ContentValues();
@@ -57,13 +56,14 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
         cv.put(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION, listTitle.getFirstVisiblePosition());
         cv.put(ListTitlesSqlTable.COL_LIST_VIEW_TOP, listTitle.getListViewTop());
         cv.put(ListTitlesSqlTable.COL_MANUAL_SORT_KEY, listTitle.getManualSortKey());
+        cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, listTitle.getListItemLastSortKey());
         cv.put(ListTitlesSqlTable.COL_LIST_LOCKED_STRING, listTitle.getListLockString());
 
         cv.put(ListTitlesSqlTable.COL_CHECKED, (listTitle.isChecked()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, (listTitle.isForceViewInflation()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, (listTitle.isListLocked()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, (listTitle.isListPrivateToThisDevice()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, (listTitle.isListTitleDirty()) ? TRUE : FALSE);
+        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
         cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, (listTitle.isMarkedForDeletion()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, (listTitle.isSortListItemsAlphabetically()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, (listTitle.isStruckOut()) ? TRUE : FALSE);
@@ -101,9 +101,9 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
     private ListTitle saveListTitleToBackendless(ListTitle listTitle) {
         // saveListTitleToBackendless object synchronously
         ListTitle response = null;
-        String objectId = listTitle.getObjectId();
-        final boolean isNew = objectId == null || objectId.isEmpty();
         try {
+            String objectId = listTitle.getObjectId();
+            boolean isNew = objectId == null || objectId.isEmpty();
             response = Backendless.Data.of(ListTitle.class).save(listTitle);
             Timber.i("saveListTitleToBackendless(): successfully saved \"%s\" to Backendless.", response.getName());
             // Update the SQLite db: set dirty to false, and updated date and time
@@ -123,25 +123,26 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
                 cv.put(ListTitlesSqlTable.COL_OBJECT_ID, response.getObjectId());
             }
             // update the SQLite db ... but don't send changes to Backendless
-            update(response, cv, false);
+            updateSQLiteDb(response, cv);
 
         } catch (BackendlessException e) {
-            listTitle.setListTitleDirty(true);
             Timber.e("saveListTitleToBackendless(): FAILED to save \"%s\" to Backendless. BackendlessException: Code: %s; Message: %s.",
                     listTitle.getName(), e.getCode(), e.getMessage());
             // Set dirty flag to true in SQLite db
-            setSQLiteDirtyFlag(listTitle, TRUE);
+            ContentValues cv = new ContentValues();
+            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+            updateSQLiteDb(listTitle, cv);
 
+        } catch (Exception e) {
+            Timber.e("saveAppSettingsToBackendless(): Exception: %s.", e.getMessage());
+            // Set dirty flag to true in SQLite db
+            ContentValues cv = new ContentValues();
+            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+            updateSQLiteDb(listTitle, cv);
         }
         return response;
     }
 
-    private void setSQLiteDirtyFlag(ListTitle listTitle, int dirtyFlag) {
-        ContentValues cv = new ContentValues();
-        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, dirtyFlag);
-        update(listTitle, cv, false);
-    }
-    //endregion
 
     //region Read
     @Override
@@ -180,6 +181,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
 
         listTitle.setListLockString(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_LOCKED_STRING)));
         listTitle.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_MANUAL_SORT_KEY)));
+        listTitle.setListItemLastSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY)));
+
         listTitle.setFirstVisiblePosition(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION)));
         listTitle.setListViewTop(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_VIEW_TOP)));
 
@@ -196,7 +199,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
         listTitle.setUpdated(updated);
         // since above set methods set ListTitleDirty to true, this statement must be last set statement
         // so that the cursor's themeDirty prevails
-        listTitle.setListTitleDirty(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY)) > 0);
+//        listTitle.setListTitleDirty(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY)) > 0);
 
         return listTitle;
     }
@@ -240,7 +243,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
                 cursor.close();
             }
         }
-
         return listTitles;
     }
 
@@ -360,6 +362,32 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
         return struckOutListTitles;
     }
 
+    @Override
+    public long retrieveListItemNextSortKey() {
+                ListTitle listTitle = null;
+        long listItemNextSortKey = 0;
+
+        Cursor cursor = getListTitleCursorByUuid(listTitle.getUuid());
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            listTitle = listTitleFromCursor(cursor);
+            listItemNextSortKey = listTitle.getListItemLastSortKey() + 1;
+            listTitle.setListItemLastSortKey(listItemNextSortKey);
+        }
+        if (cursor != null && !cursor.isClosed()) {
+            cursor.close();
+        }
+        setListItemLastSortKey(listTitle, listItemNextSortKey);
+        return listItemNextSortKey;
+    }
+
+    @Override
+    public void setListItemLastSortKey(ListTitle listTitle, long sortKey) {
+        ContentValues cv = new ContentValues();
+        cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, sortKey);
+        update(listTitle, cv);
+    }
+
     private ListTitle getListTitle(String listTitleName) {
         ListTitle result = null;
         Cursor cursor = null;
@@ -403,7 +431,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
         return isValidName;
     }
 
-    public boolean isValidListTitleName( String proposedListTitleName) {
+    public boolean isValidListTitleName(String proposedListTitleName) {
         boolean isValidName = false;
         ListTitle listTitleFromName = getListTitle(proposedListTitleName);
         if (listTitleFromName == null) {
@@ -415,32 +443,14 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
     //endregion
 
     @Override
-    public boolean update(ListTitle listTitle, ContentValues contentValues, boolean updateBackendless) {
+    public boolean update(ListTitle listTitle, ContentValues cv) {
+
         boolean result = false;
         try {
-            Uri uri = ListTitlesSqlTable.CONTENT_URI;
-            String selection = ListTitlesSqlTable.COL_UUID + " = ?";
-            String[] selectionArgs = new String[]{listTitle.getUuid()};
-            ContentResolver cr = mContext.getContentResolver();
+            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+            int numberOfRecordsUpdated = updateSQLiteDb(listTitle, cv);
 
-            if (contentValues.containsKey(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY)) {
-                // If contentValues more than one key/value pair,
-                // make sure that the theme dirty field is set to true.
-                if (contentValues.size() > 1) {
-                    contentValues.remove(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY);
-                    contentValues.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-                }
-                // If contentValues has only one key/value pair (e.g. the theme dirty field,
-                // then don't change the theme dirty field.
-            } else {
-                // contentValues do not contain the theme dirty field ... so add it
-                contentValues.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-            }
-
-            int numberOfRecordsUpdated = cr.update(uri, contentValues, selection, selectionArgs);
-            if (numberOfRecordsUpdated < 1) {
-                Timber.e("update(): Error trying to update SQLite db: %s", listTitle.toString());
-            } else if (updateBackendless && CommonMethods.isNetworkAvailable()) {
+            if (numberOfRecordsUpdated == 1 && CommonMethods.isNetworkAvailable()) {
                 result = true;
                 saveListTitleToBackendless(listTitle);
                 // TODO: Send update message to other devices
@@ -450,13 +460,34 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
         }
 
         return result;
+
+    }
+
+    private int updateSQLiteDb(ListTitle listTitle, ContentValues cv) {
+        int numberOfRecordsUpdated = 0;
+        try {
+            Uri uri = ListTitlesSqlTable.CONTENT_URI;
+            String selection = ListTitlesSqlTable.COL_UUID + " = ?";
+            String[] selectionArgs = new String[]{listTitle.getUuid()};
+            ContentResolver cr = mContext.getContentResolver();
+            numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
+
+        } catch (Exception e) {
+            Timber.e("updateSQLiteDb(): Exception: %s.", e.getMessage());
+        }
+        if (numberOfRecordsUpdated != 1) {
+            Timber.e("updateSQLiteDb(): Error updating ListTitle with uuid = %s", listTitle.getUuid());
+        }
+        return numberOfRecordsUpdated;
+
     }
 
     @Override
-    public boolean update(ListTitle listTitle, boolean updateBackendless) {
+    public boolean update(ListTitle listTitle) {
         ContentValues cv = new ContentValues();
 
         cv.put(ListTitlesSqlTable.COL_NAME, listTitle.getName());
+        cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListTheme().getUuid());
 
         cv.put(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION, listTitle.getFirstVisiblePosition());
         cv.put(ListTitlesSqlTable.COL_LIST_VIEW_TOP, listTitle.getListViewTop());
@@ -467,17 +498,17 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
         cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, (listTitle.isForceViewInflation()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, (listTitle.isListLocked()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, (listTitle.isListPrivateToThisDevice()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, (listTitle.isListTitleDirty()) ? TRUE : FALSE);
+        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
         cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, (listTitle.isMarkedForDeletion()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, (listTitle.isSortListItemsAlphabetically()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, (listTitle.isStruckOut()) ? TRUE : FALSE);
 
-        return update(listTitle, cv, updateBackendless);
+        return update(listTitle, cv);
     }
 
 
     @Override
-    public int toggle(ListTitle listTheme, String fieldName, boolean updateBackendless) {
+    public int toggle(ListTitle listTheme, String fieldName) {
         int result = 0;
         ListTitle currentListTitle = getListTitleByUuid(listTheme.getUuid());
         if (currentListTitle == null) {
@@ -497,7 +528,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION:
@@ -508,7 +539,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListTitlesSqlTable.COL_LIST_LOCKED:
@@ -519,7 +550,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE:
@@ -530,18 +561,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
-                break;
-
-            case ListTitlesSqlTable.COL_LIST_TITLE_DIRTY:
-                newValue = !currentListTitle.isListTitleDirty();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListTitlesSqlTable.COL_MARKED_FOR_DELETION:
@@ -552,7 +572,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListTitlesSqlTable.COL_SORT_ALPHABETICALLY:
@@ -563,7 +583,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             case ListTitlesSqlTable.COL_STRUCK_OUT:
@@ -574,7 +594,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
-                update(listTheme, cv, updateBackendless);
+                update(listTheme, cv);
                 break;
 
             default:
@@ -585,13 +605,13 @@ public class ListTitleRepository_Impl implements ListTitleRepository_interface {
     }
 
     @Override
-    public void replaceListTheme(ListTheme deletedListTheme, ListTheme defaultListTheme, boolean updateBackendless) {
+    public void replaceListTheme(ListTheme deletedListTheme, ListTheme defaultListTheme) {
         // retrieve all ListTitles that use the deleted ListTheme
         List<ListTitle> listTitles = retrieveAllListTitles(deletedListTheme);
         for (ListTitle listTitle : listTitles) {
             ContentValues cv = new ContentValues();
             cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, defaultListTheme.getUuid());
-            update(listTitle, cv, updateBackendless);
+            update(listTitle, cv);
         }
     }
 

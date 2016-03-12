@@ -1,6 +1,7 @@
 package com.lbconsulting.a1list.presentation.ui.dialogs;
 
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -16,8 +17,9 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
-import com.lbconsulting.a1list.domain.model.ListTheme;
+import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.utils.MyEvents;
@@ -28,37 +30,33 @@ import timber.log.Timber;
 
 
 /**
- * A dialog where the user creates a new ListTitle
+ * A dialog where the user edits an existing ListTitle Name
  */
-public class dialogNewListTitle extends DialogFragment {
+public class dialogEditListTitleName extends DialogFragment {
 
-    //    public static final int SOURCE_MAIN_ACTIVITY = 1;
-//    public static final int SOURCE_MANAGE_LISTS_ACTIVITY = 2;
-//    private static final String ARG_CALLING_ACTIVITY = "argCallingActivity";
-    private static final String ARG_LIST_THEME_UUID = "argListThemeUuid";
+    private static final String ARG_LIST_TITLE_JSON = "argListTitleJson";
+
+
 
     private EditText txtListTitleName;
     private TextInputLayout txtListTitleName_input_layout;
 
-    private AlertDialog mCreateListTitleDialog;
-    private int mCallingActivity;
+    private AlertDialog mEditListTitleDialog;
     private ListTitleRepository_Impl mListTitleRepository;
-    private ListThemeRepository_Impl mListThemeRepository;
-    private ListTheme mListTheme;
+    private ListTitle mListTitle;
 
-    public dialogNewListTitle() {
+    public dialogEditListTitleName() {
         // Empty constructor required for DialogFragment
     }
 
 
-    public static dialogNewListTitle newInstance() {
+    public static dialogEditListTitleName newInstance(String listTitleJson) {
         Timber.i("newInstance()");
-        return new dialogNewListTitle();
-//        Bundle args = new Bundle();
-//        args.putInt(ARG_CALLING_ACTIVITY, callingActivity);
-//        args.putString(ARG_LIST_THEME_UUID, listThemeUuid);
-//        frag.setArguments(args);
-//        return frag;
+        dialogEditListTitleName frag = new dialogEditListTitleName();
+        Bundle args = new Bundle();
+        args.putString(ARG_LIST_TITLE_JSON, listTitleJson);
+        frag.setArguments(args);
+        return frag;
     }
 
     @Override
@@ -66,21 +64,18 @@ public class dialogNewListTitle extends DialogFragment {
         super.onCreate(savedInstanceState);
         Timber.i("onCreate()");
 
-        mListThemeRepository = new ListThemeRepository_Impl(getActivity());
-        mListTitleRepository = new ListTitleRepository_Impl(getActivity(), mListThemeRepository);
+        ListThemeRepository_Impl listThemeRepository = new ListThemeRepository_Impl(getActivity());
+        mListTitleRepository = new ListTitleRepository_Impl(getActivity(), listThemeRepository);
 
-//        Bundle args = getArguments();
-//        if (args.containsKey(ARG_CALLING_ACTIVITY)) {
-//            mCallingActivity = args.getInt(ARG_CALLING_ACTIVITY);
-//        }
-//
-//        if (args.containsKey(ARG_LIST_THEME_UUID)) {
-//            String listThemeUuid = args.getString(ARG_LIST_THEME_UUID);
-//            mListTheme = mListThemeRepository.getListThemeByUuid(listThemeUuid);
-//            if (mListTheme == null) {
-//                Timber.e("onCreate(): Unable to retrieve ListTheme with UUID = %s.", listThemeUuid);
-//            }
-//        }
+        Bundle args = getArguments();
+        if (args.containsKey(ARG_LIST_TITLE_JSON)) {
+            String listTitleJson = args.getString(ARG_LIST_TITLE_JSON);
+            Gson gson = new Gson();
+            mListTitle = gson.fromJson(listTitleJson, ListTitle.class);
+            if (mListTitle == null) {
+                Timber.e("onCreate(): FAILED to retrieve ListTitle");
+            }
+        }
     }
 
     @Override
@@ -88,23 +83,23 @@ public class dialogNewListTitle extends DialogFragment {
         super.onActivityCreated(savedInstanceState);
         Timber.i("onActivityCreated()");
         getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-        mCreateListTitleDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+        mEditListTitleDialog.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface dialog) {
-                Button positiveButton = mCreateListTitleDialog.getButton(Dialog.BUTTON_POSITIVE);
+                Button positiveButton = mEditListTitleDialog.getButton(Dialog.BUTTON_POSITIVE);
                 positiveButton.setTextSize(17);
                 positiveButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(final View v) {
-                        String proposedNewListTitleName = txtListTitleName.getText().toString().trim();
-                        if (okToCreateNewListTitle(proposedNewListTitleName)) {
-                            EventBus.getDefault().post(new MyEvents.createNewListTitle(proposedNewListTitleName, true));
+                        String proposedListTitleName = txtListTitleName.getText().toString().trim();
+                        if (reviseListName(proposedListTitleName)) {
+                            EventBus.getDefault().post(new MyEvents.setListTitleName(proposedListTitleName));
                             dismiss();
                         }
                     }
                 });
 
-                Button negativeButton = mCreateListTitleDialog.getButton(Dialog.BUTTON_NEGATIVE);
+                Button negativeButton = mEditListTitleDialog.getButton(Dialog.BUTTON_NEGATIVE);
                 negativeButton.setTextSize(17);
                 negativeButton.setOnClickListener(new View.OnClickListener() {
 
@@ -115,35 +110,25 @@ public class dialogNewListTitle extends DialogFragment {
                     }
                 });
 
-                Button neutralButton = mCreateListTitleDialog.getButton(Dialog.BUTTON_NEUTRAL);
-                neutralButton.setTextSize(17);
-                neutralButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(final View v) {
-                        String proposedNewListTitleName = txtListTitleName.getText().toString().trim();
-                        if (okToCreateNewListTitle(proposedNewListTitleName)) {
-                            EventBus.getDefault().post(new MyEvents.createNewListTitle(proposedNewListTitleName, false));
-                            txtListTitleName.setText("");
-                        }
-                    }
-                });
             }
         });
     }
 
-    private boolean okToCreateNewListTitle(String newListName) {
+    private boolean reviseListName(String proposedListTitleName) {
         boolean result = false;
-        if (newListName.isEmpty()) {
+        // TODO: implement reviseListName
+        if (proposedListTitleName.isEmpty()) {
             String errorMsg = getActivity().getString(R.string.newListTitleName_isEmpty_error);
             txtListTitleName_input_layout.setError(errorMsg);
 
-        } else if (!mListTitleRepository.isValidListTitleName(newListName)) {
+        } else if (!mListTitleRepository.isValidListTitleName(mListTitle,proposedListTitleName)) {
             String errorMsg = String.format(getActivity()
-                    .getString(R.string.newListTitleName_listExists_error), newListName);
+                    .getString(R.string.newListTitleName_listExists_error), proposedListTitleName);
             txtListTitleName_input_layout.setError(errorMsg);
 
         } else {
-            // ok to create list
+            // ok to revise ListTitle name.
+            mListTitle.setName(proposedListTitleName);
             result = true;
         }
         return result;
@@ -157,10 +142,12 @@ public class dialogNewListTitle extends DialogFragment {
 
         // inflate the xml layout
         LayoutInflater inflater = getActivity().getLayoutInflater();
-        View view = inflater.inflate(R.layout.dialog_single_edit_text, null, false);
+//        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.dialog_single_edit_text, null, false);
+        @SuppressLint("InflateParams") View view = inflater.inflate(R.layout.dialog_single_edit_text, null);
 
         // find the dialog's views
         txtListTitleName = (EditText) view.findViewById(R.id.txtName);
+        txtListTitleName.setText(mListTitle.getName());
         txtListTitleName_input_layout = (TextInputLayout) view.findViewById(R.id.txtName_input_layout);
         txtListTitleName_input_layout.setHint(getActivity().getString(R.string.txtListTitleName_hint));
         txtListTitleName.addTextChangedListener(new TextWatcher() {
@@ -181,15 +168,14 @@ public class dialogNewListTitle extends DialogFragment {
         });
 
         // build the dialog
-        mCreateListTitleDialog = new AlertDialog.Builder(getActivity())
-                .setTitle(R.string.newListTitleDialog_title)
+        mEditListTitleDialog = new AlertDialog.Builder(getActivity())
+                .setTitle(" ")
                 .setView(view)
-                .setPositiveButton(R.string.btnSave_title, null)
+                .setPositiveButton(R.string.btnEnter_title, null)
                 .setNegativeButton(R.string.btnCancel_title, null)
-                .setNeutralButton(R.string.btnSaveNew_title, null)
                 .create();
 
-        return mCreateListTitleDialog;
+        return mEditListTitleDialog;
     }
 
 }

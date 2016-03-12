@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/llContentListTitleSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <!--style="?android:attr/borderlessButtonStyle"-->
+        <Button
+            android:id="@+id/btnListTitleName"
+            android:textAllCaps="false"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start|center_vertical"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="List Name: " />
+
+        <Spinner
+            android:id="@+id/spnListTitles"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+
+        <RadioGroup
+            android:id="@+id/groupListSorting"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sort List"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="2dp"
+                android:background="@android:color/darker_gray"
+                android:visibility="visible" />
+
+            <RadioButton
+                android:id="@+id/rbSortAlphabetically"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Alphabetically"/>
+
+            <RadioButton
+                android:id="@+id/rbSortManually"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Manually"/>
+
+        </RadioGroup>
+
+        <RadioGroup
+            android:id="@+id/groupListPrivate"
+            android:layout_marginTop="@dimen/activity_vertical_margin"
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="List private to this device?"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="2dp"
+                android:background="@android:color/darker_gray"
+                android:visibility="visible" />
+
+            <RadioButton
+                android:id="@+id/rbPrivateList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Yes"/>
+
+            <RadioButton
+                android:id="@+id/rbPublicList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No"/>
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+</ScrollView>
