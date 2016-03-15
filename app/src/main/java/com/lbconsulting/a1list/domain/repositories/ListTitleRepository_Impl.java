@@ -360,11 +360,11 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     }
 
     @Override
-    public long retrieveListItemNextSortKey() {
+    public long retrieveListItemNextSortKey(String listTitleUuid) {
         ListTitle listTitle = null;
         long listItemNextSortKey = 0;
 
-        Cursor cursor = getListTitleCursorByUuid(listTitle.getUuid());
+        Cursor cursor = getListTitleCursorByUuid(listTitleUuid);
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
             listTitle = listTitleFromCursor(cursor);
@@ -374,7 +374,9 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         if (cursor != null && !cursor.isClosed()) {
             cursor.close();
         }
-        setListItemLastSortKey(listTitle, listItemNextSortKey);
+        if (listTitle != null) {
+            setListItemLastSortKey(listTitle, listItemNextSortKey);
+        }
         return listItemNextSortKey;
     }
 
@@ -445,6 +447,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     public boolean update(ListTitle listTitle) {
         ContentValues cv = new ContentValues();
 
+
         cv.put(ListTitlesSqlTable.COL_NAME, listTitle.getName());
         cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListTheme().getUuid());
 
@@ -452,12 +455,12 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         cv.put(ListTitlesSqlTable.COL_LIST_VIEW_TOP, listTitle.getListViewTop());
         cv.put(ListTitlesSqlTable.COL_MANUAL_SORT_KEY, listTitle.getManualSortKey());
         cv.put(ListTitlesSqlTable.COL_LIST_LOCKED_STRING, listTitle.getListLockString());
+        cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, listTitle.getListItemLastSortKey());
 
         cv.put(ListTitlesSqlTable.COL_CHECKED, (listTitle.isChecked()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, (listTitle.isForceViewInflation()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, (listTitle.isListLocked()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, (listTitle.isListPrivateToThisDevice()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
         cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, (listTitle.isMarkedForDeletion()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, (listTitle.isSortListItemsAlphabetically()) ? TRUE : FALSE);
         cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, (listTitle.isStruckOut()) ? TRUE : FALSE);

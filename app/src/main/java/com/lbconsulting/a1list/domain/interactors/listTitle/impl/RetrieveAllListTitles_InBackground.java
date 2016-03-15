@@ -35,7 +35,7 @@ public class RetrieveAllListTitles_InBackground extends AbstractInteractor imple
         // check if we have failed to retrieve any ListTitles
         if (allListTitles == null || allListTitles.size() == 0) {
             // notify the failure on the main thread
-            notifyError();
+            postAllListTitlesRetrievalFailed();
         } else {
             // we have retrieved all ListTitles. Notify the UI on the main thread.
             postAllListTitlesRetrieved(allListTitles);
@@ -51,7 +51,7 @@ public class RetrieveAllListTitles_InBackground extends AbstractInteractor imple
         });
     }
 
-    private void notifyError() {
+    private void postAllListTitlesRetrievalFailed() {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {

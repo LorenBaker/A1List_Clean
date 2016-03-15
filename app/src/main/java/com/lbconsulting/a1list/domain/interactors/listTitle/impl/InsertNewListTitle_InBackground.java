@@ -46,10 +46,10 @@ public class InsertNewListTitle_InBackground extends AbstractInteractor implemen
             new SaveAppSettingsToBackendless_InBackground(mThreadExecutor, mMainThread, dirtyAppSettings, this).execute();
 
             String successMessage = String.format("Successfully inserted \"%s\" into SQLite db.",mNewListTitle.getName());
-            postListTitleCreated(successMessage);
+            postListTitleInsertedIntoSQLiteDb(successMessage);
         }else{
             String errorMessage = String.format("FAILED to insert \"%s\" into SQLite db.",mNewListTitle.getName());
-            postListTitleCreated(errorMessage);
+            postListTitleInsertedIntoSQLiteDb(errorMessage);
         }
     }
     @Override
@@ -62,7 +62,7 @@ public class InsertNewListTitle_InBackground extends AbstractInteractor implemen
         Timber.e("onAppSettingsSavedToBackendless(): %s.", errorMessage);
     }
 
-    private void postListTitleCreated(final String successMessage) {
+    private void postListTitleInsertedIntoSQLiteDb(final String successMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
@@ -71,7 +71,7 @@ public class InsertNewListTitle_InBackground extends AbstractInteractor implemen
         });
     }
 
-    private void notifyError(final String errorMessage) {
+    private void postListTitleInsertionIntoSQLiteDbFailed(final String errorMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {

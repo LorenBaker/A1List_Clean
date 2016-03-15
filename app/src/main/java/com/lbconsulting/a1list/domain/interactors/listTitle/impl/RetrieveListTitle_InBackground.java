@@ -35,7 +35,7 @@ public class RetrieveListTitle_InBackground extends AbstractInteractor implement
         // check if we have failed to retrieve the ListTitle
         if (listTitle == null) {
             // notify the failure on the main thread
-            notifyError("Unable to retrieve ListTitle with ID = " + mListTitleUuid);
+            postListTitleRetrievalFailed("Unable to retrieve ListTitle with ID = " + mListTitleUuid);
         } else {
             // we have retrieved the original ListTitles. Now clone it.
                         postListTitleRetrieved(listTitle);
@@ -51,7 +51,7 @@ public class RetrieveListTitle_InBackground extends AbstractInteractor implement
         });
     }
 
-    private void notifyError(final String message) {
+    private void postListTitleRetrievalFailed(final String message) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {

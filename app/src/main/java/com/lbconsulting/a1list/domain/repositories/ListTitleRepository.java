@@ -10,11 +10,8 @@ import java.util.List;
  */
 public interface ListTitleRepository {
 
-    //region Create
     boolean insert(ListTitle listTitle);
-    //endregion
 
-    //region Read
     ListTitle getListTitleByUuid(String uuid);
 
     List<ListTitle> retrieveAllListTitles(boolean isMarkedForDeletion);
@@ -23,14 +20,9 @@ public interface ListTitleRepository {
 
     int getNumberOfStruckOutListTitles();
 
-    long retrieveListItemNextSortKey();
+    long retrieveListItemNextSortKey(String listTitleUuid);
 
     void setListItemLastSortKey(ListTitle listTitle, long sortKey);
-    //endregion
-
-
-    //region Update
-//    boolean update(ListTitle listTitle, ContentValues contentValues);
 
     boolean update(ListTitle listTitle);
 
@@ -38,10 +30,6 @@ public interface ListTitleRepository {
 
     void replaceListTheme(ListTheme listTheme, ListTheme defaultListTheme);
 
-    //endregion
-    //region Delete
     int delete(ListTitle listTitle);
 
-//    int markDeleted(ListTitle listTitle);
-    //endregion
 }
