@@ -1,7 +1,5 @@
 package com.lbconsulting.a1list.domain.repositories;
 
-import android.content.ContentValues;
-
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 
@@ -13,7 +11,7 @@ import java.util.List;
 public interface ListTitleRepository {
 
     //region Create
-    ListTitle insert(ListTitle listTitle);
+    boolean insert(ListTitle listTitle);
     //endregion
 
     //region Read
@@ -32,7 +30,7 @@ public interface ListTitleRepository {
 
 
     //region Update
-    boolean update(ListTitle listTitle, ContentValues contentValues);
+//    boolean update(ListTitle listTitle, ContentValues contentValues);
 
     boolean update(ListTitle listTitle);
 
@@ -44,6 +42,6 @@ public interface ListTitleRepository {
     //region Delete
     int delete(ListTitle listTitle);
 
-    int markDeleted(ListTitle listTitle);
+//    int markDeleted(ListTitle listTitle);
     //endregion
 }

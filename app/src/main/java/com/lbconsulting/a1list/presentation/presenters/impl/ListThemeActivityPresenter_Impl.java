@@ -3,7 +3,7 @@ package com.lbconsulting.a1list.presentation.presenters.impl;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveListTheme_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveListTheme_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveListTheme;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
@@ -15,7 +15,7 @@ import timber.log.Timber;
  * Presents a cloned ListTheme
  */
 public class ListThemeActivityPresenter_Impl extends AbstractPresenter implements ListThemeActivityPresenter,
-        RetrieveListTheme_Interactor.Callback {
+        RetrieveListTheme.Callback {
 
     private ListThemeActivityPresenter.ListThemeActivityView mView;
     private ListThemeRepository mListThemeRepository;

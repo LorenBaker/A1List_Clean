@@ -3,14 +3,14 @@ package com.lbconsulting.a1list.domain.interactors.listTitle.impl;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.UpdateListTitle_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.UpdateListTitle;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 
 /**
  * An interactor that updates the provided ListTitle in the SQLite. All ListTitle fields are updated.
  */
-public class UpdateListTitle_InBackground extends AbstractInteractor implements UpdateListTitle_Interactor {
+public class UpdateListTitle_InBackground extends AbstractInteractor implements UpdateListTitle {
 
     private final Callback mCallback;
     private final ListTitleRepository mListTitleRepository;
@@ -32,10 +32,10 @@ public class UpdateListTitle_InBackground extends AbstractInteractor implements 
 
         // update the provided ListThem in the SQLite db
         if (mListTitleRepository.update(mListTitle)) {
-            String msg = String.format("\"%s\" successfully updated.", mListTitle.getName());
+            String msg = String.format("\"%s\" successfully updated in SQL Db.", mListTitle.getName());
             postListTitleUpdated(msg);
         } else {
-            String msg = String.format("\"%s\" FAILED to updated.", mListTitle.getName());
+            String msg = String.format("\"%s\" FAILED to updated in SQL Db.", mListTitle.getName());
             postListTitleUpdateFailed(msg);
         }
     }

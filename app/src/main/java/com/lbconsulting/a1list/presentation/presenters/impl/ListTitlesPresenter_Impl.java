@@ -3,7 +3,7 @@ package com.lbconsulting.a1list.presentation.presenters.impl;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.RetrieveAllListTitles_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.RetrieveAllListTitles_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.RetrieveAllListTitles;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
@@ -17,14 +17,14 @@ import timber.log.Timber;
  * Presents List<ListTitle>
  */
 public class ListTitlesPresenter_Impl extends AbstractPresenter implements ListTitlesPresenter,
-        RetrieveAllListTitles_Interactor.Callback {
+        RetrieveAllListTitles.Callback {
 
     private final ListTitleView mView;
     private final ListTitleRepository mListTitleRepository;
 
     private ListTitle mListTitle;
     private String mAction;
-    private RetrieveAllListTitles_Interactor mRetrieveAllListTitles_inBackground;
+    private RetrieveAllListTitles mRetrieveAllListTitles_inBackground;
 
     public ListTitlesPresenter_Impl(Executor executor,
                                     MainThread mainThread,

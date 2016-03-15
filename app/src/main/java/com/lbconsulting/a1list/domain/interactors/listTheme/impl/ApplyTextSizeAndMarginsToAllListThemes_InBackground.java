@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTextSizeAndMarginsToAllListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTextSizeAndMarginsToAllListThemes;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
@@ -13,7 +13,7 @@ import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
  * This is an interactor toggles a ListTheme's strikeout attribute.
  * <p/>
  */
-public class ApplyTextSizeAndMarginsToAllListThemes_InBackground extends AbstractInteractor implements ApplyTextSizeAndMarginsToAllListThemes_Interactor {
+public class ApplyTextSizeAndMarginsToAllListThemes_InBackground extends AbstractInteractor implements ApplyTextSizeAndMarginsToAllListThemes {
 
     private final ListThemeRepository mListThemeRepository;
     private final Callback mCallback;
@@ -31,7 +31,6 @@ public class ApplyTextSizeAndMarginsToAllListThemes_InBackground extends Abstrac
 
     @Override
     public void run() {
-        // TODO: Implement this with your business logic
         int numberOfListThemesUpdated = mListThemeRepository.applyTextSizeAndMarginsToAllListThemes(mListTheme);
         String successMessage = AndroidApplication.getContext().getResources().getQuantityString(R.plurals.updatedListThemes, numberOfListThemesUpdated, numberOfListThemesUpdated);
         postSuccessResult(successMessage);

@@ -44,10 +44,10 @@
     <string name="btnVerticalMargin_text">"Vertical Margin: %d"</string>
 
 <!--Strings related to new or edit ListThemes-->
-    <string name="themeProposedName_invalidName_error">Theme \"%1s\" already exists.\nPlease enter a unique Theme name.</string>
-    <string name="themeProposedName_isEmpty_error">The Theme\'s name cannot be empty.\nPlease enter a unique Theme name.</string>
-    <string name="themeProposedName_isDefault_error">The Theme\'s name cannot be \"%1s\".\nPlease enter a unique Theme name.</string>
-    <string name="themeUnableToDelete_message">Theme \"%1s\" is the last Theme in the datastore. There must be a minimum of one Theme in the datastore.</string>
+    <string name="themeProposedName_invalidName_error">Theme \"%1s\" already exists.\nPlease enter a unique theme name.</string>
+    <string name="themeProposedName_isEmpty_error">The theme\'s name cannot be empty.\nPlease enter a unique theme name.</string>
+    <string name="themeProposedName_isDefault_error">The theme\'s name cannot be \"%1s\".\nPlease enter a unique theme name.</string>
+    <string name="themeUnableToDelete_message">Theme \"%1s\" is the last theme in the datastore. There must be a minimum of one theme in the datastore.</string>
     <string name="themeUnableToDelete_title">Unable to Delete Theme</string>
     <string name="editListThemesNameDialog_title">Edit Theme Name</string>
     <string name="txtListThemeName_hint">Theme Name</string>
@@ -58,9 +58,9 @@
 
     <!--Strings related to new or edit ListTitles-->
     <string name="newListITitleDialog_title">Create New List</string>
-    <string name="newListTitleName_isEmpty_error">The List\'s name cannot be empty.\nPlease enter a unique List name.</string>
-    <string name="newListTitleName_isDefault_error">The List\'s name cannot be \"%1s\".\nPlease enter a unique List name.</string>
-    <string name="newListTitleName_listExists_error">List \"%1s\" already exists.\nPlease enter a unique List name.</string>
+    <string name="newListTitleName_isEmpty_error">The list\'s name cannot be empty.\nPlease enter a unique list name.</string>
+    <string name="newListTitleName_isDefault_error">The list\'s name cannot be \"%1s\".\nPlease enter a unique list name.</string>
+    <string name="newListTitleName_listExists_error">\"%1s\" already exists.\nPlease enter a unique list name.</string>
     <string name="txtListTitleName_hint">List Name</string>
     <string name="newListTitleDialog_title">Create New List</string>
     <string name="editListTitleDialog_title">Edit List Name</string>

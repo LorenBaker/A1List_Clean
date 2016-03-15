@@ -3,7 +3,7 @@ package com.lbconsulting.a1list.domain.interactors.listTitle.impl;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.ToggleListTitleBooleanField_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.ToggleListTitleBooleanField;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 
@@ -11,7 +11,7 @@ import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
  * This is an interactor toggles the provided boolean field attribute for the given ListTitle.
  * <p/>
  */
-public class ToggleListTitleBooleanField_InBackground extends AbstractInteractor implements ToggleListTitleBooleanField_Interactor {
+public class ToggleListTitleBooleanField_InBackground extends AbstractInteractor implements ToggleListTitleBooleanField {
 
     private final ListTitleRepository mListTitleRepository;
     private final Callback mCallback;

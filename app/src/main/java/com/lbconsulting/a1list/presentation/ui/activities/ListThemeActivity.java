@@ -22,10 +22,10 @@ import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ApplyTextSizeAndMarginsToAllListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.impl.CreateNewListTheme_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.InsertNewListTheme_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.UpdateListTheme_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTextSizeAndMarginsToAllListThemes_Interactor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateNewListTheme_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTextSizeAndMarginsToAllListThemes;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.InsertNewListTheme;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.UpdateListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
@@ -47,8 +47,8 @@ import timber.log.Timber;
 
 public class ListThemeActivity extends AppCompatActivity implements View.OnClickListener,
         UpdateListTheme_Interactor.Callback,
-        CreateNewListTheme_Interactor.Callback,
-        ApplyTextSizeAndMarginsToAllListThemes_Interactor.Callback {
+        InsertNewListTheme.Callback,
+        ApplyTextSizeAndMarginsToAllListThemes.Callback {
 
     public static final String ARG_LIST_THEME_JSON = "argListThemeJson";
     public static final String ARG_MODE = "argMode";
@@ -370,7 +370,7 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
                 break;
 
             case CREATE_NEW_LIST_THEME:
-                new CreateNewListTheme_InBackground(ThreadExecutor.getInstance(),
+                new InsertNewListTheme_InBackground(ThreadExecutor.getInstance(),
                         MainThreadImpl.getInstance(), this, mListThemeRepository, mListTheme).execute();
                 break;
         }
@@ -383,17 +383,19 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
 
     //region Background Implementation Overrides
+
+
     @Override
-    public void onListThemeCreated(ListTheme newListTheme) {
-        Timber.i("onListThemeCreated(): \"%s\" created.", newListTheme.getName());
+    public void onListThemeInsertedIntoSQLiteDb(String successMessage) {
+        Timber.i("onListThemeInsertedIntoSQLiteDb(): %s",successMessage);
         if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
             finish();
         }
     }
 
     @Override
-    public void onListThemeCreationFailed(String errorMessage) {
-        Timber.e("onListThemeCreationFailed(): \"%s\"", errorMessage);
+    public void onListThemeInsertionIntoSQLiteDbFailed(String errorMessage) {
+        Timber.e("onListThemeInsertionIntoSQLiteDbFailed(): \"%s\"", errorMessage);
         if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
             finish();
         }

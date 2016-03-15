@@ -9,7 +9,7 @@ import com.lbconsulting.a1list.domain.model.AppSettings;
  */
 public interface AppSettingsRepository {
 
-    AppSettings insert(AppSettings appSettings);
+    boolean insert(AppSettings appSettings);
 
     boolean update(AppSettings appSettings, ContentValues contentValues);
 

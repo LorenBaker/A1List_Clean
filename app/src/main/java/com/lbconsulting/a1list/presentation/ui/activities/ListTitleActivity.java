@@ -22,8 +22,8 @@ import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveAllListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes_Interactor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.impl.CreateNewListTitle_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes;
+import com.lbconsulting.a1list.domain.interactors.listTitle.impl.InsertNewListTitle_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.UpdateListTitle_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
@@ -48,9 +48,9 @@ import timber.log.Timber;
 
 public class ListTitleActivity extends AppCompatActivity implements View.OnClickListener,
 //        ListThemesPresenter.ListThemeView,
-        RetrieveAllListThemes_Interactor.Callback,
+        RetrieveAllListThemes.Callback,
         UpdateListTitle_InBackground.Callback,
-        CreateNewListTitle_InBackground.Callback {
+        InsertNewListTitle_InBackground.Callback {
 
     public static final String ARG_LIST_TITLE_JSON = "argListTitleJson";
     public static final String ARG_MODE = "argMode";
@@ -242,6 +242,20 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
     }
 
     @Override
+    public void onAllListThemesRetrieved(List<ListTheme> listThemes) {
+        mListThemeSpinnerArrayAdapter.setData(listThemes);
+        mListThemeSpinnerArrayAdapter.notifyDataSetChanged();
+
+        int position = mListThemeSpinnerArrayAdapter.getPosition(mListTitle.getListTheme());
+        spnListTitles.setSelection(position);
+        updateUI(mListTitle);
+    }
+
+    @Override
+    public void onRetrievalFailed(String errorMessage) {
+        Timber.e("onRetrievalFailed(): %s.", errorMessage);
+    }
+    @Override
     protected void onPause() {
         super.onPause();
         Timber.i("onPause()");
@@ -281,7 +295,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
                 } else {
                     // the list name is the default name
                     String title = "Unable to Save List";
-                    String msg = String.format("List name cannot be \"%s\"",dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME);
+                    String msg = "Please provide a valid list name.";
                     CommonMethods.showOkDialog(this,title,msg);
                 }
                 break;
@@ -301,38 +315,42 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 
             case CREATE_NEW_LIST_TITLE:
 //                Toast.makeText(this, "btnSaveList: CREATE_NEW_LIST_TITLE clicked.", Toast.LENGTH_SHORT).show();
-                new CreateNewListTitle_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this, listTitle, mListTitleRepository).execute();
+                new InsertNewListTitle_InBackground(ThreadExecutor.getInstance(),
+                        MainThreadImpl.getInstance(), this, listTitle, mListTitleRepository,
+                        mAppSettingsRepository).execute();
                 break;
         }
     }
 
+
     @Override
-    public void onListTitleCreated(ListTitle newListTitle) {
+    public void onListTitleInsertedIntoSQLiteDb(String successMessage) {
+        Timber.i("onListTitleInsertedIntoSQLiteDb(): %s", successMessage);
         hideProgress();
         finish();
     }
 
     @Override
-    public void onListTitleCreationFailed(String errorMessage) {
+    public void onListTitleInsertionIntoSQLiteDbFailed(String errorMessage) {
+        Timber.e("onListTitleInsertionIntoSQLiteDbFailed(): %s.", errorMessage);
         hideProgress();
         String title = "";
-        String msg = String.format("Failed to save \"%s\" changes. %s.", mListTitle.getName(), errorMessage);
-        CommonMethods.showOkDialog(this, title, msg);
+        CommonMethods.showOkDialog(this, title, errorMessage);
     }
 
     @Override
     public void onListTitleUpdated(String successMessage) {
+        Timber.i("onListTitleUpdated(): %s", successMessage);
         hideProgress();
         finish();
     }
 
     @Override
     public void onListTitleUpdateFailed(String errorMessage) {
+        Timber.e("onListTitleUpdateFailed(): %s.", errorMessage);
         hideProgress();
         String title = "";
-        String msg = String.format("Failed to save \"%s\" changes. %s.", mListTitle.getName(), errorMessage);
-        CommonMethods.showOkDialog(this, title, msg);
+        CommonMethods.showOkDialog(this, title, errorMessage);
     }
     //endregion
 
@@ -424,7 +442,11 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         }
 
         // show the attributes values in their respective Buttons
-        btnListTitleName.setText(listTitle.getName());
+        if(listTitle.getName().equals(dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME)){
+            btnListTitleName.setText("");
+        }else{
+            btnListTitleName.setText(listTitle.getName());
+        }
     }
 
     public void showProgress(String waitMessage) {
@@ -455,20 +477,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 //        updateUI(mListTitle);
 //    }
 
-    @Override
-    public void onAllListThemesRetrieved(List<ListTheme> listThemes) {
-        mListThemeSpinnerArrayAdapter.setData(listThemes);
-        mListThemeSpinnerArrayAdapter.notifyDataSetChanged();
 
-        int position = mListThemeSpinnerArrayAdapter.getPosition(mListTitle.getListTheme());
-        spnListTitles.setSelection(position);
-        updateUI(mListTitle);
-    }
-
-    @Override
-    public void onRetrievalFailed(String errorMessage) {
-        Timber.e("onRetrievalFailed(): %s.", errorMessage);
-    }
 
 
     //endregion

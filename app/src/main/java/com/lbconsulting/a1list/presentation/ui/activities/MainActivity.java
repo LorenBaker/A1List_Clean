@@ -22,7 +22,7 @@ import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.CreateInitialListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
@@ -44,7 +44,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity implements CreateInitialListThemes_Interactor.Callback {
+public class MainActivity extends AppCompatActivity implements CreateInitialListThemes.Callback {
     @Bind(R.id.fab)
     FloatingActionButton mFab;
 
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
 
         mAppSettingsRepository = new AppSettingsRepository_Impl(this);
         mListThemeRepository = new ListThemeRepository_Impl(this);
-        mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository, mListThemeRepository);
+        mListTitleRepository = new ListTitleRepository_Impl(this, mAppSettingsRepository, mListThemeRepository);
         showActiveUser();
     }
 
@@ -155,14 +155,14 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
 
 
 //    @Override
-//    public void onListTitleCreated(ListTitle newListTitle, boolean hideProgressBar) {
-//        Timber.i("onListTitleCreated(): %s.", newListTitle.getName());
+//    public void onListTitleInsertedIntoSQLiteDb(ListTitle newListTitle, boolean hideProgressBar) {
+//        Timber.i("onListTitleInsertedIntoSQLiteDb(): %s.", newListTitle.getName());
 //        updateUI(hideProgressBar);
 //    }
 //
 //    @Override
-//    public void onListTitleCreationFailed(String errorMessage) {
-//        Timber.e("onListTitleCreationFailed(): %s.", errorMessage);
+//    public void onListTitleInsertionIntoSQLiteDbFailed(String errorMessage) {
+//        Timber.e("onListTitleInsertionIntoSQLiteDbFailed(): %s.", errorMessage);
 //
 //    }
 
@@ -197,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         showProgressBar("Loading initial Themes.");
         new CreateInitialListThemes_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, mAppSettingsRepository,
-                mListThemeRepository,mListTitleRepository, this).execute();
+                mListThemeRepository, this).execute();
     }
 
     @Override
@@ -345,6 +345,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         listTitleActivityIntent.putExtra(ListTitleActivity.ARG_MODE, ListTitleActivity.CREATE_NEW_LIST_TITLE);
         startActivity(listTitleActivityIntent);
     }
+
     private void showListSortingDialogue() {
         Toast.makeText(this, "showListSortingDialogue clicked", Toast.LENGTH_SHORT).show();
 

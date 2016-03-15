@@ -7,7 +7,7 @@ import com.lbconsulting.a1list.domain.model.ListTitle;
 import java.util.List;
 
 
-public interface RetrieveAllListTitles_Interactor extends Interactor {
+public interface RetrieveAllListTitles extends Interactor {
 
     interface Callback {
 

@@ -1,17 +1,13 @@
 package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 
-import com.backendless.Backendless;
-import com.backendless.exceptions.BackendlessException;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.DeleteStruckOutListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.DeleteStruckOutListThemes;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
-import com.lbconsulting.a1list.utils.CommonMethods;
 
-import java.util.Date;
 import java.util.List;
 
 import timber.log.Timber;
@@ -19,7 +15,7 @@ import timber.log.Timber;
 /**
  * An interactor that retrieves all ListThemes
  */
-public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor implements DeleteStruckOutListThemes_Interactor {
+public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor implements DeleteStruckOutListThemes {
 
 
     private final Callback mCallback;
@@ -49,39 +45,11 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
             if (defaultListTheme == null) {
                 Timber.e("DeleteStruckOutListThemes_InBackground: Failed to retrieve default ListTheme!");
             }
+
             int numberOfListThemesDeleted = 0;
-            int numberOfListThemesDeletedFromBackendless = 0;
-
-            if (CommonMethods.isNetworkAvailable()) {
-                for (ListTheme listTheme : struckOutListThemes) {
-                    if (!listTheme.isDefaultTheme()) {
-                        numberOfListThemesDeleted += mListThemeRepository.delete(listTheme);
-                        // Delete ListThemes from Backendless
-                        try {
-                            long timestamp = Backendless.Data.of(ListTheme.class).remove(listTheme);
-                            String msg = "\"" + listTheme.getName() + "\" removed at " + new Date(timestamp).toString();
-                        } catch (BackendlessException e) {
-                            Timber.e("DeleteStruckOutListThemes_InBackground(): BackendlessException: %s.", e.getMessage());
-                        }
-                        // Replace any ListTheme being deleted with the default ListTheme.
-                        mListTitleRepository.replaceListTheme(listTheme, defaultListTheme);
-                        // TODO: Send ListTheme delete and ListTitle update messages to other devices
-
-                    } else {
-                        Timber.e("DeleteStruckOutListThemes_InBackground: Aborted deleting the default ListTheme.");
-                    }
-                }
-
-            } else {
-                for (ListTheme listTheme : struckOutListThemes) {
-                    if (!listTheme.isDefaultTheme()) {
-                        numberOfListThemesDeleted += mListThemeRepository.markDeleted(listTheme);
-                        // Replace any ListTheme being deleted with the default ListTheme.
-                        mListTitleRepository.replaceListTheme(listTheme, defaultListTheme);
-                    } else {
-                        Timber.e("DeleteStruckOutListThemes_InBackground: Aborted deleting the default ListTheme.");
-                    }
-                }
+            for (ListTheme listTheme : struckOutListThemes) {
+                mListTitleRepository.replaceListTheme(listTheme, defaultListTheme);
+                numberOfListThemesDeleted += mListThemeRepository.delete(listTheme);
             }
 
             if (struckOutListThemes.size() == numberOfListThemesDeleted) {
@@ -91,11 +59,11 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
             } else {
                 String errorMessage = String.format("Only %d of %d struck out ListThemes deleted.",
                         numberOfListThemesDeleted, struckOutListThemes.size());
-                notifyError(errorMessage);
+                postStruckOutListThemesDeletionFailed(errorMessage);
             }
 
         } else {
-            notifyError("No struck out ListThemes found.");
+            postStruckOutListThemesDeletionFailed("No struck out ListThemes found.");
         }
     }
 
@@ -109,7 +77,7 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
         });
     }
 
-    private void notifyError(final String errorMessage) {
+    private void postStruckOutListThemesDeletionFailed(final String errorMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {

@@ -5,15 +5,15 @@ import com.lbconsulting.a1list.domain.interactors.base.Interactor;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 
 
-public interface CreateNewListTitle_Interactor extends Interactor {
+public interface RetrieveListTitle extends Interactor {
 
 
     interface Callback {
 
         // interactor callback methods
-        void onListTitleCreated(ListTitle newListTitle);
+        void onListTitleRetrieved(ListTitle listTitle);
 
-        void onListTitleCreationFailed(String errorMessage);
+        void onListTitleRetrievalFailed(String error);
 
     }
 

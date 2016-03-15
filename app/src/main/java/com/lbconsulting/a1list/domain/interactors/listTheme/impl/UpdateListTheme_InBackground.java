@@ -8,7 +8,7 @@ import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
 /**
- * An interactor that retrieves all ListThemes
+ * An interactor that updates the provided ListTheme
  */
 public class UpdateListTheme_InBackground extends AbstractInteractor implements UpdateListTheme_Interactor {
 
@@ -37,15 +37,15 @@ public class UpdateListTheme_InBackground extends AbstractInteractor implements 
 
         // update the provided ListThem in the SQLite db
         if (mListThemeRepository.update(mListTheme)) {
-            String msg = String.format("\"%s\" successfully updated.", mListTheme.getName());
-            postRetrievedListTheme(msg);
+            String msg = String.format("\"%s\" successfully updated in the SQLite Db.", mListTheme.getName());
+            postListThemeUpdated(msg);
         } else {
-            String msg = String.format("\"%s\" FAILED to updated.", mListTheme.getName());
-            notifyError(msg);
+            String msg = String.format("\"%s\" FAILED to updated in the SQLite Db.", mListTheme.getName());
+            postListThemeUpdateFailed(msg);
         }
     }
 
-    private void postRetrievedListTheme(final String message) {
+    private void postListThemeUpdated(final String message) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
@@ -54,7 +54,7 @@ public class UpdateListTheme_InBackground extends AbstractInteractor implements 
         });
     }
 
-    private void notifyError(final String errorMessage) {
+    private void postListThemeUpdateFailed(final String errorMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {

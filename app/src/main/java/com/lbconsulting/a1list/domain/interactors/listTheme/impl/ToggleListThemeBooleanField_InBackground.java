@@ -14,25 +14,24 @@ import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 public class ToggleListThemeBooleanField_InBackground extends AbstractInteractor implements ToggleListThemeBooleanField_Interactor {
 
     private final ListThemeRepository mListThemeRepository;
+    private final Callback mCallback;
     private ListTheme mListTheme;
     private String mListThemeBooleanField;
-    private final Callback mCallback;
 
     public ToggleListThemeBooleanField_InBackground(Executor threadExecutor,
-                                                    MainThread mainThread,Callback callback,
+                                                    MainThread mainThread, Callback callback,
                                                     ListThemeRepository listThemeRepository,
                                                     ListTheme listTheme, String listThemeBooleanField) {
         super(threadExecutor, mainThread);
         mListThemeRepository = listThemeRepository;
         mListTheme = listTheme;
         mListThemeBooleanField = listThemeBooleanField;
-        mCallback=callback;
+        mCallback = callback;
     }
 
     @Override
     public void run() {
-        // TODO: Implement this with your business logic
-      int toggleResult=  mListThemeRepository.toggle(mListTheme, mListThemeBooleanField);
+        int toggleResult = mListThemeRepository.toggle(mListTheme, mListThemeBooleanField);
         postToggleResult(toggleResult);
     }
 

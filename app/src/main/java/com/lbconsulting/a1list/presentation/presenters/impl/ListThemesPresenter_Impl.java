@@ -3,7 +3,7 @@ package com.lbconsulting.a1list.presentation.presenters.impl;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveAllListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
@@ -17,14 +17,14 @@ import timber.log.Timber;
  * Presents List<ListTheme>
  */
 public class ListThemesPresenter_Impl extends AbstractPresenter implements ListThemesPresenter,
-        RetrieveAllListThemes_Interactor.Callback {
+        RetrieveAllListThemes.Callback {
 
     private final ListThemesPresenter.ListThemeView mView;
     private final ListThemeRepository mListThemeRepository;
 
     private ListTheme mListTheme;
     private String mAction;
-    private RetrieveAllListThemes_Interactor mRetrieveAllListThemes_inBackground;
+    private RetrieveAllListThemes mRetrieveAllListThemes_inBackground;
 
     public ListThemesPresenter_Impl(Executor executor,
                                     MainThread mainThread,

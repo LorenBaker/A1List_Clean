@@ -6,14 +6,18 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
-import com.backendless.Backendless;
-import com.backendless.exceptions.BackendlessException;
+import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
+import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToBackendless;
+import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTitle.impl.DeleteListTitleFromBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitleToBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.DeleteListTitleFromBackendless;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitleToBackendless;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.storage.AppSettingsSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
-import com.lbconsulting.a1list.utils.CommonMethods;
+import com.lbconsulting.a1list.threading.MainThreadImpl;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,7 +29,9 @@ import timber.log.Timber;
  * This class provided CRUD operations for ListTitle
  * NOTE: All CRUD operations should run on a background thread
  */
-public class ListTitleRepository_Impl implements ListTitleRepository {
+public class ListTitleRepository_Impl implements ListTitleRepository,
+        SaveListTitleToBackendless.Callback, SaveAppSettingsToBackendless.Callback,
+        DeleteListTitleFromBackendless.Callback {
 
     private final int FALSE = 0;
     private final int TRUE = 1;
@@ -43,11 +49,11 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
 
     // CRUD operations
 
-    //region Create
+    //region Create ListTitle
     @Override
-    public ListTitle insert(ListTitle listTitle) {
+    public boolean insert(ListTitle listTitle) {
         // insert new listTitle into SQLite db
-        ListTitle backendlessResponse = null;
+        boolean result = false;
         long newListTitleSqlId = -1;
 
         Uri uri = ListTitlesSqlTable.CONTENT_URI;
@@ -87,107 +93,56 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
 
         if (newListTitleSqlId > -1) {
             // successfully saved new ListTitle to the SQLite db
-            Timber.i("insert(): ListTitleRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listTitle.getName());
+            result = true;
+//            Timber.i("insert(): ListTitleRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listTitle.getName());
+            saveListTitleToBackendless(listTitle);
+            saveAppSettingsToBackendless();
+            // TODO: send message to Backendless to notify other devices of the new ListTitle
 
-            // if the network is available ... save new listTitle to Backendless
-            if (CommonMethods.isNetworkAvailable()) {
-                // save listTitle to Backendless
-                backendlessResponse = saveListTitleToBackendless(listTitle);
-                saveAppSettingsToBackendless();
-                // TODO: send message to Backendless to notify other devices of the new ListTitle
-            }
 
         } else {
             // failed to create listTitle in the SQLite db
             Timber.e("insert(): ListTitleRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listTitle.getName());
         }
-        return backendlessResponse;
+        return result;
     }
 
+    //region Save AppSettings to Backendless
     private void saveAppSettingsToBackendless() {
-        AppSettings appSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
-        if (appSettings != null) {
-            try {
-                AppSettings response = Backendless.Data.of(AppSettings.class).save(appSettings);
-                Timber.i("saveAppSettingsToBackendless(): successfully saved AppSettings to Backendless.");
-
-                // Update the SQLite db: set dirty to false, and updated date and time
-                ContentValues cv = new ContentValues();
-                Date updatedDate = response.getUpdated();
-                if (updatedDate == null) {
-                    updatedDate = response.getCreated();
-                }
-                if (updatedDate != null) {
-                    long updated = updatedDate.getTime();
-                    cv.put(AppSettingsSqlTable.COL_UPDATED, updated);
-                }
-                cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, FALSE);
-                int numberOfRecordsUpdated = 0;
-                try {
-                    Uri uri = AppSettingsSqlTable.CONTENT_URI;
-                    String selection = AppSettingsSqlTable.COL_UUID + " = ?";
-                    String[] selectionArgs = new String[]{appSettings.getUuid()};
-                    ContentResolver cr = mContext.getContentResolver();
-                    numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
-
-                } catch (Exception e) {
-                    Timber.e("saveAppSettingsToBackendless(): Exception: %s.", e.getMessage());
-                }
-                if (numberOfRecordsUpdated != 1) {
-                    Timber.e("saveAppSettingsToBackendless(): Error updating AppSettings with uuid = %s", appSettings.getUuid());
-                }
-
-            } catch (BackendlessException e) {
-                e.printStackTrace();
-            }
-        }
+        AppSettings dirtyListSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
+        new SaveAppSettingsToBackendless_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), dirtyListSettings, this).execute();
     }
 
-    private ListTitle saveListTitleToBackendless(ListTitle listTitle) {
-        // saveListTitleToBackendless object synchronously
-        ListTitle response = null;
-        try {
-            String objectId = listTitle.getObjectId();
-            boolean isNew = objectId == null || objectId.isEmpty();
-            response = Backendless.Data.of(ListTitle.class).save(listTitle);
-            Timber.i("saveListTitleToBackendless(): successfully saved \"%s\" to Backendless.", response.getName());
-            // Update the SQLite db: set dirty to false, and updated date and time
-            ContentValues cv = new ContentValues();
-            Date updatedDate = response.getUpdated();
-            if (updatedDate == null) {
-                updatedDate = response.getCreated();
-            }
-            if (updatedDate != null) {
-                long updated = updatedDate.getTime();
-                cv.put(ListTitlesSqlTable.COL_UPDATED, updated);
-            }
-            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, FALSE);
-
-            // If a new ListTitle, update SQLite db with objectID
-            if (isNew) {
-                cv.put(ListTitlesSqlTable.COL_OBJECT_ID, response.getObjectId());
-            }
-            // update the SQLite db ... but don't send changes to Backendless
-            updateSQLiteDb(response, cv);
-
-        } catch (BackendlessException e) {
-            Timber.e("saveListTitleToBackendless(): FAILED to save \"%s\" to Backendless. BackendlessException: Code: %s; Message: %s.",
-                    listTitle.getName(), e.getCode(), e.getMessage());
-            // Set dirty flag to true in SQLite db
-            ContentValues cv = new ContentValues();
-            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-            updateSQLiteDb(listTitle, cv);
-
-        } catch (Exception e) {
-            Timber.e("saveAppSettingsToBackendless(): Exception: %s.", e.getMessage());
-            // Set dirty flag to true in SQLite db
-            ContentValues cv = new ContentValues();
-            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-            updateSQLiteDb(listTitle, cv);
-        }
-        return response;
+    @Override
+    public void onAppSettingsSavedToBackendless(String successMessage) {
+//        Timber.i("onAppSettingsSavedToBackendless(): %s.", successMessage);
     }
 
+    @Override
+    public void onAppSettingsSaveToBackendlessFailed(String errorMessage) {
+        Timber.e("onAppSettingsSaveToBackendlessFailed(): %s.", errorMessage);
+    }
+    //endregion
+
+    //region Save ListTitle to Backendless
+    private void saveListTitleToBackendless(ListTitle listTitle) {
+        new SaveListTitleToBackendless_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), listTitle, this).execute();
+    }
+
+    @Override
+    public void onListTitleSavedToBackendless(String successMessage) {
+        Timber.i("onListTitleSavedToBackendless(): %s", successMessage);
+    }
+
+    @Override
+    public void onListTitleSaveToBackendlessFailed(String errorMessage) {
+        Timber.e("onListTitleSavedToBackendless(): %s", errorMessage);
+    }
+    //endregion
+
+    //endregion
 
     //region Read
     @Override
@@ -242,9 +197,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
         long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_UPDATED));
         Date updated = new Date(dateMillis);
         listTitle.setUpdated(updated);
-        // since above set methods set ListTitleDirty to true, this statement must be last set statement
-        // so that the cursor's themeDirty prevails
-//        listTitle.setListTitleDirty(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY)) > 0);
 
         return listTitle;
     }
@@ -476,26 +428,51 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
         return isValidName;
     }
 
-    public boolean isValidListTitleName(String proposedListTitleName) {
-        boolean isValidName = false;
-        ListTitle listTitleFromName = getListTitle(proposedListTitleName);
-        if (listTitleFromName == null) {
-            // The proposed ListTitle name is not in the SQLite db.
-            isValidName = true;
-        }
-        return isValidName;
-    }
+//    public boolean isValidListTitleName(String proposedListTitleName) {
+//        boolean isValidName = false;
+//        ListTitle listTitleFromName = getListTitle(proposedListTitleName);
+//        if (listTitleFromName == null) {
+//            // The proposed ListTitle name is not in the SQLite db.
+//            isValidName = true;
+//        }
+//        return isValidName;
+//    }
     //endregion
 
+//    @Override
+
     @Override
-    public boolean update(ListTitle listTitle, ContentValues cv) {
+    public boolean update(ListTitle listTitle) {
+        ContentValues cv = new ContentValues();
+
+        cv.put(ListTitlesSqlTable.COL_NAME, listTitle.getName());
+        cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListTheme().getUuid());
+
+        cv.put(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION, listTitle.getFirstVisiblePosition());
+        cv.put(ListTitlesSqlTable.COL_LIST_VIEW_TOP, listTitle.getListViewTop());
+        cv.put(ListTitlesSqlTable.COL_MANUAL_SORT_KEY, listTitle.getManualSortKey());
+        cv.put(ListTitlesSqlTable.COL_LIST_LOCKED_STRING, listTitle.getListLockString());
+
+        cv.put(ListTitlesSqlTable.COL_CHECKED, (listTitle.isChecked()) ? TRUE : FALSE);
+        cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, (listTitle.isForceViewInflation()) ? TRUE : FALSE);
+        cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, (listTitle.isListLocked()) ? TRUE : FALSE);
+        cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, (listTitle.isListPrivateToThisDevice()) ? TRUE : FALSE);
+        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+        cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, (listTitle.isMarkedForDeletion()) ? TRUE : FALSE);
+        cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, (listTitle.isSortListItemsAlphabetically()) ? TRUE : FALSE);
+        cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, (listTitle.isStruckOut()) ? TRUE : FALSE);
+
+        return update(listTitle, cv);
+    }
+
+    private boolean update(ListTitle listTitle, ContentValues cv) {
 
         boolean result = false;
         try {
             cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
             int numberOfRecordsUpdated = updateSQLiteDb(listTitle, cv);
 
-            if (numberOfRecordsUpdated == 1 && CommonMethods.isNetworkAvailable()) {
+            if (numberOfRecordsUpdated == 1) {
                 result = true;
                 saveListTitleToBackendless(listTitle);
                 // TODO: Send update message to other devices
@@ -525,30 +502,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
         }
         return numberOfRecordsUpdated;
 
-    }
-
-    @Override
-    public boolean update(ListTitle listTitle) {
-        ContentValues cv = new ContentValues();
-
-        cv.put(ListTitlesSqlTable.COL_NAME, listTitle.getName());
-        cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListTheme().getUuid());
-
-        cv.put(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION, listTitle.getFirstVisiblePosition());
-        cv.put(ListTitlesSqlTable.COL_LIST_VIEW_TOP, listTitle.getListViewTop());
-        cv.put(ListTitlesSqlTable.COL_MANUAL_SORT_KEY, listTitle.getManualSortKey());
-        cv.put(ListTitlesSqlTable.COL_LIST_LOCKED_STRING, listTitle.getListLockString());
-
-        cv.put(ListTitlesSqlTable.COL_CHECKED, (listTitle.isChecked()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, (listTitle.isForceViewInflation()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, (listTitle.isListLocked()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, (listTitle.isListPrivateToThisDevice()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-        cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, (listTitle.isMarkedForDeletion()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, (listTitle.isSortListItemsAlphabetically()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, (listTitle.isStruckOut()) ? TRUE : FALSE);
-
-        return update(listTitle, cv);
     }
 
 
@@ -668,7 +621,13 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
             String selection = ListTitlesSqlTable.COL_UUID + " = ?";
             String[] selectionArgs = new String[]{listTitle.getUuid()};
             ContentResolver cr = mContext.getContentResolver();
-            numberOfDeletedListTitles = cr.delete(uri, selection, selectionArgs);
+            ContentValues cv = new ContentValues();
+            cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
+            numberOfDeletedListTitles = cr.update(uri, cv, selection, selectionArgs);
+
+            new DeleteListTitleFromBackendless_InBackground(ThreadExecutor.getInstance(),
+                    MainThreadImpl.getInstance(), listTitle, this).execute();
+
         } catch (Exception e) {
             Timber.e("delete(): Exception: %s.", e.getMessage());
         }
@@ -677,22 +636,14 @@ public class ListTitleRepository_Impl implements ListTitleRepository {
     }
 
     @Override
-    public int markDeleted(ListTitle listTitle) {
-        int numberOfDeletedListTitles = 0;
-        try {
-            Uri uri = ListTitlesSqlTable.CONTENT_URI;
-            String selection = ListTitlesSqlTable.COL_UUID + " = ?";
-            String[] selectionArgs = new String[]{listTitle.getUuid()};
-            ContentResolver cr = mContext.getContentResolver();
-            ContentValues cv = new ContentValues();
-            cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
-            numberOfDeletedListTitles = cr.update(uri, cv, selection, selectionArgs);
-        } catch (Exception e) {
-            Timber.e("markDeleted(): Exception: %s.", e.getMessage());
-        }
-
-        return numberOfDeletedListTitles;
+    public void onListTitleDeletedFromBackendless(String successMessage) {
+        Timber.i("onListTitleDeletedFromBackendless(): %s.", successMessage);
     }
 
+    @Override
+    public void onListTitleDeleteFromBackendlessFailed(String errorMessage) {
+        Timber.e("onListTitleDeleteFromBackendlessFailed(): %s.", errorMessage);
+
+    }
 
 }

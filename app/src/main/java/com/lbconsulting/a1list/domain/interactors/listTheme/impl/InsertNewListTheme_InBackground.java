@@ -3,21 +3,22 @@ package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateNewListTheme_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.InsertNewListTheme;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
 /**
  * An interactor that creates a new ListTheme
  */
-public class CreateNewListTheme_InBackground extends AbstractInteractor implements CreateNewListTheme_Interactor {
+public class InsertNewListTheme_InBackground extends AbstractInteractor implements InsertNewListTheme {
 
     private final Callback mCallback;
     private final ListThemeRepository mListThemeRepository;
     private final ListTheme mListTheme;
 
-    public CreateNewListTheme_InBackground(Executor threadExecutor, MainThread mainThread,
-                                           Callback callback, ListThemeRepository listThemeRepository,
+    public InsertNewListTheme_InBackground(Executor threadExecutor, MainThread mainThread,
+                                           Callback callback,
+                                           ListThemeRepository listThemeRepository,
                                            ListTheme listTheme) {
         super(threadExecutor, mainThread);
 
@@ -30,36 +31,39 @@ public class CreateNewListTheme_InBackground extends AbstractInteractor implemen
     @Override
     public void run() {
 
-        if(mListTheme.isDefaultTheme()){
+        if (mListTheme.isDefaultTheme()) {
             // clear the previous default theme that's in the SQLite db.
             mListThemeRepository.clearDefaultFlag();
         }
 
         // insert the new ListThem in the SQLite db
-        ListTheme newListTheme = mListThemeRepository.insert(mListTheme);
-        if(newListTheme!=null){
-            postListThemeCreated(newListTheme);
-        }else{
-            notifyError(String.format("FAILED to create ListTheme \"%s\".", mListTheme.getName()));
+        if (mListThemeRepository.insert(mListTheme)) {
+            String successMessage = String.format("Successfully inserted \"%s\" into SQLite Db.", mListTheme.getName());
+            postListThemeInsertedIntoSQLiteDb(successMessage);
+
+        } else {
+            String errorMessage = String.format("FAILED to insert \"%s\" into SQLite Db.", mListTheme.getName());
+            postListThemeInsertionIntoSQLiteDbFailed(errorMessage);
         }
     }
 
-    private void postListThemeCreated(final ListTheme newListTheme) {
+    private void postListThemeInsertedIntoSQLiteDb(final String successMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListThemeCreated(newListTheme);
+                mCallback.onListThemeInsertedIntoSQLiteDb(successMessage);
             }
         });
     }
 
-    private void notifyError(final String errorMessage) {
+    private void postListThemeInsertionIntoSQLiteDbFailed(final String errorMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListThemeCreationFailed(errorMessage);
+                mCallback.onListThemeInsertionIntoSQLiteDbFailed(errorMessage);
             }
         });
     }
+
 
 }
