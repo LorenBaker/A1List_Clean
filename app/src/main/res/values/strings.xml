@@ -42,8 +42,10 @@
     <string name="btnTextStyle_text_bold">Text Style: Bold</string>
     <string name="btnTextStyle_text_normal">Text Style: Normal</string>
     <string name="btnVerticalMargin_text">"Vertical Margin: %d"</string>
+    <string name="btnFavorite_contentDescription">Favorite</string>
 
-<!--Strings related to new or edit ListThemes-->
+
+    <!--Strings related to new or edit ListThemes-->
     <string name="themeProposedName_invalidName_error">Theme \"%1s\" already exists.\nPlease enter a unique theme name.</string>
     <string name="themeProposedName_isEmpty_error">The theme\'s name cannot be empty.\nPlease enter a unique theme name.</string>
     <string name="themeProposedName_isDefault_error">The theme\'s name cannot be \"%1s\".\nPlease enter a unique theme name.</string>

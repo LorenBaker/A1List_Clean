@@ -35,6 +35,15 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 
     @Override
     public boolean insert(AppSettings appSettings) {
+        boolean successfullyInsertedIntoSQLiteDb = insertIntoSQLiteDb(appSettings);
+        if(successfullyInsertedIntoSQLiteDb){
+            saveAppSettingsToBackendless(appSettings);
+        }
+        return successfullyInsertedIntoSQLiteDb;
+    }
+
+    @Override
+    public boolean insertIntoSQLiteDb(AppSettings appSettings) {
         // insert new appSettings into SQLite db
         boolean result = false;
         long newAppSettingsId = -1;
@@ -63,9 +72,8 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 
         if (newAppSettingsId > -1) {
             // successfully saved new AppSettings to the SQLite db
-            Timber.i("insert(): AppSettingsRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", appSettings.getUuid());
-            saveAppSettingsToBackendless(appSettings);
             result = true;
+            Timber.i("insert(): AppSettingsRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", appSettings.getUuid());
         } else {
             // failed to create appSettings in the SQLite db
             Timber.e("insert(): AppSettingsRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", appSettings.getUuid());
@@ -156,14 +164,23 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
     private AppSettings appSettingsFromCursor(Cursor cursor) {
 
         AppSettings appSettings = new AppSettings();
-        appSettings.setId(cursor.getLong(cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_ID)));
-        appSettings.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_OBJECT_ID)));
-        appSettings.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_UUID)));
+        appSettings.setId(cursor.getLong(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_ID)));
+        appSettings.setObjectId(cursor.getString(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_OBJECT_ID)));
+        appSettings.setUuid(cursor.getString(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_UUID)));
 
-        appSettings.setTimeBetweenSynchronizations(cursor.getLong(cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_TIME_BETWEEN_SYNCHRONIZATIONS)));
-        appSettings.setListTitleLastSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY)));
+        appSettings.setLastListTitleViewedUuid(cursor.getString(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_LAST_LIST_TITLE_VIEWED_UUID)));
 
-        long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_UPDATED));
+        appSettings.setTimeBetweenSynchronizations(cursor.getLong(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_TIME_BETWEEN_SYNCHRONIZATIONS)));
+        appSettings.setListTitleLastSortKey(cursor.getLong(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY)));
+
+        long dateMillis = cursor.getLong(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_UPDATED));
         Date updated = new Date(dateMillis);
         appSettings.setUpdated(updated);
 
@@ -181,6 +198,8 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
                 result = true;
                 saveAppSettingsToBackendless(appSettings);
                 // TODO: Send update message to other devices
+            }else{
+                Timber.e("update(): FAILED to update AppSettings.");
             }
         } catch (Exception e) {
             Timber.e("update(): Exception: %s.", e.getMessage());
@@ -281,6 +300,12 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
     }
 
     @Override
+    public void setLastListTitleViewedUuid(AppSettings appSettings,String listTitleUuid) {
+        ContentValues cv = new ContentValues();
+        cv.put(AppSettingsSqlTable.COL_LAST_LIST_TITLE_VIEWED_UUID, listTitleUuid);
+        update(appSettings, cv);
+    }
+    @Override
     public AppSettings retrieveDirtyAppSettings() {
         AppSettings appSettings = null;
 
@@ -301,6 +326,8 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         }
         return appSettings;
     }
+
+
 
 
 //    @Override

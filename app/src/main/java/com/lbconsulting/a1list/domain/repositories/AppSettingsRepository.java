@@ -11,6 +11,8 @@ public interface AppSettingsRepository {
 
     boolean insert(AppSettings appSettings);
 
+    boolean insertIntoSQLiteDb(AppSettings appSettings);
+
     boolean update(AppSettings appSettings, ContentValues contentValues);
 
     boolean update(AppSettings appSettings);
@@ -21,7 +23,9 @@ public interface AppSettingsRepository {
 
     long retrieveListTitleNextSortKey();
 
-    void setListTitleLastSortKey(AppSettings appSettings,long sortKey);
+    void setListTitleLastSortKey(AppSettings appSettings, long sortKey);
 
     AppSettings retrieveDirtyAppSettings();
+
+    void setLastListTitleViewedUuid(AppSettings appSettings,String listTitleUuid);
 }

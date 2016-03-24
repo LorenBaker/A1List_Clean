@@ -9,16 +9,18 @@ import timber.log.Timber;
 
 public class A1List_DatabaseHelper extends SQLiteOpenHelper {
 
-    private static Context mContext;
-
     private static final String DATABASE_NAME = "A1List.db";
     private static final int DATABASE_VERSION = 1;
-
+    private static Context mContext;
     private static SQLiteDatabase dBase;
 
     public A1List_DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         mContext = context;
+    }
+
+    public static SQLiteDatabase getDatabase() {
+        return dBase;
     }
 
     @Override
@@ -28,6 +30,7 @@ public class A1List_DatabaseHelper extends SQLiteOpenHelper {
         AppSettingsSqlTable.onCreate(database, mContext);
         ListThemesSqlTable.onCreate(database, mContext);
         ListTitlesSqlTable.onCreate(database, mContext);
+        ListItemsSqlTable.onCreate(database, mContext);
     }
 
     @Override
@@ -36,11 +39,7 @@ public class A1List_DatabaseHelper extends SQLiteOpenHelper {
         AppSettingsSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
         ListThemesSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
         ListTitlesSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
-
-    }
-
-    public static SQLiteDatabase getDatabase() {
-        return dBase;
+        ListItemsSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
     }
 
 }

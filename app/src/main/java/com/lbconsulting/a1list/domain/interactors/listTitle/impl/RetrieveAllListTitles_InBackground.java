@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.RetrieveAllListTitles;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 
 import java.util.List;
 
@@ -15,15 +15,18 @@ import java.util.List;
 public class RetrieveAllListTitles_InBackground extends AbstractInteractor implements RetrieveAllListTitles {
 
     private final Callback mCallback;
-    private final ListTitleRepository mListTitleRepository;
+    private final ListTitleRepository_Impl mListTitleRepository;
     private ListTitle mSelectedListTitle;
+    private  boolean mIsSortAlphabetically;
 
     public RetrieveAllListTitles_InBackground(Executor threadExecutor, MainThread mainThread,
-                                              Callback callback, ListTitleRepository listTitleRepository) {
+                                              Callback callback, ListTitleRepository_Impl listTitleRepository,
+                                              boolean isSortAlphabetically) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
         mListTitleRepository = listTitleRepository;
+        mIsSortAlphabetically = isSortAlphabetically;
     }
 
 
@@ -31,11 +34,12 @@ public class RetrieveAllListTitles_InBackground extends AbstractInteractor imple
     public void run() {
 
         // retrieve all ListTitles that are not marked for deletion
-        final List<ListTitle> allListTitles = mListTitleRepository.retrieveAllListTitles(false);
+
+        final List<ListTitle> allListTitles = mListTitleRepository.retrieveAllListTitles(false, mIsSortAlphabetically);
         // check if we have failed to retrieve any ListTitles
         if (allListTitles == null || allListTitles.size() == 0) {
             // notify the failure on the main thread
-            postAllListTitlesRetrievalFailed();
+            postAllListTitlesRetrievalFailed("No ListTitles retrieved!");
         } else {
             // we have retrieved all ListTitles. Notify the UI on the main thread.
             postAllListTitlesRetrieved(allListTitles);
@@ -51,11 +55,11 @@ public class RetrieveAllListTitles_InBackground extends AbstractInteractor imple
         });
     }
 
-    private void postAllListTitlesRetrievalFailed() {
+    private void postAllListTitlesRetrievalFailed(final String errorMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onAllListTitlesRetrievalFailed("No ListTitles retrieved!");
+                mCallback.onAllListTitlesRetrievalFailed(errorMessage);
             }
         });
     }

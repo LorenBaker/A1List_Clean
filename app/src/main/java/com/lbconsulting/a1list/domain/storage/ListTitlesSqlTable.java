@@ -47,6 +47,7 @@ public class ListTitlesSqlTable {
             + CONTENT_PATH);
 
     public static final String SORT_ORDER_NAME_ASC = COL_NAME + " ASC";
+    public static final String SORT_MANUALLY_ASC = COL_MANUAL_SORT_KEY + " ASC";
     //endregion
 
     // Database creation SQL statements

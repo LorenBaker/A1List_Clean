@@ -67,13 +67,13 @@ public class ListThemesPresenter_Impl extends AbstractPresenter implements ListT
 
     @Override
     public void onAllListThemesRetrieved(List<ListTheme> listThemes) {
-        mView.hideProgress();
+        mView.hideProgress("");
         mView.displayAllListThemes(listThemes);
     }
 
     @Override
     public void onRetrievalFailed(String errorMessage) {
-        mView.hideProgress();
+        mView.hideProgress("");
         onError(errorMessage);
     }
 

@@ -5,7 +5,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.RetrieveAllListTitles_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.RetrieveAllListTitles;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListTitlesPresenter;
 
@@ -20,7 +20,7 @@ public class ListTitlesPresenter_Impl extends AbstractPresenter implements ListT
         RetrieveAllListTitles.Callback {
 
     private final ListTitleView mView;
-    private final ListTitleRepository mListTitleRepository;
+    private final ListTitleRepository_Impl mListTitleRepository;
 
     private ListTitle mListTitle;
     private String mAction;
@@ -29,19 +29,20 @@ public class ListTitlesPresenter_Impl extends AbstractPresenter implements ListT
     public ListTitlesPresenter_Impl(Executor executor,
                                     MainThread mainThread,
                                     ListTitleView view,
-                                    ListTitleRepository listTitleRepository) {
+                                    ListTitleRepository_Impl listTitleRepository,
+                                    boolean isSortedAlphabetically) {
         super(executor, mainThread);
         mView = view;
         mListTitleRepository = listTitleRepository;
         // initialize the interactor
         mRetrieveAllListTitles_inBackground = new RetrieveAllListTitles_InBackground(mExecutor, mMainThread,
-                this, mListTitleRepository);
+                this, mListTitleRepository, isSortedAlphabetically);
     }
 
 
     @Override
     public void resume() {
-        mView.showProgress("Retrieving all Lists.");
+        mView.showProgress("Retrieving Lists.");
         mRetrieveAllListTitles_inBackground.execute();
     }
 
@@ -67,13 +68,13 @@ public class ListTitlesPresenter_Impl extends AbstractPresenter implements ListT
 
     @Override
     public void onAllListTitlesRetrieved(List<ListTitle> listTitles) {
-        mView.hideProgress();
+        mView.hideProgress("");
         mView.displayAllListTitles(listTitles);
     }
 
     @Override
     public void onAllListTitlesRetrievalFailed(String errorMessage) {
-        mView.hideProgress();
+        mView.hideProgress("");
         onError(errorMessage);
     }
 

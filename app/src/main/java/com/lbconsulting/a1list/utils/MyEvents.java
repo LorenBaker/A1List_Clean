@@ -1,11 +1,42 @@
 package com.lbconsulting.a1list.utils;
 
 import com.lbconsulting.a1list.domain.model.ListTheme;
+import com.lbconsulting.a1list.domain.model.ListTitle;
 
 /**
  * EventBus events.
  */
 public class MyEvents {
+
+    public static class replaceListTitle {
+        private final int mPosition;
+        private final ListTitle mListTitle;
+
+        public replaceListTitle(int position, ListTitle listTitle) {
+            this.mPosition = position;
+            this.mListTitle = listTitle;
+        }
+
+        public int getPosition() {
+            return mPosition;
+        }
+
+        public ListTitle getListTitle() {
+            return mListTitle;
+        }
+    }
+
+    public static class updateFragListItemsUI {
+        private final String mListTitleUuid;
+
+        public updateFragListItemsUI(String listTitleUuid) {
+            mListTitleUuid = listTitleUuid;
+        }
+
+        public String getListTitleUuid() {
+            return mListTitleUuid;
+        }
+    }
 
     public static class createNewListTitle {
         private final String mName;

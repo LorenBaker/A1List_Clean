@@ -41,9 +41,17 @@ public class ListThemeRepository_Impl implements ListThemeRepository, SaveListTh
     //region Create
     @Override
     public boolean insert(ListTheme listTheme) {
+        boolean successfullyInsertedIntoSQLiteDb = insertIntoSQLiteDb(listTheme);
+        if (successfullyInsertedIntoSQLiteDb) {
+            saveListThemeToBackendless(listTheme);
+        }
+        return successfullyInsertedIntoSQLiteDb;
+    }
+
+    @Override
+    public boolean insertIntoSQLiteDb(ListTheme listTheme) {
         // insert new listTheme into SQLite db
         boolean result = false;
-        ListTheme backendlessResponse;
         long newThemeSqlId = -1;
 
         Uri uri = ListThemesSqlTable.CONTENT_URI;
@@ -79,10 +87,6 @@ public class ListThemeRepository_Impl implements ListThemeRepository, SaveListTh
             // successfully saved new ListTheme to the SQLite db
             result = true;
             Timber.i("insert(): ListThemeRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listTheme.getName());
-
-            saveListThemeToBackendless(listTheme);
-            // TODO: send message to Backendless to notify other devices of the new ListTheme
-
 
         } else {
             // failed to create listTheme in the SQLite db
@@ -241,6 +245,24 @@ public class ListThemeRepository_Impl implements ListThemeRepository, SaveListTh
     }
 
     @Override
+    public List<ListTheme> retrieveDirtyListThemes() {
+        List<ListTheme> dirtyListThemes = new ArrayList<>();
+        Cursor cursor = getDirtyListThemesCursor();
+        ListTheme listTheme;
+        if (cursor != null && cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                listTheme = listThemeFromCursor(cursor);
+                dirtyListThemes.add(listTheme);
+            }
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return dirtyListThemes;
+    }
+
+    @Override
     public ListTheme retrieveDefaultListTheme() {
         ListTheme defaultListTheme = null;
         Cursor cursor = null;
@@ -355,6 +377,22 @@ public class ListThemeRepository_Impl implements ListThemeRepository, SaveListTh
         }
         return cursor;
 
+    }
+
+    private Cursor getDirtyListThemesCursor() {
+        Cursor cursor = null;
+        Uri uri = ListThemesSqlTable.CONTENT_URI;
+        String[] projection = ListThemesSqlTable.PROJECTION_ALL;
+        String selection = ListThemesSqlTable.COL_THEME_DIRTY + " = ?";
+        String selectionArgs[] = new String[]{String.valueOf(TRUE)};
+        String sortOrder = null;
+        ContentResolver cr = mContext.getContentResolver();
+        try {
+            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+        } catch (Exception e) {
+            Timber.e("getDirtyListThemesCursor(): Exception: %s.", e.getMessage());
+        }
+        return cursor;
     }
 
     public List<ListTheme> getListThemes(String selection, String selectionArgs[]) {
@@ -679,7 +717,6 @@ public class ListThemeRepository_Impl implements ListThemeRepository, SaveListTh
 //
 //        return numberOfDeletedListThemes;
     }
-
 
 
     //endregion

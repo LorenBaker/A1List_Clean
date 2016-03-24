@@ -15,13 +15,15 @@ public interface BaseView {
 
     /**
      * This is a general method used for hiding progress information after a background task finishes.
+     * *
+     * @param message The error message to be displayed.
      */
-    void hideProgress();
+    void hideProgress(String message);
 
     /**
      * This method is used for showing error messages on the UI.
      *
-     * @param message The error message to be displayed.
+     * @param errorMessage The error message to be displayed.
      */
-    void showError(String message);
+    void showError(String errorMessage);
 }

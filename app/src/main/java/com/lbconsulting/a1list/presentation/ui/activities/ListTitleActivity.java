@@ -472,7 +472,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 //        mListThemeSpinnerArrayAdapter.setData(allListThemes);
 //        mListThemeSpinnerArrayAdapter.notifyDataSetChanged();
 //
-//        int position = mListThemeSpinnerArrayAdapter.getPosition(mListTitle.getListTheme());
+//        int position = mListThemeSpinnerArrayAdapter.getmPosition(mListTitle.getListTheme());
 //        spnListTitles.setSelection(position);
 //        updateUI(mListTitle);
 //    }

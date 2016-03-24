@@ -15,6 +15,7 @@ public class AppSettings {
     private long timeBetweenSynchronizations;
     private long listTitleLastSortKey;
 
+    private String lastListTitleViewedUuid;
 
     private Date updated;
     private Date created;
@@ -60,6 +61,14 @@ public class AppSettings {
 
     public void setObjectId(String objectId) {
         this.objectId = objectId;
+    }
+
+    public String getLastListTitleViewedUuid() {
+        return lastListTitleViewedUuid;
+    }
+
+    public void setLastListTitleViewedUuid(String lastListTitleViewedUuid) {
+        this.lastListTitleViewedUuid = lastListTitleViewedUuid;
     }
 
     public long getTimeBetweenSynchronizations() {

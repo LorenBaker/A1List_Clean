@@ -12,6 +12,7 @@ import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToB
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.DeleteListTitleFromBackendless_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitleToBackendless_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.DeleteListTitleFromBackendless;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitleListToBackendless;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitleToBackendless;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
@@ -30,7 +31,9 @@ import timber.log.Timber;
  * NOTE: All CRUD operations should run on a background thread
  */
 public class ListTitleRepository_Impl implements ListTitleRepository,
-        SaveListTitleToBackendless.Callback, SaveAppSettingsToBackendless.Callback,
+        SaveListTitleToBackendless.Callback,
+        SaveListTitleListToBackendless.Callback,
+        SaveAppSettingsToBackendless.Callback,
         DeleteListTitleFromBackendless.Callback {
 
     private final int FALSE = 0;
@@ -53,6 +56,16 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     @Override
     public boolean insert(ListTitle listTitle) {
         // insert new listTitle into SQLite db
+        boolean successfullyInsertedIntoSQLiteDb = insertIntoSQLiteDb(listTitle);
+        if (successfullyInsertedIntoSQLiteDb) {
+            saveListTitleToBackendless(listTitle);
+            saveAppSettingsToBackendless();
+        }
+        return successfullyInsertedIntoSQLiteDb;
+    }
+
+    @Override
+    public boolean insertIntoSQLiteDb(ListTitle listTitle) {
         boolean result = false;
         long newListTitleSqlId = -1;
 
@@ -90,21 +103,23 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         if (newListTitleUri != null) {
             newListTitleSqlId = Long.parseLong(newListTitleUri.getLastPathSegment());
         }
-
         if (newListTitleSqlId > -1) {
             // successfully saved new ListTitle to the SQLite db
             result = true;
-//            Timber.i("insert(): ListTitleRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listTitle.getName());
-            saveListTitleToBackendless(listTitle);
-            saveAppSettingsToBackendless();
-            // TODO: send message to Backendless to notify other devices of the new ListTitle
-
-
+            Timber.i("insertIntoSQLiteDb(): Successfully inserted \"%s\" into the SQLite db.", listTitle.getName());
         } else {
             // failed to create listTitle in the SQLite db
-            Timber.e("insert(): ListTitleRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listTitle.getName());
+            Timber.i("insertIntoSQLiteDb(): FAILED to insert \"%s\" into the SQLite db.", listTitle.getName());
         }
+
         return result;
+    }
+
+    @Override
+    public void insertIntoSQLiteDb(List<ListTitle> listTitles) {
+        for (ListTitle listTitle : listTitles) {
+            insertIntoSQLiteDb(listTitle);
+        }
     }
 
     //region Save AppSettings to Backendless
@@ -130,6 +145,13 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         new SaveListTitleToBackendless_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), listTitle, this).execute();
     }
+//
+//    private void saveListTitlesToBackendless(List<ListTitle> listTitles) {
+//        ListTitleList listTitlesList = new ListTitleList();
+//        listTitlesList.setListTitleList(listTitles);
+//        new SaveListTitleListToBackendless_InBackground(ThreadExecutor.getInstance(),
+//                MainThreadImpl.getInstance(), listTitlesList, this).execute();
+//    }
 
     @Override
     public void onListTitleSavedToBackendless(String successMessage) {
@@ -220,12 +242,12 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     }
 
     @Override
-    public List<ListTitle> retrieveAllListTitles(boolean isMarkedForDeletion) {
+    public List<ListTitle> retrieveAllListTitles(boolean isMarkedForDeletion, boolean isListsSortedAlphabetically) {
         List<ListTitle> listTitles = new ArrayList<>();
         ListTitle listTitle;
         Cursor cursor = null;
         try {
-            cursor = getAllListTitlesCursor(isMarkedForDeletion);
+            cursor = getAllListTitlesCursor(isMarkedForDeletion, isListsSortedAlphabetically);
             if (cursor != null && cursor.getCount() > 0) {
                 while (cursor.moveToNext()) {
                     listTitle = listTitleFromCursor(cursor);
@@ -243,7 +265,25 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         return listTitles;
     }
 
-    private Cursor getAllListTitlesCursor(boolean isMarkedForDeletion) {
+    @Override
+    public List<ListTitle> retrieveDirtyListTitles() {
+        List<ListTitle> dirtyListTitles = new ArrayList<>();
+        Cursor cursor = getDirtyListTitlesCursor();
+        ListTitle listTitle;
+        if (cursor != null && cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                listTitle = listTitleFromCursor(cursor);
+                dirtyListTitles.add(listTitle);
+            }
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return dirtyListTitles;
+    }
+
+    private Cursor getAllListTitlesCursor(boolean isMarkedForDeletion, boolean isListsSortedAlphabetically) {
         Cursor cursor = null;
         Uri uri = ListTitlesSqlTable.CONTENT_URI;
         String[] projection = ListTitlesSqlTable.PROJECTION_ALL;
@@ -253,6 +293,9 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             selectionArgs = new String[]{String.valueOf(TRUE)};
         }
         String sortOrder = ListTitlesSqlTable.SORT_ORDER_NAME_ASC;
+        if (!isListsSortedAlphabetically) {
+            sortOrder = ListTitlesSqlTable.SORT_MANUALLY_ASC;
+        }
 
         ContentResolver cr = mContext.getContentResolver();
         try {
@@ -300,6 +343,22 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
         } catch (Exception e) {
             Timber.e("getAllListTitlesCursor(): Exception: %s.", e.getMessage());
+        }
+        return cursor;
+    }
+
+    private Cursor getDirtyListTitlesCursor() {
+        Cursor cursor = null;
+        Uri uri = ListTitlesSqlTable.CONTENT_URI;
+        String[] projection = ListTitlesSqlTable.PROJECTION_ALL;
+        String selection = ListTitlesSqlTable.COL_LIST_TITLE_DIRTY + " = ?";
+        String selectionArgs[] = new String[]{String.valueOf(TRUE)};
+        String sortOrder = null;
+        ContentResolver cr = mContext.getContentResolver();
+        try {
+            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+        } catch (Exception e) {
+            Timber.e("getDirtyListTitlesCursor(): Exception: %s.", e.getMessage());
         }
         return cursor;
     }
@@ -385,6 +444,39 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         ContentValues cv = new ContentValues();
         cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, sortKey);
         update(listTitle, cv);
+    }
+
+    @Override
+    public long retrieveListItemNextSortKeyNoBackendless(String listTitleUuid, boolean saveToBackendless) {
+        ListTitle listTitle = null;
+        long listItemNextSortKey = 0;
+
+        Cursor cursor = getListTitleCursorByUuid(listTitleUuid);
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            listTitle = listTitleFromCursor(cursor);
+            listItemNextSortKey = listTitle.getListItemLastSortKey() + 1;
+            listTitle.setListItemLastSortKey(listItemNextSortKey);
+        }
+        if (cursor != null && !cursor.isClosed()) {
+            cursor.close();
+        }
+
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, listItemNextSortKey);
+            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+            int numberOfRecordsUpdated = updateSQLiteDb(listTitle, cv);
+
+            if (numberOfRecordsUpdated != 1) {
+                Timber.e("retrieveListItemNextSortKey(): FAILED to up date SQLiteDb");
+            }
+        } catch (Exception e) {
+            Timber.e("retrieveListItemNextSortKey(): Exception: %s.", e.getMessage());
+        }
+
+
+        return listItemNextSortKey;
     }
 
     private ListTitle getListTitle(String listTitleName) {
@@ -646,7 +738,16 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     @Override
     public void onListTitleDeleteFromBackendlessFailed(String errorMessage) {
         Timber.e("onListTitleDeleteFromBackendlessFailed(): %s.", errorMessage);
+    }
 
+    @Override
+    public void onListTitleListSavedToBackendless(String successMessage, List<ListTitle> successfullySavedListTitles) {
+        Timber.i("onListTitleListSavedToBackendless(): %s.", successMessage);
+    }
+
+    @Override
+    public void onListTitleListSaveToBackendlessFailed(String errorMessage, List<ListTitle> successfullySavedListTitles) {
+        Timber.i("onListTitleListSaveToBackendlessFailed(): %s.", errorMessage);
     }
 
 }

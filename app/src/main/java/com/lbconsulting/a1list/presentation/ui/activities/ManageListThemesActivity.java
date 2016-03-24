@@ -195,7 +195,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     }
 
     @Override
-    public void hideProgress() {
+    public void hideProgress(String message) {
         Timber.i("hideProgress()");
         manageListThemesActivityProgressBar.setVisibility(View.GONE);
 //        tvProgressBarMessage.setVisibility(View.GONE);
@@ -319,7 +319,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         Timber.i("onStruckOutListThemesDeleted(): %s.", successMessage);
         mNumberOfStruckOutListThemes = 0;
         mPresenter.resume();
-        hideProgress();
+        hideProgress("");
     }
 
     @Override
@@ -327,7 +327,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         Timber.e("onStruckOutListThemesDeleted(): %s.", errorMessage);
         mNumberOfStruckOutListThemes = mListThemeRepository.getNumberOfStruckOutListThemes();
         mPresenter.resume();
-        hideProgress();
+        hideProgress("");
     }
 
     @Override

@@ -12,9 +12,15 @@ public interface ListItemRepository {
 
     boolean insert(ListItem listItem);
 
+    boolean insertIntoSQLiteDb(ListItem listItem);
+
+    void insertIntoSQLiteDb(List<ListItem> listItems);
+
     ListItem retrieveListItemByUuid(String uuid);
 
     List<ListItem> retrieveAllListItems(ListTitle listTitle, boolean isMarkedForDeletion);
+
+    List<ListItem> retrieveDirtyListItems();
 
     List<ListItem> retrieveStruckOutListItems(ListTitle listTitle);
 
@@ -27,5 +33,4 @@ public interface ListItemRepository {
     int toggle(ListItem listItem, String fieldName);
 
     int delete(ListItem listItem);
-
 }

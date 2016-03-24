@@ -151,8 +151,11 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
         mListThemeRepository = new ListThemeRepository_Impl(this);
         mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository ,mListThemeRepository);
 
+        // TODO: Get isListTitlesSortedAlphabetically from AppSettings
+        boolean isListTitlesSortedAlphabetically = true;
+
         mPresenter = new ListTitlesPresenter_Impl(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListTitleRepository);
+                MainThreadImpl.getInstance(), this, mListTitleRepository,isListTitlesSortedAlphabetically);
 
         mDeleteStruckOutListTitles = new DeleteStruckOutListTitles_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, mListTitleRepository);
@@ -191,15 +194,13 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
         Timber.i("showProgress()");
         manageListTitlesActivityProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
-//        tvProgressBarMessage.setVisibility(View.VISIBLE);
         manageListTitlesActivityContent.setVisibility(View.GONE);
     }
 
     @Override
-    public void hideProgress() {
+    public void hideProgress(String message) {
         Timber.i("hideProgress()");
         manageListTitlesActivityProgressBar.setVisibility(View.GONE);
-//        tvProgressBarMessage.setVisibility(View.GONE);
         manageListTitlesActivityContent.setVisibility(View.VISIBLE);
     }
 
@@ -322,7 +323,7 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
         Timber.i("onStruckOutListTitlesDeleted(): %s.", successMessage);
         mNumberOfStruckOutListTitles = 0;
         mPresenter.resume();
-        hideProgress();
+        hideProgress("");
     }
 
     @Override
@@ -330,7 +331,7 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
         Timber.e("onStruckOutListTitlesDeleted(): %s.", errorMessage);
         mNumberOfStruckOutListTitles = mListTitleRepository.getNumberOfStruckOutListTitles();
         mPresenter.resume();
-        hideProgress();
+        hideProgress("");
     }
 
     @Override

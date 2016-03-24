@@ -59,7 +59,8 @@ public class RetrieveAllListItems_InBackground extends AbstractInteractor implem
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onAllListItemsRetrievalFailed("No ListItems retrieved!");
+                String errorMessage = String.format("No ListItems retrieved for \"%s\".",mListTitle.getName());
+                mCallback.onAllListItemsRetrievalFailed(errorMessage);
             }
         });
     }

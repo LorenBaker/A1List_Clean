@@ -5,6 +5,8 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -21,20 +23,36 @@ import com.backendless.messaging.Message;
 import com.google.gson.Gson;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
+import com.lbconsulting.a1list.domain.interactors.appSettings.SaveDirtyObjectsToBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listItem.interactors.InsertNewListItem;
+import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemListToBackendless;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.CreateInitialListThemes_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes;
+import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitleListToBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.InsertNewListTitle;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitleListToBackendless;
+import com.lbconsulting.a1list.domain.model.AppSettings;
+import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
+import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
+import com.lbconsulting.a1list.presentation.presenters.impl.ListTitlesPresenter_Impl;
+import com.lbconsulting.a1list.presentation.presenters.interfaces.ListTitlesPresenter;
 import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;
+import com.lbconsulting.a1list.presentation.ui.adapters.SectionsPagerAdapter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.CsvParser;
+import com.lbconsulting.a1list.utils.MyEvents;
 import com.lbconsulting.a1list.utils.MySettings;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,33 +62,32 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity implements CreateInitialListThemes.Callback {
+public class MainActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView,
+        CreateInitialListThemes.Callback, InsertNewListTitle.Callback, InsertNewListItem.Callback,
+        SaveListTitleListToBackendless.Callback,
+        SaveListItemListToBackendless.Callback {
+    private static ListTitlesPresenter_Impl mMainActivityPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
-
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
-
-    @Bind(R.id.tvMainActivity)
-    TextView tvMainActivity;
-
-    @Bind(R.id.mainActivityContent)
-    View mainActivityContent;
-
+    @Bind(R.id.listItemsViewPager)
+    ViewPager mViewPager;
+    @Bind(R.id.tabs)
+    TabLayout mTabLayout;
     @Bind(R.id.activityProgressBar)
     View mainActivityProgressBar;
-
     @Bind(R.id.tvActivityProgressBarMessage)
     TextView tvProgressBarMessage;
-
+    private SectionsPagerAdapter mSectionsPagerAdapter;
     private String MESSAGE_CHANNEL = "";
     private Subscription mSubscription;
 
     private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
-
-//    private CreateInitialListThemes_InBackground mCreateInitialListThemesInBackground;
+    private ListItemRepository_Impl mListItemRepository;
+    private int mPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,11 +102,19 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
-//        EventBus.getDefault().register(this);
 
+        EventBus.getDefault().register(this);
 
-//        Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
+        // TODO: Get isListTitlesSortedAlphabetically from AppSettings
+        boolean isListTitlesSortedAlphabetically = true;
+        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
+        mListThemeRepository = new ListThemeRepository_Impl(this);
+        mListTitleRepository = new ListTitleRepository_Impl(this, mAppSettingsRepository, mListThemeRepository);
+        mListItemRepository = new ListItemRepository_Impl(this, mListTitleRepository);
+
+        mMainActivityPresenter = new ListTitlesPresenter_Impl(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, mListTitleRepository, isListTitlesSortedAlphabetically);
 
 
         //region Messaging
@@ -128,43 +153,14 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         );
         //endregion
 
-        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
-        mListThemeRepository = new ListThemeRepository_Impl(this);
-        mListTitleRepository = new ListTitleRepository_Impl(this, mAppSettingsRepository, mListThemeRepository);
+
         showActiveUser();
     }
 
-//    @Subscribe
-//    public void onEvent(MyEvents.createNewListTitle event) {
-//        if (event.showProgress()) {
-//            showProgressBar("Creating new List.");
-//        }
-//
-//        new CreateNewListTitle_InBackground(ThreadExecutor.getInstance(),
-//                MainThreadImpl.getInstance(),  this, event.getName(),mAppSettingsRepository,
-//                mListTitleRepository, mListThemeRepository, event.showProgress()).execute();
-//    }
-
-
-    private void updateUI(boolean hideProgressBar) {
-        // TODO: implement updateUI()
-        if (hideProgressBar) {
-            hideProgressBar();
-        }
+    @Subscribe
+    public void onEvent(MyEvents.replaceListTitle event) {
+        mSectionsPagerAdapter.replaceListTitle(event.getPosition(), event.getListTitle());
     }
-
-
-//    @Override
-//    public void onListTitleInsertedIntoSQLiteDb(ListTitle newListTitle, boolean hideProgressBar) {
-//        Timber.i("onListTitleInsertedIntoSQLiteDb(): %s.", newListTitle.getName());
-//        updateUI(hideProgressBar);
-//    }
-//
-//    @Override
-//    public void onListTitleInsertionIntoSQLiteDbFailed(String errorMessage) {
-//        Timber.e("onListTitleInsertionIntoSQLiteDbFailed(): %s.", errorMessage);
-//
-//    }
 
     @OnClick(R.id.fab)
     public void fab() {
@@ -179,22 +175,16 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         Timber.i("onResume()");
 
         if (MySettings.isStartedFromRegistrationActivity()) {
-            Timber.i("onResume(): Show welcome dialog");
             initializeApp();
         } else {
-
-            // TODO: Figure out where to hide the progress bar
-            hideProgressBar();
-//            mMainActivityPresenter.resume();
-
+            mMainActivityPresenter.resume();
         }
 
-//        initializeApp();
     }
 
     private void initializeApp() {
         Timber.i("initializeApp()");
-        showProgressBar("Loading initial Themes.");
+        showProgress("Loading initial Themes.");
         new CreateInitialListThemes_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, mAppSettingsRepository,
                 mListThemeRepository, this).execute();
@@ -203,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     @Override
     public void onInitialListThemesCreated(String message) {
         Timber.i("onInitialListThemesCreated():\n%s", message);
-        hideProgressBar();
+        mMainActivityPresenter.resume();
         CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
         // TODO: show welcome dialog
     }
@@ -211,37 +201,80 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
     @Override
     public void onListThemesCreationFailed(String errorMessage) {
         Timber.e("onListThemesCreationFailed(): %s.", errorMessage);
-        hideProgressBar();
+        hideProgress("");
     }
 
-    private void showProgressBar(String waitMessage) {
+    @Override
+    public void displayAllListTitles(List<ListTitle> listTitles) {
+        // Create the adapter that will return a fragListItems fragments
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), listTitles);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                Timber.i("onPageSelected(): position = %d", position);
+                mPosition = position;
+//                updateActiveListTitle(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+        mTabLayout.setupWithViewPager(mViewPager);
+
+        AppSettings appSettings = mAppSettingsRepository.retrieveAppSettings();
+        String lastListTitleViewedUuid = appSettings.getLastListTitleViewedUuid();
+        int position = mSectionsPagerAdapter.getPosition(lastListTitleViewedUuid);
+        mViewPager.setCurrentItem(position);
+
+    }
+
+    @Override
+    public void showProgress(String waitMessage) {
         mainActivityProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
-//        tvProgressBarMessage.setVisibility(View.VISIBLE);
-        mainActivityContent.setVisibility(View.GONE);
+        mViewPager.setVisibility(View.GONE);
         // TODO: hide menus
     }
 
-    private void hideProgressBar() {
-        Timber.i("hideProgressBar()");
+    @Override
+    public void hideProgress(String message) {
         mainActivityProgressBar.setVisibility(View.GONE);
-//        tvProgressBarMessage.setVisibility(View.GONE);
-        mainActivityContent.setVisibility(View.VISIBLE);
+        mViewPager.setVisibility(View.VISIBLE);
         // TODO: show menus
     }
+
+    @Override
+    public void showError(String message) {
+        Timber.e("showError(): %s.", message);
+    }
+
 
     @Override
     protected void onPause() {
         super.onPause();
         Timber.i("onPause()");
         MySettings.setStartedFromRegistrationActivity(false);
+        if (mSectionsPagerAdapter != null) {
+            ListTitle listTitle = mSectionsPagerAdapter.getListTitle(mPosition);
+            AppSettings appSettings = mAppSettingsRepository.retrieveAppSettings();
+            appSettings.setLastListTitleViewedUuid(listTitle.getUuid());
+            mAppSettingsRepository.setLastListTitleViewedUuid(appSettings, listTitle.getUuid());
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         Timber.i("onDestroy()");
-//        EventBus.getDefault().unregister(this);
+        EventBus.getDefault().unregister(this);
 
     }
 
@@ -269,9 +302,11 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
         if (id == R.id.action_deleteItemsStruckOut) {
             deleteStruckOutItems();
             return true;
+
         } else if (id == R.id.action_showFavorites) {
             showFavorites();
             return true;
+
         } else if (id == R.id.action_newList) {
             createNewList();
             return true;
@@ -314,10 +349,120 @@ public class MainActivity extends AppCompatActivity implements CreateInitialList
             showPreferencesActivity();
             Toast.makeText(this, "action_settings clicked", Toast.LENGTH_SHORT).show();
             return true;
-        }
 
+        } else if (id == R.id.action_addTestLists) {
+            addTestLists();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
+
+    //region Add Test Lists with Test Items
+    // TODO: Remove addTestLists
+    private void addTestLists() {
+        int numberOfLists = 10;
+        List<ListTitle> listTitles = new ArrayList<>();
+
+        ListTheme defaultListTheme;
+        AppSettingsRepository_Impl appSettingsRepository = new AppSettingsRepository_Impl(this);
+        ListThemeRepository_Impl listThemeRepository = new ListThemeRepository_Impl(this);
+        ListTitleRepository_Impl listTitleRepository = new ListTitleRepository_Impl(this, appSettingsRepository, listThemeRepository);
+//        ListItemRepository_Impl listItemRepository = new ListItemRepository_Impl(this, listTitleRepository);
+        ListTitle newListTitle;
+
+        Timber.i("addTestLists(): Starting to add test lists.");
+        for (int i = 1; i < numberOfLists + 1; i++) {
+            defaultListTheme = mListThemeRepository.retrieveDefaultListTheme();
+            String listNumber = String.valueOf(i);
+            if (i < 10) {
+                listNumber = "0" + listNumber;
+            }
+            String listName = "List " + listNumber;
+            Timber.i("addTestLists(): adding \"%s\"", listName);
+            newListTitle = ListTitle.newInstance(listName, defaultListTheme, appSettingsRepository);
+            listTitles.add(newListTitle);
+        }
+        mListTitleRepository.insertIntoSQLiteDb(listTitles);
+
+        List<ListTitle> allListTitles = listTitleRepository.retrieveAllListTitles(false, true);
+        new SaveListTitleListToBackendless_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(), allListTitles, this).execute();
+    }
+
+    @Override
+    public void onListTitleListSavedToBackendless(String successMessage, List<ListTitle> successfullySavedListTitles) {
+        Timber.i("onListTitleListSavedToBackendless(): %s.", successMessage);
+        Timber.i("addTestLists(): Starting to add test items to %d ListTitles.", successfullySavedListTitles.size());
+        addItemsToListTitles(successfullySavedListTitles);
+    }
+
+    @Override
+    public void onListTitleListSaveToBackendlessFailed(String errorMessage, List<ListTitle> successfullySavedListTitles) {
+        Timber.e("onListTitleListSavedToBackendless(): %s.", errorMessage);
+        Timber.i("addTestLists(): Starting to add test items to %d ListTitles.", successfullySavedListTitles.size());
+        addItemsToListTitles(successfullySavedListTitles);
+    }
+
+    private void addItemsToListTitles(List<ListTitle> listTitles) {
+        int numberOfItemsPerList = 5;
+        ListItem newListItem;
+        List<ListItem> listItems = new ArrayList<>();
+        String listTitleName;
+        for (ListTitle listTitle : listTitles) {
+            numberOfItemsPerList++;
+            listTitleName = listTitle.getName();
+            Timber.i("addItemsToListTitles(): adding items to \"%s\"", listTitle.getName());
+            for (int i = 1; i < numberOfItemsPerList + 1; i++) {
+                String itemNumber = String.valueOf(i);
+                if (i < 10) {
+                    itemNumber = "0" + itemNumber;
+                }
+                String itemName = listTitleName + ": Item " + itemNumber;
+                Timber.i("addTestLists(): adding to \"%s\"", itemName);
+                newListItem = ListItem.newInstance(itemName, listTitle, mListTitleRepository, false);
+                listItems.add(newListItem);
+            }
+        }
+        mListItemRepository.insertIntoSQLiteDb(listItems);
+        Timber.i("addItemsToListTitles(): Starting to save dirty objects to Backendless.");
+        new SaveDirtyObjectsToBackendless_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance()).execute();
+//        new SaveListItemListToBackendless_InBackground(ThreadExecutor.getInstance(),
+//                MainThreadImpl.getInstance(), listItems, this).execute();
+    }
+
+    @Override
+    public void onListItemListSavedToBackendless(String successMessage, List<ListItem> successfullySavedListItems) {
+        Timber.e("onListItemListSavedToBackendless(): %s.", successMessage);
+        // TODO: Save successfullySavedListItems
+        mMainActivityPresenter.resume();
+    }
+
+    @Override
+    public void onListItemListSaveToBackendlessFailed(String errorMessage, List<ListItem> successfullySavedListItems) {
+        Timber.e("onListItemListSaveToBackendlessFailed(): %s.", errorMessage);
+        // TODO: Save successfullySavedListItems
+        mMainActivityPresenter.resume();
+    }
+
+    @Override
+    public void onListTitleInsertedIntoSQLiteDb(String successMessage) {
+        Timber.i("onListTitleInsertedIntoSQLiteDb(): %s.", successMessage);
+    }
+
+    @Override
+    public void onListTitleInsertionIntoSQLiteDbFailed(String errorMessage) {
+        Timber.e("onListTitleInsertionIntoSQLiteDbFailed(): %s.", errorMessage);
+    }
+
+    @Override
+    public void onListItemInsertedIntoSQLiteDb(String successMessage) {
+        Timber.i("onListItemInsertedIntoSQLiteDb(): %s.", successMessage);
+    }
+
+    @Override
+    public void onListItemInsertionIntoSQLiteDbFailed(String errorMessage) {
+        Timber.e("onListItemInsertionIntoSQLiteDbFailed(): %s.", errorMessage);
+    }
+    //endregion
 
     private void deleteStruckOutItems() {
         Toast.makeText(this, "deleteStruckOutItems clicked", Toast.LENGTH_SHORT).show();

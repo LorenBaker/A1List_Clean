@@ -18,6 +18,13 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_addTestLists"
+        android:icon="@android:drawable/ic_menu_add"
+        android:orderInCategory="100"
+        android:title="Add Test Lists"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_newList"
         android:icon="@android:drawable/ic_menu_add"
         android:orderInCategory="100"

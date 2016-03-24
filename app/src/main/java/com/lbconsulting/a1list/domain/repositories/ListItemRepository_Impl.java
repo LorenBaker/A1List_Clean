@@ -48,6 +48,15 @@ public class ListItemRepository_Impl implements ListItemRepository,
     @Override
     public boolean insert(ListItem listItem) {
         // insert new listItem into SQLite db
+        boolean successfullySavedListItemToSQLiteDb = insertIntoSQLiteDb(listItem);
+        if (successfullySavedListItemToSQLiteDb) {
+            saveListItemToBackendless(listItem);
+        }
+        return successfullySavedListItemToSQLiteDb;
+    }
+
+    @Override
+    public boolean insertIntoSQLiteDb(ListItem listItem) {
         boolean result = false;
         long newListItemSqlId = -1;
 
@@ -80,17 +89,22 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
         if (newListItemSqlId > -1) {
             // successfully saved new ListItem to the SQLite db
-            Timber.i("insert(): ListItemRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listItem.getName());
             result = true;
-            saveListItemToBackendless(listItem);
-
+            Timber.i("insertIntoSQLiteDb(): ListItemRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listItem.getName());
         } else {
             // failed to create listItem in the SQLite db
-            Timber.e("insert(): ListItemRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listItem.getName());
+            Timber.i("insertIntoSQLiteDb(): ListItemRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listItem.getName());
         }
+
         return result;
     }
 
+    @Override
+    public void insertIntoSQLiteDb(List<ListItem> listItems) {
+        for (ListItem listItem : listItems) {
+            insertIntoSQLiteDb(listItem);
+        }
+    }
 
     //region Save ListItem to Backendless
     private void saveListItemToBackendless(ListItem listItem) {
@@ -202,6 +216,24 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return listItems;
     }
 
+    @Override
+    public List<ListItem> retrieveDirtyListItems() {
+        List<ListItem> dirtyListItems = new ArrayList<>();
+        Cursor cursor = getDirtyListItemsCursor();
+        ListItem listItem;
+        if (cursor != null && cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                listItem = listItemFromCursor(cursor);
+                dirtyListItems.add(listItem);
+            }
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return dirtyListItems;
+    }
+
     private Cursor getAllListItemsCursor(ListTitle listTitle, boolean isMarkedForDeletion) {
         Cursor cursor = null;
         Uri uri = ListItemsSqlTable.CONTENT_URI;
@@ -226,6 +258,21 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return cursor;
     }
 
+    private Cursor getDirtyListItemsCursor() {
+        Cursor cursor = null;
+        Uri uri = ListItemsSqlTable.CONTENT_URI;
+        String[] projection = ListItemsSqlTable.PROJECTION_ALL;
+        String selection = ListItemsSqlTable.COL_LIST_ITEM_DIRTY + " = ?";
+        String selectionArgs[] = new String[]{String.valueOf(TRUE)};
+        String sortOrder = null;
+        ContentResolver cr = mContext.getContentResolver();
+        try {
+            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+        } catch (Exception e) {
+            Timber.e("getDirtyListItemsCursor(): Exception: %s.", e.getMessage());
+        }
+        return cursor;
+    }
 
     @Override
     public List<ListItem> retrieveStruckOutListItems(ListTitle listTitle) {
@@ -287,7 +334,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     @Override
     public long retrieveListItemNextSortKey(ListTitle listTitle) {
-        long listItemNextSortKey = listTitle.getListItemLastSortKey()+1;
+        long listItemNextSortKey = listTitle.getListItemLastSortKey() + 1;
         listTitle.setListItemLastSortKey(listItemNextSortKey);
         setListItemLastSortKey(listTitle, listItemNextSortKey);
         return listItemNextSortKey;
@@ -413,7 +460,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
         switch (fieldName) {
             case ListItemsSqlTable.COL_CHECKED:
-                newValue = !listItem.isChecked();
+                newValue = listItem.isChecked();
                 if (newValue) {
                     result++;
                 } else {
@@ -424,7 +471,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
                 break;
 
             case ListItemsSqlTable.COL_FAVORITE:
-                newValue = !listItem.isFavorite();
+                newValue = listItem.isFavorite();
                 if (newValue) {
                     result++;
                 } else {
@@ -435,9 +482,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
                 break;
 
 
-
             case ListItemsSqlTable.COL_MARKED_FOR_DELETION:
-                newValue = !listItem.isMarkedForDeletion();
+                newValue = listItem.isMarkedForDeletion();
                 if (newValue) {
                     result++;
                 } else {
@@ -449,7 +495,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
 
             case ListItemsSqlTable.COL_STRUCK_OUT:
-                newValue = !listItem.isStruckOut();
+                newValue = listItem.isStruckOut();
                 if (newValue) {
                     result++;
                 } else {
@@ -499,5 +545,6 @@ public class ListItemRepository_Impl implements ListItemRepository,
         Timber.e("onListItemDeleteFromBackendlessFailed(): %s.", errorMessage);
 
     }
+
 
 }

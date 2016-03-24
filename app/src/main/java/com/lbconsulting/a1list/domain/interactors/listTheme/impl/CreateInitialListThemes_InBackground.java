@@ -8,8 +8,10 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToBackendless;
+import com.lbconsulting.a1list.domain.interactors.appSettings.SaveDirtyObjectsToBackendless_InBackground;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.SaveListThemeListToBackendless;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
@@ -23,13 +25,15 @@ import timber.log.Timber;
  * An interactor that retrieves all ListThemes
  */
 public class CreateInitialListThemes_InBackground extends AbstractInteractor implements CreateInitialListThemes,
-        SaveAppSettingsToBackendless.Callback {
+        SaveAppSettingsToBackendless.Callback, SaveListThemeListToBackendless.Callback {
 
     private final Callback mCallback;
     private final AppSettingsRepository mAppSettingsRepository;
     private final ListThemeRepository mListThemeRepository;
     //    private final ListTitleRepository mListTitleRepository;
     private final Context mContext;
+
+    private List<ListTheme> mAllListThemes;
 
     public CreateInitialListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
                                                 Callback callback, AppSettingsRepository appSettingsRepository,
@@ -47,13 +51,12 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
         try {
             // create app settings
             AppSettings appSettings = AppSettings.newInstance();
-            if (!mAppSettingsRepository.insert(appSettings)) {
+            if (!mAppSettingsRepository.insertIntoSQLiteDb(appSettings)) {
                 Timber.e("run(): FAILED to create AppSettings!");
             }
 
             //region create initial ListThemes
             int requestedInsertListThemeCount = 0;
-
             ListTheme newListTheme;
 
             // TODO: create resource strings for the initial ListThemes
@@ -62,7 +65,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -71,7 +74,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -80,7 +83,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -89,7 +92,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, true, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -98,7 +101,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -107,7 +110,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -116,7 +119,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -125,7 +128,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -134,7 +137,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -143,7 +146,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -152,7 +155,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -161,7 +164,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -170,7 +173,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -179,7 +182,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -188,7 +191,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -197,7 +200,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -206,7 +209,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -215,7 +218,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
 
@@ -224,38 +227,36 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
             requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insert(newListTheme)) {
+            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
                 Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
             }
             //endregion
 
 
-            final List<ListTheme> allListThemes = mListThemeRepository.retrieveAllListThemes(false);
+            mAllListThemes = mListThemeRepository.retrieveAllListThemes(false);
             String createdListThemeMessage;
             // check if we have failed to retrieve any ListThemes
-            if (allListThemes == null) {
+            if (mAllListThemes == null) {
                 // notify the failure on the main thread
                 posListThemesCreationFailed("No Themes created!");
 
             } else {
                 // we have created ListThemes. Notify the UI on the main thread.
-                if (allListThemes.size() != requestedInsertListThemeCount) {
-                    createdListThemeMessage = String.format("Only %d out of %d requested Themes created in the local database.", allListThemes.size(), requestedInsertListThemeCount);
+                if (mAllListThemes.size() != requestedInsertListThemeCount) {
+                    createdListThemeMessage = String.format("Only %d out of %d requested Themes created in the local database.", mAllListThemes.size(), requestedInsertListThemeCount);
 
                 } else {
                     createdListThemeMessage = String.format("All %d Themes created in the local database.", requestedInsertListThemeCount);
                 }
-//
-//                if (allListThemes.size() != newBackendlessListThemeCount) {
-//                    createdListThemeMessage = createdListThemeMessage + "\n" +
-//                            String.format("Only %d out of %d requested ListThemes saved to the Cloud.", newBackendlessListThemeCount, requestedInsertListThemeCount);
-//                } else {
-//                    createdListThemeMessage = createdListThemeMessage + "\n" +
-//                            String.format("All %d ListThemes saved to the Cloud.", requestedInsertListThemeCount);
-//                }
 
                 postInitialListThemesCreated(createdListThemeMessage);
 
+                new SaveDirtyObjectsToBackendless_InBackground(mThreadExecutor,mMainThread).execute();
+
+//                AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
+//                if (dirtyAppSettings != null) {
+//                    new SaveAppSettingsToBackendless_InBackground(mThreadExecutor, mMainThread, dirtyAppSettings, this).execute();
+//                }
             }
         } catch (Exception e) {
             Timber.e("run(): Exception: %s.", e.getMessage());
@@ -264,12 +265,24 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
 
     @Override
     public void onAppSettingsSavedToBackendless(final String successMessage) {
-        Timber.e("onAppSettingsSavedToBackendless(): %s", successMessage);
+        Timber.i("onAppSettingsSavedToBackendless(): %s", successMessage);
+        new SaveListThemeListToBackendless_InBackground(mThreadExecutor, mMainThread, mAllListThemes, this).execute();
     }
 
     @Override
     public void onAppSettingsSaveToBackendlessFailed(final String errorMessage) {
-        Timber.e("onAppSettingsSavedToBackendless(): %s", errorMessage);
+        Timber.e("onAppSettingsSaveToBackendlessFailed(): %s", errorMessage);
+        new SaveListThemeListToBackendless_InBackground(mThreadExecutor, mMainThread, mAllListThemes, this).execute();
+    }
+
+    @Override
+    public void onListThemeListSavedToBackendless(String successMessage, List<ListTheme> successfullySavedListThemes) {
+        Timber.i("onListThemeListSavedToBackendless(): %s", successMessage);
+    }
+
+    @Override
+    public void onListThemeListSaveToBackendlessFailed(String errorMessage, List<ListTheme> successfullySavedListThemes) {
+        Timber.e("onListThemeListSaveToBackendlessFailed(): %s", errorMessage);
     }
 
     private void postInitialListThemesCreated(final String successMessage) {
@@ -290,5 +303,6 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
             }
         });
     }
+
 
 }

@@ -12,9 +12,15 @@ public interface ListTitleRepository {
 
     boolean insert(ListTitle listTitle);
 
+    boolean insertIntoSQLiteDb(ListTitle listTitle);
+
+    void insertIntoSQLiteDb(List<ListTitle> listTitles);
+
     ListTitle getListTitleByUuid(String uuid);
 
-    List<ListTitle> retrieveAllListTitles(boolean isMarkedForDeletion);
+    List<ListTitle> retrieveAllListTitles(boolean isMarkedForDeletion, boolean isListsSortedAlphabetically);
+
+    List<ListTitle> retrieveDirtyListTitles();
 
     List<ListTitle> retrieveStruckOutListTitles();
 
@@ -32,4 +38,5 @@ public interface ListTitleRepository {
 
     int delete(ListTitle listTitle);
 
+    long retrieveListItemNextSortKeyNoBackendless(String uuid, boolean saveToBackendless);
 }

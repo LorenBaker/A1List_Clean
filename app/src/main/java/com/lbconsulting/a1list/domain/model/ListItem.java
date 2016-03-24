@@ -11,7 +11,6 @@ import java.util.UUID;
 public class ListItem {
 
     private long Id;
-    ;
     private String uuid;
     private String objectId;
 
@@ -31,7 +30,7 @@ public class ListItem {
 // A default constructor.
     }
 
-    public static ListItem newInstance(String name, ListTitle listTitle, ListTitleRepository listTitleRepository) {
+    public static ListItem newInstance(String name, ListTitle listTitle, ListTitleRepository listTitleRepository, boolean saveToBackendless) {
         ListItem newListItem = new ListItem();
 
         String newUuid = UUID.randomUUID().toString();
@@ -41,7 +40,11 @@ public class ListItem {
 
         newListItem.setName(name);
         newListItem.setListTitle(listTitle);
-        newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKey(listTitle.getUuid()));
+        if (saveToBackendless) {
+            newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKey(listTitle.getUuid()));
+        } else {
+            newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKeyNoBackendless(listTitle.getUuid(), false));
+        }
         newListItem.setChecked(false);
         newListItem.setFavorite(false);
         newListItem.setMarkedForDeletion(false);

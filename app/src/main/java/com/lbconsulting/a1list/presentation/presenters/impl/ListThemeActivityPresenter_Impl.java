@@ -64,13 +64,13 @@ public class ListThemeActivityPresenter_Impl extends AbstractPresenter implement
 
     @Override
     public void onListThemeRetrieved(ListTheme listTheme) {
-        mView.hideProgress();
+        mView.hideProgress("");
         mView.displayRetrievedListTheme(listTheme);
     }
 
     @Override
     public void onListThemeRetrievalFailed(String errorMessage) {
-        mView.hideProgress();
+        mView.hideProgress("");
         onError(errorMessage);
     }
 }

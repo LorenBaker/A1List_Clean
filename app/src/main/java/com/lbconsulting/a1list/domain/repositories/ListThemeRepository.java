@@ -11,9 +11,13 @@ public interface ListThemeRepository {
 
     boolean insert(ListTheme listTheme);
 
+    boolean insertIntoSQLiteDb(ListTheme listTheme);
+
     ListTheme getListThemeByUuid(String uuid);
 
     List<ListTheme> retrieveAllListThemes(boolean isMarkedForDeletion);
+
+    List<ListTheme> retrieveDirtyListThemes();
 
     ListTheme retrieveDefaultListTheme();
 

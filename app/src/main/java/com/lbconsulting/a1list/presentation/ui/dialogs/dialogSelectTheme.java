@@ -129,7 +129,7 @@ public class dialogSelectTheme extends DialogFragment implements  ListThemesPres
     }
 
     @Override
-    public void hideProgress() {
+    public void hideProgress(String message) {
 
     }
 

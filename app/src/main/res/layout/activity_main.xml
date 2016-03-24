@@ -7,6 +7,12 @@
     android:fitsSystemWindows="true"
     tools:context=".activities.MainActivity">
 
+    <!--<LinearLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:orientation="vertical">-->
+
+
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,13 +25,28 @@
             android:background="?attr/colorPrimary"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabMode="scrollable" />
+
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/activity_progress_bar"
-        android:id="@+id/activityProgressBar"/>
+    <include
+        android:id="@+id/activityProgressBar"
+        layout="@layout/activity_progress_bar" />
 
-    <include layout="@layout/content_main"
-        android:id="@+id/mainActivityContent"/>
+    <!--<include-->
+        <!--android:id="@+id/mainActivityContent"-->
+        <!--layout="@layout/content_main" />-->
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/listItemsViewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
@@ -35,4 +56,5 @@
         android:layout_margin="@dimen/fab_margin"
         android:src="@android:drawable/ic_input_add" />
 
+    <!--</LinearLayout>-->
 </android.support.design.widget.CoordinatorLayout>

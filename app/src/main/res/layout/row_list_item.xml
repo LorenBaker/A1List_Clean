@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/llRowItemName"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/rec_genoa_no_stroke"
+    android:orientation="horizontal"
+
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/tvItemName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:hint="List Item Name"
+        android:paddingBottom="15dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="15dp"
+        android:textColor="@color/white"
+        android:longClickable="true"
+        android:textSize="17sp" />
+
+    <ImageButton
+        android:id="@+id/btnFavorite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:background="@null"
+        android:src="@drawable/ic_favorite_black"
+        android:contentDescription="@string/btnFavorite_contentDescription" />
+
+    <ImageButton
+        android:id="@+id/btnEditItemName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:background="@null"
+        android:src="@drawable/ic_mode_edit_black"
+        android:layout_marginLeft="5dp"
+        android:contentDescription="@string/btnEditItemName_contentDescription" />
+
+</LinearLayout>
