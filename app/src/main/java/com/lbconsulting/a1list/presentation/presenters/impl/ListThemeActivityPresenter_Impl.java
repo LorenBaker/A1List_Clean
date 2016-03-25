@@ -33,7 +33,7 @@ public class ListThemeActivityPresenter_Impl extends AbstractPresenter implement
 
         // initialize the interactor
         mRetrieveListTheme_InBackground = new RetrieveListTheme_InBackground(mExecutor, mMainThread,
-                this, mListThemeRepository, listThemeUuid);
+                this, listThemeUuid);
     }
 
     @Override

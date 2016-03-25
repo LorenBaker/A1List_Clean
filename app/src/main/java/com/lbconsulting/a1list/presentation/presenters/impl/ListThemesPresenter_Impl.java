@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.presentation.presenters.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveAllListThemes_InBackground;
@@ -28,14 +29,13 @@ public class ListThemesPresenter_Impl extends AbstractPresenter implements ListT
 
     public ListThemesPresenter_Impl(Executor executor,
                                     MainThread mainThread,
-                                    ListThemesPresenter.ListThemeView view,
-                                    ListThemeRepository listThemeRepository) {
+                                    ListThemesPresenter.ListThemeView view) {
         super(executor, mainThread);
         mView = view;
-        mListThemeRepository = listThemeRepository;
+        mListThemeRepository = AndroidApplication.getListThemeRepository();
         // initialize the interactor
-        mRetrieveAllListThemes_inBackground = new RetrieveAllListThemes_InBackground(mExecutor, mMainThread,
-                this, mListThemeRepository);
+        mRetrieveAllListThemes_inBackground = new RetrieveAllListThemes_InBackground(mExecutor,
+                mMainThread, this);
     }
 
 

@@ -109,7 +109,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
     //region Save ListItem to Backendless
     private void saveListItemToBackendless(ListItem listItem) {
         new SaveListItemToBackendless_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), listItem, this).execute();
+                MainThreadImpl.getInstance(), this, listItem).execute();
     }
 
     @Override
@@ -523,10 +523,17 @@ public class ListItemRepository_Impl implements ListItemRepository,
             ContentResolver cr = mContext.getContentResolver();
             ContentValues cv = new ContentValues();
             cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
+            cv.put(ListItemsSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
             numberOfDeletedListItems = cr.update(uri, cv, selection, selectionArgs);
 
-            new DeleteListItemFromBackendless_InBackground(ThreadExecutor.getInstance(),
-                    MainThreadImpl.getInstance(), listItem, this).execute();
+            if (listItem.isFavorite()) {
+                listItem.setMarkedForDeletion(true);
+                listItem.setStruckOut(false);
+                saveListItemToBackendless(listItem);
+            } else {
+                new DeleteListItemFromBackendless_InBackground(ThreadExecutor.getInstance(),
+                        MainThreadImpl.getInstance(), listItem, this).execute();
+            }
 
         } catch (Exception e) {
             Timber.e("delete(): Exception: %s.", e.getMessage());

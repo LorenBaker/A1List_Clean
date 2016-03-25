@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.interactors.listTitle.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -19,11 +20,11 @@ public class DeleteStruckOutListTitles_InBackground extends AbstractInteractor i
 
 
     public DeleteStruckOutListTitles_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                  Callback callback, ListTitleRepository listTitleRepository) {
+                                                  Callback callback) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
-        mListTitleRepository = listTitleRepository;
+        mListTitleRepository = AndroidApplication.getListTitleRepository();
     }
 
 

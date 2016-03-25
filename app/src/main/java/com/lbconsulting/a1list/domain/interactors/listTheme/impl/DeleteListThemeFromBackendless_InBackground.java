@@ -24,7 +24,7 @@ public class DeleteListThemeFromBackendless_InBackground extends AbstractInterac
     private final ListTheme mListTheme;
 
     public DeleteListThemeFromBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                       ListTheme listTheme, Callback callback) {
+                                                       Callback callback, ListTheme listTheme) {
         super(threadExecutor, mainThread);
         mListTheme = listTheme;
         mCallback = callback;

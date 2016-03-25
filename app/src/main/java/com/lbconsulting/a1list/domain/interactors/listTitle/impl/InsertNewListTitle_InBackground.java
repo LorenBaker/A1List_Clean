@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.interactors.listTitle.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToBackendless_InBackground;
@@ -24,15 +25,13 @@ public class InsertNewListTitle_InBackground extends AbstractInteractor implemen
     private final ListTitle mNewListTitle;
 
     public InsertNewListTitle_InBackground(Executor threadExecutor, MainThread mainThread,
-                                           Callback callback, ListTitle newListTitle,
-                                           ListTitleRepository listTitleRepository,
-                                           AppSettingsRepository appSettingRepository) {
+                                           Callback callback, ListTitle newListTitle) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
         mNewListTitle = newListTitle;
-        mListTitleRepository = listTitleRepository;
-        mAppSettingRepository = appSettingRepository;
+        mListTitleRepository = AndroidApplication.getListTitleRepository();
+        mAppSettingRepository = AndroidApplication.getAppSettingsRepository();
     }
 
 

@@ -26,12 +26,14 @@ public class AppSettingsSqlTable {
     public static final String COL_APP_SETTINGS_DIRTY = "appSettingsDirty";
     public static final String COL_TIME_BETWEEN_SYNCHRONIZATIONS = "timeBetweenSynchronizations";
     public static final String COL_LIST_TITLE_LAST_SORT_KEY = "listTitleLastSortKey";
+    public static final String COL_LIST_TITLES_SORTED_ALPHABETICALLY = "listTitlesSortedAlphabetically";
     public static final String COL_LAST_LIST_TITLE_VIEWED_UUID = "lastListTitleViewedUuid";
     public static final String COL_UPDATED = "updated";
 
     //region Projections and Content Path
     public static final String[] PROJECTION_ALL = {COL_ID, COL_UUID, COL_OBJECT_ID, COL_APP_SETTINGS_DIRTY,
-            COL_TIME_BETWEEN_SYNCHRONIZATIONS, COL_LIST_TITLE_LAST_SORT_KEY, COL_LAST_LIST_TITLE_VIEWED_UUID, COL_UPDATED};
+            COL_TIME_BETWEEN_SYNCHRONIZATIONS, COL_LIST_TITLE_LAST_SORT_KEY,COL_LIST_TITLES_SORTED_ALPHABETICALLY,
+            COL_LAST_LIST_TITLE_VIEWED_UUID, COL_UPDATED};
 
     public static final String CONTENT_PATH = "appSettings";
     public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + "vnd.lbconsulting."
@@ -53,6 +55,7 @@ public class AppSettingsSqlTable {
                     + COL_APP_SETTINGS_DIRTY + " integer default 0, "
                     + COL_TIME_BETWEEN_SYNCHRONIZATIONS + " integer default 0, "
                     + COL_LIST_TITLE_LAST_SORT_KEY + " integer default 0, "
+                    + COL_LIST_TITLES_SORTED_ALPHABETICALLY + " integer default 1, "
                     + COL_LAST_LIST_TITLE_VIEWED_UUID + " text default '', "
                     + COL_UPDATED + " integer default 0"
                     + ");";

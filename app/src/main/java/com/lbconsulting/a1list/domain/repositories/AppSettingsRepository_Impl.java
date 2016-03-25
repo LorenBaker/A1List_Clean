@@ -176,6 +176,10 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 
         appSettings.setTimeBetweenSynchronizations(cursor.getLong(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_TIME_BETWEEN_SYNCHRONIZATIONS)));
+
+        appSettings.setListTitlesSortedAlphabetically(cursor.getInt(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_LIST_TITLES_SORTED_ALPHABETICALLY)) > 0);
+
         appSettings.setListTitleLastSortKey(cursor.getLong(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY)));
 

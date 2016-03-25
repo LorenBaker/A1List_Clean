@@ -98,7 +98,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository, SaveListTh
 
     private void saveListThemeToBackendless(final ListTheme listTheme) {
         new SaveListThemeToBackendless_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), listTheme, this).execute();
+                MainThreadImpl.getInstance(), this, listTheme).execute();
     }
 
     @Override

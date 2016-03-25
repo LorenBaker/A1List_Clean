@@ -37,7 +37,7 @@ import timber.log.Timber;
 /**
  * An ArrayAdapter for displaying a ListTheme.
  */
-public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
+public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
 
     private final Context mContext;
     private final ListView mListView;
@@ -160,7 +160,7 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
                     setNoStrikeOut((TextView) v, mSelectedTheme.isBold(), mSelectedTheme.getTextColor());
                 }
                 new ToggleListThemeBooleanField_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), mCallback, mListThemeRepository,
+                        MainThreadImpl.getInstance(), mCallback,
                         mSelectedTheme, ListThemesSqlTable.COL_STRUCK_OUT).execute();
 
             }
@@ -178,7 +178,7 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
                 ListTheme selectedTheme = (ListTheme) v.getTag();
                 startListThemeActivity(selectedTheme);
 
-//                CommonMethods.showSnackbar(mSnackbarView, "btnEditThemeName: " + selectedTheme.getName() + " clicked.", Snackbar.LENGTH_SHORT);
+//                CommonMethods.showSnackbar(mSnackbarView, "btnEditThemeName: " + selectedTheme.getListItem() + " clicked.", Snackbar.LENGTH_SHORT);
 
 //                        showEditThemeNameDialog(selectedTheme.getUuid());
             }
@@ -227,7 +227,7 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
     }
 
 //    private void showEditThemeNameDialog(String themeUuid) {
-//        CommonMethods.showSnackbar(mSnackbarView,selectedTheme.getName()+" selected.", Snackbar.LENGTH_SHORT);
+//        CommonMethods.showSnackbar(mSnackbarView,selectedTheme.getListItem()+" selected.", Snackbar.LENGTH_SHORT);
 //        EventBus.getDefault().post(new MyEvents.showEditAttributesNameDialog(themeUuid));
 //    }
 

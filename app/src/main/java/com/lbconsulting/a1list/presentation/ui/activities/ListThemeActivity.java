@@ -28,7 +28,6 @@ import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTex
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.InsertNewListTheme;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.UpdateListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogColorPicker;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListThemeName;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogNumberPicker;
@@ -107,7 +106,7 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
     private int mMode;
     private ListTheme mListTheme;
-    private ListThemeRepository_Impl mListThemeRepository;
+//    private ListThemeRepository_Impl mListThemeRepository;
 
 
     @Override
@@ -157,7 +156,7 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
                 break;
         }
 
-        mListThemeRepository = new ListThemeRepository_Impl(this);
+//        mListThemeRepository = new ListThemeRepository_Impl(this);
 
         setSupportActionBar(mToolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -366,18 +365,18 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         switch (mMode) {
             case EDIT_EXISTING_LIST_THEME:
                 new UpdateListTheme_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this, mListThemeRepository, mListTheme).execute();
+                        MainThreadImpl.getInstance(), this, mListTheme).execute();
                 break;
 
             case CREATE_NEW_LIST_THEME:
                 new InsertNewListTheme_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this, mListThemeRepository, mListTheme).execute();
+                        MainThreadImpl.getInstance(), this,  mListTheme).execute();
                 break;
         }
 
         if (ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
             new ApplyTextSizeAndMarginsToAllListThemes_InBackground(ThreadExecutor.getInstance(),
-                    MainThreadImpl.getInstance(), this, mListThemeRepository, mListTheme).execute();
+                    MainThreadImpl.getInstance(), this,  mListTheme).execute();
         }
     }
 

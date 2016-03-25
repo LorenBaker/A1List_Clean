@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.interactors.listItem.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -17,12 +18,11 @@ public class RetrieveListItem_InBackground extends AbstractInteractor implements
     private final String mListItemUuid;
 
     public RetrieveListItem_InBackground(Executor threadExecutor, MainThread mainThread,
-                                         Callback callback, ListItemRepository listItemRepository,
-                                         String listItemUuid) {
+                                         Callback callback, String listItemUuid) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
-        mListItemRepository = listItemRepository;
+        mListItemRepository = AndroidApplication.getListItemRepository();
         mListItemUuid = listItemUuid;
     }
 

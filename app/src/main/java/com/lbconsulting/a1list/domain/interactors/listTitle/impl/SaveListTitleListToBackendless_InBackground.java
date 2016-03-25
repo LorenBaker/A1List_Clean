@@ -29,7 +29,7 @@ public class SaveListTitleListToBackendless_InBackground extends AbstractInterac
     private final List<ListTitle> mListTitleList;
 
     public SaveListTitleListToBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                       List<ListTitle> listTitleList, Callback callback) {
+                                                       Callback callback, List<ListTitle> listTitleList) {
         super(threadExecutor, mainThread);
         mListTitleList = listTitleList;
         mCallback = callback;

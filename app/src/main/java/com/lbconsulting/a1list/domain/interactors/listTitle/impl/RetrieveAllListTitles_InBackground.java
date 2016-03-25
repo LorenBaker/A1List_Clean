@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.interactors.listTitle.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -17,15 +18,14 @@ public class RetrieveAllListTitles_InBackground extends AbstractInteractor imple
     private final Callback mCallback;
     private final ListTitleRepository_Impl mListTitleRepository;
     private ListTitle mSelectedListTitle;
-    private  boolean mIsSortAlphabetically;
+    private boolean mIsSortAlphabetically;
 
     public RetrieveAllListTitles_InBackground(Executor threadExecutor, MainThread mainThread,
-                                              Callback callback, ListTitleRepository_Impl listTitleRepository,
-                                              boolean isSortAlphabetically) {
+                                              Callback callback, boolean isSortAlphabetically) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
-        mListTitleRepository = listTitleRepository;
+        mListTitleRepository = AndroidApplication.getListTitleRepository();
         mIsSortAlphabetically = isSortAlphabetically;
     }
 

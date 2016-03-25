@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.utils;
 
+import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 
@@ -7,6 +8,31 @@ import com.lbconsulting.a1list.domain.model.ListTitle;
  * EventBus events.
  */
 public class MyEvents {
+
+    public static class showEditListItemDialog {
+        private final ListItem mListItem;
+
+        public showEditListItemDialog(ListItem listItem) {
+            mListItem = listItem;
+        }
+
+        public ListItem getListItem() {
+            return mListItem;
+        }
+    }
+
+    public static class updateListItem {
+        private final ListItem mListItem;
+
+        public updateListItem(ListItem listItem) {
+            mListItem = listItem;
+        }
+
+        public ListItem getListItem() {
+            return mListItem;
+        }
+    }
+
 
     public static class replaceListTitle {
         private final int mPosition;
@@ -166,6 +192,8 @@ public class MyEvents {
             return mSelectedListTheme;
         }
     }
+
+
     //endregion
 
 

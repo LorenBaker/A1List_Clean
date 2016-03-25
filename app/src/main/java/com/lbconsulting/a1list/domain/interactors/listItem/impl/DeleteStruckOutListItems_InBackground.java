@@ -27,7 +27,7 @@ public class DeleteStruckOutListItems_InBackground extends AbstractInteractor im
 
         mCallback = callback;
         mListItemRepository = listItemRepository;
-        mListTitle=listTitle;
+        mListTitle = listTitle;
     }
 
 
@@ -38,9 +38,9 @@ public class DeleteStruckOutListItems_InBackground extends AbstractInteractor im
         List<ListItem> struckOutListItems = mListItemRepository.retrieveStruckOutListItems(mListTitle);
         if (struckOutListItems.size() > 0) {
             int numberOfListItemsDeleted = 0;
-                for (ListItem listItem : struckOutListItems) {
-                    numberOfListItemsDeleted += mListItemRepository.delete(listItem);
-                }
+            for (ListItem listItem : struckOutListItems) {
+                numberOfListItemsDeleted += mListItemRepository.delete(listItem);
+            }
 
             if (struckOutListItems.size() == numberOfListItemsDeleted) {
                 // Success

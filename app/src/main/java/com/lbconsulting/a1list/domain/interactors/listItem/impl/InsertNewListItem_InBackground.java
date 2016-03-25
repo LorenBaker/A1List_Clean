@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.interactors.listItem.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -17,13 +18,12 @@ public class InsertNewListItem_InBackground extends AbstractInteractor implement
     private final ListItem mNewListItem;
 
     public InsertNewListItem_InBackground(Executor threadExecutor, MainThread mainThread,
-                                          Callback callback, ListItem newListItem,
-                                          ListItemRepository listItemRepository) {
+                                          Callback callback, ListItem newListItem) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
         mNewListItem = newListItem;
-        mListItemRepository = listItemRepository;
+        mListItemRepository = AndroidApplication.getListItemRepository();
     }
 
 

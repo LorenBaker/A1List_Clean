@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.content.ContextCompat;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
@@ -36,14 +37,12 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
     private List<ListTheme> mAllListThemes;
 
     public CreateInitialListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                Callback callback, AppSettingsRepository appSettingsRepository,
-                                                ListThemeRepository listThemeRepository,
-                                                Context context) {
+                                                Callback callback) {
         super(threadExecutor, mainThread);
         mCallback = callback;
-        mAppSettingsRepository = appSettingsRepository;
-        mListThemeRepository = listThemeRepository;
-        mContext = context;
+        mAppSettingsRepository = AndroidApplication.getAppSettingsRepository();
+        mListThemeRepository = AndroidApplication.getListThemeRepository();
+        mContext = AndroidApplication.getContext();
     }
 
     @Override
@@ -266,13 +265,13 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
     @Override
     public void onAppSettingsSavedToBackendless(final String successMessage) {
         Timber.i("onAppSettingsSavedToBackendless(): %s", successMessage);
-        new SaveListThemeListToBackendless_InBackground(mThreadExecutor, mMainThread, mAllListThemes, this).execute();
+        new SaveListThemeListToBackendless_InBackground(mThreadExecutor, mMainThread, this, mAllListThemes).execute();
     }
 
     @Override
     public void onAppSettingsSaveToBackendlessFailed(final String errorMessage) {
         Timber.e("onAppSettingsSaveToBackendlessFailed(): %s", errorMessage);
-        new SaveListThemeListToBackendless_InBackground(mThreadExecutor, mMainThread, mAllListThemes, this).execute();
+        new SaveListThemeListToBackendless_InBackground(mThreadExecutor, mMainThread, this, mAllListThemes).execute();
     }
 
     @Override

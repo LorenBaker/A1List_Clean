@@ -16,7 +16,6 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
@@ -25,10 +24,12 @@ import com.lbconsulting.a1list.domain.interactors.listItem.interactors.ToggleLis
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
+import com.lbconsulting.a1list.utils.MyEvents;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
 
@@ -48,17 +49,16 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
     private final String mListName;
     private ListTheme mListTheme;
     private ListTitle mListTitle;
-    private ListItemRepository_Impl mListItemRepository;
+//    private ListItemRepository_Impl mListItemRepository;
 //    private boolean mIsForceViewInflation;
 
-    public ListItemsArrayAdapter(Context context, ListView listView, ListTitle listTitle,
-                                 ListItemRepository_Impl listItemRepository) {
+    public ListItemsArrayAdapter(Context context, ListView listView, ListTitle listTitle) {
         super(context, 0);
         this.mContext = context;
         this.mListView = listView;
         this.mListTitle = listTitle;
         this.mListName = listTitle.getName();
-        mListItemRepository = listItemRepository;
+//        mListItemRepository = AndroidApplication.getListItemRepository();
 //        this.mIsForceViewInflation = listTitle.isForceViewInflation();
         Timber.i("ListItemsArrayAdapter() initialized for List: \"%s\".", mListName);
     }
@@ -184,7 +184,6 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
                     }
                     new ToggleListItemBooleanField_InBackground(ThreadExecutor.getInstance(),
                             MainThreadImpl.getInstance(), ListItemsArrayAdapter.this,
-                            mListItemRepository,
                             clickedItem, ListItemsSqlTable.COL_STRUCK_OUT).execute();
                 }
             }
@@ -197,14 +196,13 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
                 ListItem clickedItem = (ListItem) v.getTag();
                 if (clickedItem != null) {
                     clickedItem.setFavorite(!clickedItem.isFavorite());
-                    if (clickedItem.isStruckOut()) {
+                    if (clickedItem.isFavorite()) {
                         setAsFavorite((ImageButton) v);
                     } else {
                         setAsNotFavorite((ImageButton) v);
                     }
                     new ToggleListItemBooleanField_InBackground(ThreadExecutor.getInstance(),
                             MainThreadImpl.getInstance(), ListItemsArrayAdapter.this,
-                            mListItemRepository,
                             clickedItem, ListItemsSqlTable.COL_FAVORITE).execute();
                 }
             }
@@ -214,7 +212,8 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
             @Override
             public void onClick(View v) {
                 ListItem selectedListItem = (ListItem) v.getTag();
-                Toast.makeText(mContext, "btnEditItemName Clicked", Toast.LENGTH_SHORT).show();
+                EventBus.getDefault().post(new MyEvents.showEditListItemDialog(selectedListItem));
+//                Toast.makeText(mContext, "btnEditItemName Clicked", Toast.LENGTH_SHORT).show();
 //                EventBus.getDefault().post(new MyEvents.showEditListItemDialog(selectedListItem.getItemUuid()));
             }
         });

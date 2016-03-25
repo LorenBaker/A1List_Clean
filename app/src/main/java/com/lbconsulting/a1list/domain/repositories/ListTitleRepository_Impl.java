@@ -143,7 +143,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     //region Save ListTitle to Backendless
     private void saveListTitleToBackendless(ListTitle listTitle) {
         new SaveListTitleToBackendless_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), listTitle, this).execute();
+                MainThreadImpl.getInstance(), this, listTitle).execute();
     }
 //
 //    private void saveListTitlesToBackendless(List<ListTitle> listTitles) {

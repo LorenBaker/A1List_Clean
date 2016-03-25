@@ -27,7 +27,7 @@ public class SaveListItemToBackendless_InBackground extends AbstractInteractor i
     private final ListItem mListItem;
 
     public SaveListItemToBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                  ListItem listItem, Callback callback) {
+                                                   Callback callback, ListItem listItem) {
         super(threadExecutor, mainThread);
         mListItem = listItem;
         mCallback = callback;

@@ -11,13 +11,11 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import com.google.gson.Gson;
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
-import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListItemsPresenter_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListItemsPresenter;
@@ -49,7 +47,7 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
     private ListItemsArrayAdapter mListItemsArrayAdapter;
 
     private ListTitleRepository_Impl mListTitleRepository;
-    private ListItemRepository_Impl mListItemRepository;
+//    private ListItemRepository_Impl mListItemRepository;
 
 
     public fragListItems() {
@@ -85,13 +83,13 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
 
         EventBus.getDefault().register(this);
 
-        AppSettingsRepository_Impl appSettingsRepository = new AppSettingsRepository_Impl(getActivity());
-        ListThemeRepository_Impl listThemeRepository = new ListThemeRepository_Impl(getActivity());
-        mListTitleRepository = new ListTitleRepository_Impl(getActivity(), appSettingsRepository, listThemeRepository);
-        mListItemRepository = new ListItemRepository_Impl(getActivity(), mListTitleRepository);
+        mListTitleRepository = AndroidApplication.getListTitleRepository();
+//        AppSettingsRepository_Impl appSettingsRepository = new AppSettingsRepository_Impl(getActivity());
+//        ListThemeRepository_Impl listThemeRepository = new ListThemeRepository_Impl(getActivity());
+//        mListItemRepository = new ListItemRepository_Impl(getActivity(), mListTitleRepository);
 
         mPresenter = new ListItemsPresenter_Impl(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListItemRepository, mListTitle);
+                MainThreadImpl.getInstance(), this, mListTitle);
 
         Timber.i("onCreate() complete for \"%s\"", mListTitle.getName());
     }
@@ -119,7 +117,7 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
 //            mListTitle = ListTitle.getListTitle(listTitleUuid);
 //            if (mListTitle != null) {
 //                mListTheme = mListTitle.getAttributes();
-//                MyLog.i("fragListItems", source + " refreshListTitle " + mListTitle.getName());
+//                MyLog.i("fragListItems", source + " refreshListTitle " + mListTitle.getListItem());
 //            } else {
 //                MyLog.e("fragListItems", source + ": listTitleUuid = " + listTitleUuid + " Unable to find ListTitle");
 //            }
@@ -146,7 +144,7 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
         lvListItems.setLongClickable(true);
 
         // Set up the ListView adapter
-        mListItemsArrayAdapter = new ListItemsArrayAdapter(getActivity(), lvListItems, mListTitle, mListItemRepository);
+        mListItemsArrayAdapter = new ListItemsArrayAdapter(getActivity(), lvListItems, mListTitle);
         lvListItems.setAdapter(mListItemsArrayAdapter);
 
 

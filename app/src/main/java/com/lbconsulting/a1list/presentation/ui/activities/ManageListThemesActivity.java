@@ -15,14 +15,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.DeleteStruckOutListThemes_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ToggleListThemeBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListThemesPresenter_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListThemesPresenter;
 import com.lbconsulting.a1list.presentation.ui.activities.backendless.BackendlessLoginActivity;
@@ -61,9 +60,9 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
 
     private ListThemeArrayAdapter mListThemeAdapter;
     private DeleteStruckOutListThemes_InBackground mDeleteStruckOutListThemes;
-    private AppSettingsRepository_Impl mAppSettingsRepository;
+//    private ListTitleRepository_Impl mListTitleRepository;
+    //    private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
-    private ListTitleRepository_Impl mListTitleRepository;
     // Note: these Toggle Methods run on the UI thread
     // The update one field on one record in one SQLite table (ListThemesSqlTable)
     // After the toggle method complete, querying the SQLite ListThemesSqlTable for all ListThemes
@@ -148,15 +147,16 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
                 }
         );*/
         //endregion
-        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
-        mListThemeRepository = new ListThemeRepository_Impl(this);
-        mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository, mListThemeRepository);
+
+//        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
+//        mListTitleRepository = AndroidApplication.getListTitleRepository();
+        mListThemeRepository = AndroidApplication.getListThemeRepository();
 
         mPresenter = new ListThemesPresenter_Impl(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListThemeRepository);
+                MainThreadImpl.getInstance(), this);
 
         mDeleteStruckOutListThemes = new DeleteStruckOutListThemes_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListThemeRepository, mListTitleRepository);
+                MainThreadImpl.getInstance(), this);
 
         mNumberOfStruckOutListThemes = mListThemeRepository.getNumberOfStruckOutListThemes();
 
@@ -177,12 +177,9 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         String listThemeJson = gson.toJson(newListTheme);
 
         Intent listThemeActivityIntent = new Intent(this, ListThemeActivity.class);
-//        listThemeActivityIntent.putExtra(ListThemeActivity.ARG_LIST_THEME_UUID, newListTheme.getUuid());
         listThemeActivityIntent.putExtra(ListThemeActivity.ARG_LIST_THEME_JSON, listThemeJson);
         listThemeActivityIntent.putExtra(ListThemeActivity.ARG_MODE, ListThemeActivity.CREATE_NEW_LIST_THEME);
         startActivity(listThemeActivityIntent);
-
-//        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
     }
 
     @Override
@@ -190,7 +187,6 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         Timber.i("showProgress()");
         manageListThemesActivityProgressBar.setVisibility(View.VISIBLE);
         tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
-//        tvProgressBarMessage.setVisibility(View.VISIBLE);
         manageListThemesActivityContent.setVisibility(View.GONE);
     }
 
@@ -198,7 +194,6 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     public void hideProgress(String message) {
         Timber.i("hideProgress()");
         manageListThemesActivityProgressBar.setVisibility(View.GONE);
-//        tvProgressBarMessage.setVisibility(View.GONE);
         manageListThemesActivityContent.setVisibility(View.VISIBLE);
     }
 
@@ -284,30 +279,6 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
                 .show();
     }
 
-
-//    private void showProgressBar() {
-//        Timber.i("showProgressBar()");
-//        mainActivityProgressBar.setVisibility(View.VISIBLE);
-//        tvProgressBarMessage.setText(String.format("Please wait ...\n%s", waitMessage));
-//        tvProgressBarMessage.setVisibility(View.VISIBLE);
-//        manageListThemesActivityContent.setVisibility(View.GONE);
-//
-//
-//
-//        mainActivityProgressBar.setVisibility(View.VISIBLE);
-//        tvProgressBarMessage.setVisibility(View.VISIBLE);
-//        lvThemes.setVisibility(View.GONE);
-//        // TODO: hide menus
-//    }
-//
-//    private void hideProgressBar() {
-//        Timber.i("hideProgressBar()");
-//        mainActivityProgressBar.setVisibility(View.GONE);
-//        tvProgressBarMessage.setVisibility(View.GONE);
-//        lvThemes.setVisibility(View.VISIBLE);
-//        // TODO: show menus
-//    }
-
     private void startLoginActivity() {
         Intent intent = new Intent(this, BackendlessLoginActivity.class);
         startActivity(intent);
@@ -333,7 +304,6 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     @Override
     public void onListThemeBooleanFieldToggled(int toggleValue) {
         mNumberOfStruckOutListThemes += toggleValue;
-//        Timber.i("onListThemeBooleanFieldToggled(): Number of struck out ListThemes = %d.", mNumberOfStruckOutListThemes);
     }
 
     private class MessagePayload {

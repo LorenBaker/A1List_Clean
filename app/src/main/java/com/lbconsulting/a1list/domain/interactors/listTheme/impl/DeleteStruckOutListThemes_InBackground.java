@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -24,14 +25,12 @@ public class DeleteStruckOutListThemes_InBackground extends AbstractInteractor i
 
 
     public DeleteStruckOutListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                  Callback callback,
-                                                  ListThemeRepository listThemeRepository,
-                                                  ListTitleRepository listTitleRepository) {
+                                                  Callback callback) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
-        mListThemeRepository = listThemeRepository;
-        mListTitleRepository = listTitleRepository;
+        mListThemeRepository = AndroidApplication.getListThemeRepository();
+        mListTitleRepository = AndroidApplication.getListTitleRepository();
     }
 
 

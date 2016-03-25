@@ -6,7 +6,6 @@ import com.lbconsulting.a1list.domain.interactors.listItem.impl.RetrieveAllListI
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.RetrieveAllListItems;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.ListItemRepository;
 import com.lbconsulting.a1list.presentation.presenters.base.AbstractPresenter;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListItemsPresenter;
 
@@ -21,25 +20,19 @@ public class ListItemsPresenter_Impl extends AbstractPresenter implements ListIt
         RetrieveAllListItems.Callback {
 
     private final ListItemView mView;
-    private final ListItemRepository mListItemRepository;
-
     private ListTitle mListTitle;
     private ListItem mListItem;
     private String mAction;
     private RetrieveAllListItems mRetrieveAllListItems_inBackground;
 
-    public ListItemsPresenter_Impl(Executor executor,
-                                   MainThread mainThread,
-                                   ListItemView view,
-                                   ListItemRepository listItemRepository,
-                                   ListTitle listTitle) {
+    public ListItemsPresenter_Impl(Executor executor, MainThread mainThread,
+                                   ListItemView view, ListTitle listTitle) {
         super(executor, mainThread);
         mView = view;
-        mListItemRepository = listItemRepository;
         mListTitle = listTitle;
         // initialize the interactor
         mRetrieveAllListItems_inBackground = new RetrieveAllListItems_InBackground(mExecutor, mMainThread,
-                this, mListItemRepository, listTitle);
+                this, listTitle);
     }
 
 

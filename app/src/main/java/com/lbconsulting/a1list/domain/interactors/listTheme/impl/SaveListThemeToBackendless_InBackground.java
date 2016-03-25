@@ -27,7 +27,7 @@ public class SaveListThemeToBackendless_InBackground extends AbstractInteractor 
     private final ListTheme mListTheme;
 
     public SaveListThemeToBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                   ListTheme listTheme, Callback callback) {
+                                                   Callback callback, ListTheme listTheme) {
         super(threadExecutor, mainThread);
         mListTheme = listTheme;
         mCallback = callback;

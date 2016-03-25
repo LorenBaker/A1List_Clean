@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -17,13 +18,11 @@ public class InsertNewListTheme_InBackground extends AbstractInteractor implemen
     private final ListTheme mListTheme;
 
     public InsertNewListTheme_InBackground(Executor threadExecutor, MainThread mainThread,
-                                           Callback callback,
-                                           ListThemeRepository listThemeRepository,
-                                           ListTheme listTheme) {
+                                           Callback callback, ListTheme listTheme) {
         super(threadExecutor, mainThread);
 
         mCallback = callback;
-        mListThemeRepository = listThemeRepository;
+        mListThemeRepository = AndroidApplication.getListThemeRepository();
         mListTheme = listTheme;
     }
 

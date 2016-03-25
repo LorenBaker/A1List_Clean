@@ -27,7 +27,7 @@
     <string name="btnEditItemName_contentDescription">Edit Item Name</string>
     <string name="action_deleteListThemeStrikeouts_title">Delete Struck Out List Themes</string>
 
-<!--Strings of button titles-->
+    <!--Strings of button titles-->
     <string name="btnListTitleName_text">"List Name: %1$s"</string>
     <string name="btnThemeName_text">"Theme Name: %1$s"</string>
     <string name="btnCancel_title">Cancel</string>
@@ -67,19 +67,25 @@
     <string name="newListTitleDialog_title">Create New List</string>
     <string name="editListTitleDialog_title">Edit List Name</string>
 
-<!--Strings related to Color Picker-->
+    <!--Strings related to new or edit ListItems-->
+    <string name="listItemProposedName_invalidName_error">Item \"%1s\" already exists.\nPlease enter a unique listItem name.</string>
+    <string name="listItemProposedName_isEmpty_error">The Item\'s name cannot be empty.\nPlease enter a unique listItem name.</string>
+    <string name="listItemProposedName_isDefault_error">The Item\'s name cannot be \"%1s\".\nPlease enter a unique listItem name.</string>
+    <string name="txtListItemName_hint">Item Name</string>
+
+    <!--Strings related to Color Picker-->
     <string name="onColorChanged">#%1s</string>
     <string name="colorPicker_endColor_title">Select Gradient End Color</string>
     <string name="colorPicker_startColor_title">Select Gradient Start Color</string>
     <string name="colorPicker_textColor_title">Select Text Color</string>
 
 
-<!--Strings related to Number Picker-->
+    <!--Strings related to Number Picker-->
     <string name="numberPickerDialog_select_horizontal_padding_title">Select Horizontal Padding</string>
     <string name="numberPickerDialog_select_text_size_title">Select Text Size</string>
     <string name="numberPickerDialog_select_vertical_padding_title">Select Vertical Padding</string>
 
-<!--Strings related to ManageListTitlesActivity-->
+    <!--Strings related to ManageListTitlesActivity-->
     <string name="action_listTitleSorting_title">List Sorting</string>
     <string name="btnLockList_contentDescription">Lock List</string>
     <string name="btnEditListTitle_contentDescription">Edit List Title</string>

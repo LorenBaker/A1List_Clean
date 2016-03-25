@@ -27,9 +27,6 @@ import com.lbconsulting.a1list.domain.interactors.listTitle.impl.InsertNewListTi
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.UpdateListTitle_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeSpinnerArrayAdapter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
@@ -105,9 +102,9 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 
     private int mMode;
     private ListTitle mListTitle;
-    private AppSettingsRepository_Impl mAppSettingsRepository;
-    private ListThemeRepository_Impl mListThemeRepository;
-    private ListTitleRepository_Impl mListTitleRepository;
+    //    private AppSettingsRepository_Impl mAppSettingsRepository;
+//    private ListThemeRepository_Impl mListThemeRepository;
+//    private ListTitleRepository_Impl mListTitleRepository;
     //    private ListThemesPresenter_Impl mListThemesPresenter;
     private ListThemeSpinnerArrayAdapter mListThemeSpinnerArrayAdapter;
 
@@ -174,9 +171,9 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
                 break;
         }
 
-        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
-        mListThemeRepository = new ListThemeRepository_Impl(this);
-        mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository ,mListThemeRepository);
+//        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
+//        mListThemeRepository = new ListThemeRepository_Impl(this);
+//        mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository ,mListThemeRepository);
 //        mListThemesPresenter = new ListThemesPresenter_Impl(ThreadExecutor.getInstance(),
 //                MainThreadImpl.getInstance(), this, mListThemeRepository);
 
@@ -227,7 +224,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         Timber.i("onResume()");
         if (mListTitle != null) {
             new RetrieveAllListThemes_InBackground(ThreadExecutor.getInstance(),
-                    MainThreadImpl.getInstance(), this, mListThemeRepository).execute();
+                    MainThreadImpl.getInstance(), this).execute();
         } else {
             Timber.e("onResume(): Unable to display ListTitle. mListTitle is null!");
         }
@@ -255,6 +252,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
     public void onRetrievalFailed(String errorMessage) {
         Timber.e("onRetrievalFailed(): %s.", errorMessage);
     }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -296,7 +294,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
                     // the list name is the default name
                     String title = "Unable to Save List";
                     String msg = "Please provide a valid list name.";
-                    CommonMethods.showOkDialog(this,title,msg);
+                    CommonMethods.showOkDialog(this, title, msg);
                 }
                 break;
         }
@@ -310,14 +308,13 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         switch (mMode) {
             case EDIT_EXISTING_LIST_TITLE:
                 new UpdateListTitle_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this, mListTitleRepository, listTitle).execute();
+                        MainThreadImpl.getInstance(), this, listTitle).execute();
                 break;
 
             case CREATE_NEW_LIST_TITLE:
 //                Toast.makeText(this, "btnSaveList: CREATE_NEW_LIST_TITLE clicked.", Toast.LENGTH_SHORT).show();
                 new InsertNewListTitle_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this, listTitle, mListTitleRepository,
-                        mAppSettingsRepository).execute();
+                        MainThreadImpl.getInstance(), this, listTitle).execute();
                 break;
         }
     }
@@ -442,9 +439,9 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         }
 
         // show the attributes values in their respective Buttons
-        if(listTitle.getName().equals(dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME)){
+        if (listTitle.getName().equals(dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME)) {
             btnListTitleName.setText("");
-        }else{
+        } else {
             btnListTitleName.setText(listTitle.getName());
         }
     }
@@ -476,8 +473,6 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 //        spnListTitles.setSelection(position);
 //        updateUI(mListTitle);
 //    }
-
-
 
 
     //endregion

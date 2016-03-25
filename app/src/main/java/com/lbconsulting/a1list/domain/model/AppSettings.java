@@ -14,7 +14,7 @@ public class AppSettings {
 
     private long timeBetweenSynchronizations;
     private long listTitleLastSortKey;
-
+    private boolean listTitlesSortedAlphabetically;
     private String lastListTitleViewedUuid;
 
     private Date updated;
@@ -85,6 +85,14 @@ public class AppSettings {
 
     public void setListTitleLastSortKey(long listTitleLastSortKey) {
         this.listTitleLastSortKey = listTitleLastSortKey;
+    }
+
+    public boolean isListTitlesSortedAlphabetically() {
+        return listTitlesSortedAlphabetically;
+    }
+
+    public void setListTitlesSortedAlphabetically(boolean listTitlesSortedAlphabetically) {
+        this.listTitlesSortedAlphabetically = listTitlesSortedAlphabetically;
     }
 
     public Date getUpdated() {

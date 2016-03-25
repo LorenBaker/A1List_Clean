@@ -23,9 +23,6 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.ToggleListTitleBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.presentation.ui.activities.ListTitleActivity;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
@@ -44,24 +41,16 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
     private final Context mContext;
     private final ListView mListView;
     private final boolean mShowBtnEditListTitleName;
-    private final View mSnackbarView;
     private ListTitle mSelectedListTitle;
-    private AppSettingsRepository_Impl mAppSettingsRepository;
-    private ListThemeRepository_Impl mListThemeRepository;
-    private ListTitleRepository_Impl mListTitleRepository;
+
     private ToggleListTitleBooleanField_InBackground.Callback mCallback;
 
-    public ListTitleArrayAdapter(Context context, ListView listView, boolean showBtnEditListTitleName,
-                                 View snackbarView) {
+    public ListTitleArrayAdapter(Context context, ListView listView, boolean showBtnEditListTitleName) {
         super(context, 0);
         this.mContext = context;
         this.mCallback = (ToggleListTitleBooleanField_InBackground.Callback) context;
         this.mListView = listView;
         this.mShowBtnEditListTitleName = showBtnEditListTitleName;
-        mSnackbarView = snackbarView;
-        mAppSettingsRepository = new AppSettingsRepository_Impl(context);
-        mListThemeRepository = new ListThemeRepository_Impl(context);
-        mListTitleRepository = new ListTitleRepository_Impl(context,mAppSettingsRepository, mListThemeRepository);
         Timber.i("ListTitleArrayAdapter(): Initialized");
     }
 
@@ -140,19 +129,12 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
                     mSelectedListTitle.getListTheme().getVerticalPaddingInDp());
             holder.tvListTitleName.setPadding(horizontalPadding, verticalPadding,
                     horizontalPadding, verticalPadding);
-
-//            if (mSelectedListTitle.isTransparent()) {
-//                holder.llRowListTitleName.setBackgroundColor(Color.TRANSPARENT);
-//                mListView.setDivider(null);
-//                mListView.setDividerHeight(0);
-//            } else {
             holder.llRowListTitleName.setBackground(getBackgroundDrawable(
                     mSelectedListTitle.getListTheme().getStartColor(),
                     mSelectedListTitle.getListTheme().getEndColor()));
             mListView.setDivider(new ColorDrawable(ContextCompat.getColor(mContext,
                     R.color.greyLight3_50Transparent)));
             mListView.setDividerHeight(1);
-//            }
 
             if (mSelectedListTitle.isStruckOut()) {
                 setStrikeOut(holder.tvListTitleName, mSelectedListTitle.getListTheme().isBold());
@@ -174,7 +156,7 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
                             mSelectedListTitle.getListTheme().getTextColor());
                 }
                 new ToggleListTitleBooleanField_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), mCallback, mListTitleRepository,
+                        MainThreadImpl.getInstance(), mCallback,
                         mSelectedListTitle, ListTitlesSqlTable.COL_STRUCK_OUT).execute();
 
             }
@@ -191,10 +173,6 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
             public void onClick(View v) {
                 ListTitle selectedListTitle = (ListTitle) v.getTag();
                 startListTitleActivity(selectedListTitle);
-
-//                CommonMethods.showSnackbar(mSnackbarView, "btnEditListTitleName: " + selectedListTitle.getName() + " clicked.", Snackbar.LENGTH_SHORT);
-
-//                        showEditListTitleNameDialog(selectedListTitle.getUuid());
             }
         });
 
@@ -240,17 +218,11 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
         return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);
     }
 
-//    private void showEditListTitleNameDialog(String listtitleUuid) {
-//        CommonMethods.showSnackbar(mSnackbarView,selectedListTitle.getName()+" selected.", Snackbar.LENGTH_SHORT);
-//        EventBus.getDefault().post(new MyEvents.showEditAttributesNameDialog(listtitleUuid));
-//    }
-
     @Override
     public void notifyDataSetChanged() {
         super.notifyDataSetChanged();
         Timber.i("notifyDataSetChanged()");
     }
-
 
     private class ListTitleViewHolder {
         public final TextView tvListTitleName;

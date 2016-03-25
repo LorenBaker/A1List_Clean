@@ -29,7 +29,7 @@ public class SaveListItemListToBackendless_InBackground extends AbstractInteract
     private final List<ListItem> mListItemList;
 
     public SaveListItemListToBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                      List<ListItem> listItemList, Callback callback) {
+                                                      Callback callback, List<ListItem> listItemList) {
         super(threadExecutor, mainThread);
         mListItemList = listItemList;
         mCallback = callback;

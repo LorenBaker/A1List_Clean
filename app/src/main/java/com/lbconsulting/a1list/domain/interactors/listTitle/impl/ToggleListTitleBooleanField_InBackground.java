@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.interactors.listTitle.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -20,10 +21,9 @@ public class ToggleListTitleBooleanField_InBackground extends AbstractInteractor
 
     public ToggleListTitleBooleanField_InBackground(Executor threadExecutor,
                                                     MainThread mainThread, Callback callback,
-                                                    ListTitleRepository listTitleRepository,
                                                     ListTitle listTitle, String listTitleBooleanField) {
         super(threadExecutor, mainThread);
-        mListTitleRepository = listTitleRepository;
+        mListTitleRepository = AndroidApplication.getListTitleRepository();
         mListTitle = listTitle;
         mListTitleBooleanField = listTitleBooleanField;
         mCallback = callback;

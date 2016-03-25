@@ -158,7 +158,7 @@ public class ListThemeSpinnerArrayAdapter extends ArrayAdapter<ListTheme> {
             public void onClick(View v) {
                 mSelectedTheme = (ListTheme) v.getTag();
                 EventBus.getDefault().post(new MyEvents.updateListTitleActivityUI(mSelectedTheme));
-//                Toast.makeText(mContext, mSelectedTheme.getName() + " selected.", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(mContext, mSelectedTheme.getListItem() + " selected.", Toast.LENGTH_SHORT).show();
 
                 int position = getPosition(mSelectedTheme);
                 mSpinner.setSelection(position);

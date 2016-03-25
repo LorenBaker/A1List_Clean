@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -20,10 +21,9 @@ public class ToggleListThemeBooleanField_InBackground extends AbstractInteractor
 
     public ToggleListThemeBooleanField_InBackground(Executor threadExecutor,
                                                     MainThread mainThread, Callback callback,
-                                                    ListThemeRepository listThemeRepository,
                                                     ListTheme listTheme, String listThemeBooleanField) {
         super(threadExecutor, mainThread);
-        mListThemeRepository = listThemeRepository;
+        mListThemeRepository = AndroidApplication.getListThemeRepository();
         mListTheme = listTheme;
         mListThemeBooleanField = listThemeBooleanField;
         mCallback = callback;

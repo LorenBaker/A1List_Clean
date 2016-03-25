@@ -21,10 +21,9 @@ public class ApplyTextSizeAndMarginsToAllListThemes_InBackground extends Abstrac
 
     public ApplyTextSizeAndMarginsToAllListThemes_InBackground(Executor threadExecutor,
                                                                MainThread mainThread, Callback callback,
-                                                               ListThemeRepository listThemeRepository,
                                                                ListTheme listTheme) {
         super(threadExecutor, mainThread);
-        mListThemeRepository = listThemeRepository;
+        mListThemeRepository = AndroidApplication.getListThemeRepository();
         mListTheme = listTheme;
         mCallback = callback;
     }
