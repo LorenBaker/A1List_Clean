@@ -31,6 +31,7 @@ import com.lbconsulting.a1list.utils.MyEvents;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import timber.log.Timber;
@@ -49,6 +50,7 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
     private final String mListName;
     private ListTheme mListTheme;
     private ListTitle mListTitle;
+
 //    private ListItemRepository_Impl mListItemRepository;
 //    private boolean mIsForceViewInflation;
 
@@ -73,6 +75,16 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
             addAll(data);
             Timber.i("setData(): Loaded %d ListItems for ListTitle \"%s\".", data.size(), mListName);
         }
+
+    }
+
+    public List<ListItem> getListItems(){
+        List<ListItem> listItems = new ArrayList<>();
+        for (int i = 0; i < getCount(); i++) {
+            ListItem listItem = getItem(i);
+            listItems.add(listItem);
+        }
+        return listItems;
     }
 
     @Override

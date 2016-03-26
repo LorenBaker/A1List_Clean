@@ -6,10 +6,15 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listItem.impl.DeleteListItemFromBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listItem.impl.DeleteListItemsFromBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listItem.impl.SaveListItemListToBackendless_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listItem.impl.SaveListItemToBackendless_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteListItemFromBackendless;
+import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteListItemsFromBackendless;
+import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemListToBackendless;
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemToBackendless;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
@@ -28,35 +33,64 @@ import timber.log.Timber;
  * NOTE: All CRUD operations should run on a background thread
  */
 public class ListItemRepository_Impl implements ListItemRepository,
+        SaveListItemListToBackendless.Callback,
         SaveListItemToBackendless.Callback,
-        DeleteListItemFromBackendless.Callback {
+        DeleteListItemFromBackendless.Callback,
+        DeleteListItemsFromBackendless.Callback {
 
     private final int FALSE = 0;
     private final int TRUE = 1;
     private final Context mContext;
     private final ListTitleRepository_Impl mListTitleRepository;
 
-    public ListItemRepository_Impl(Context context, ListTitleRepository_Impl listTitleRepository) {
+    public ListItemRepository_Impl(Context context) {
         // private constructor
         this.mContext = context;
-        this.mListTitleRepository = listTitleRepository;
+        this.mListTitleRepository = AndroidApplication.getListTitleRepository();
     }
 
     // CRUD operations
 
-    //region Create ListItem
+    //region Insert ListItem
     @Override
-    public boolean insert(ListItem listItem) {
-        // insert new listItem into SQLite db
-        boolean successfullySavedListItemToSQLiteDb = insertIntoSQLiteDb(listItem);
-        if (successfullySavedListItemToSQLiteDb) {
-            saveListItemToBackendless(listItem);
+    public int insert(List<ListItem> listItems) {
+        List<ListItem> successfullyInsertedListItems = insertIntoLocalStorage(listItems);
+        if (successfullyInsertedListItems.size() > 0) {
+            insertInCloud(successfullyInsertedListItems);
         }
-        return successfullySavedListItemToSQLiteDb;
+        return successfullyInsertedListItems.size();
     }
 
     @Override
-    public boolean insertIntoSQLiteDb(ListItem listItem) {
+    public boolean insert(ListItem listItem) {
+        // insert new listItem into SQLite db
+        boolean successfullySavedIntoLocalStorage = insertIntoLocalStorage(listItem);
+        if (successfullySavedIntoLocalStorage) {
+            updateInCloud(listItem);
+        }
+        return successfullySavedIntoLocalStorage;
+    }
+
+    @Override
+    public List<ListItem> insertIntoLocalStorage(List<ListItem> listItems) {
+        List<ListItem> successfullyInsertedListItems = new ArrayList<>();
+        for (ListItem listItem : listItems) {
+            if (insertIntoLocalStorage(listItem)) {
+                successfullyInsertedListItems.add(listItem);
+            }
+        }
+
+        if (successfullyInsertedListItems.size() == listItems.size()) {
+            Timber.i("insertIntoLocalStorage(): Successfully inserted all %d ListItems.", listItems.size());
+        } else {
+            Timber.e("insertIntoLocalStorage(): Only inserted %d out of %d ListItems.",
+                    successfullyInsertedListItems.size(), listItems.size());
+        }
+        return successfullyInsertedListItems;
+    }
+
+    @Override
+    public boolean insertIntoLocalStorage(ListItem listItem) {
         boolean result = false;
         long newListItemSqlId = -1;
 
@@ -75,6 +109,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
         cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, (listItem.isMarkedForDeletion()) ? TRUE : FALSE);
         cv.put(ListItemsSqlTable.COL_STRUCK_OUT, (listItem.isStruckOut()) ? TRUE : FALSE);
 
+        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+
         Date updatedDateTime = listItem.getUpdated();
         if (updatedDateTime != null) {
             cv.put(ListItemsSqlTable.COL_UPDATED, updatedDateTime.getTime());
@@ -90,38 +126,24 @@ public class ListItemRepository_Impl implements ListItemRepository,
         if (newListItemSqlId > -1) {
             // successfully saved new ListItem to the SQLite db
             result = true;
-            Timber.i("insertIntoSQLiteDb(): ListItemRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listItem.getName());
+            Timber.i("insertIntoLocalStorage(): ListItemRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listItem.getName());
         } else {
             // failed to create listItem in the SQLite db
-            Timber.i("insertIntoSQLiteDb(): ListItemRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listItem.getName());
+            Timber.i("insertIntoLocalStorage(): ListItemRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listItem.getName());
         }
 
         return result;
     }
 
     @Override
-    public void insertIntoSQLiteDb(List<ListItem> listItems) {
-        for (ListItem listItem : listItems) {
-            insertIntoSQLiteDb(listItem);
-        }
-    }
-
-    //region Save ListItem to Backendless
-    private void saveListItemToBackendless(ListItem listItem) {
-        new SaveListItemToBackendless_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, listItem).execute();
+    public void insertInCloud(List<ListItem> listItems) {
+        updateInCloud(listItems);
     }
 
     @Override
-    public void onListItemSavedToBackendless(String successMessage) {
-        Timber.i("onListItemSavedToBackendless(): %s", successMessage);
+    public void insertInCloud(ListItem listItem) {
+        updateInCloud(listItem);
     }
-
-    @Override
-    public void onListItemSaveToBackendlessFailed(String errorMessage) {
-        Timber.e("onListItemSavedToBackendless(): %s", errorMessage);
-    }
-    //endregion
 
     //endregion
 
@@ -234,6 +256,24 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return dirtyListItems;
     }
 
+    @Override
+    public List<ListItem> retrieveFavoriteListItems() {
+        List<ListItem> favoriteListItems = new ArrayList<>();
+        Cursor cursor = getFavoriteListItemsCursor();
+        ListItem listItem;
+        if (cursor != null && cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                listItem = listItemFromCursor(cursor);
+                favoriteListItems.add(listItem);
+            }
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return favoriteListItems;
+    }
+
     private Cursor getAllListItemsCursor(ListTitle listTitle, boolean isMarkedForDeletion) {
         Cursor cursor = null;
         Uri uri = ListItemsSqlTable.CONTENT_URI;
@@ -274,6 +314,22 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return cursor;
     }
 
+    private Cursor getFavoriteListItemsCursor() {
+        Cursor cursor = null;
+        Uri uri = ListItemsSqlTable.CONTENT_URI;
+        String[] projection = ListItemsSqlTable.PROJECTION_ALL;
+        String selection = ListItemsSqlTable.COL_FAVORITE + " = ?";
+        String selectionArgs[] = new String[]{String.valueOf(TRUE)};
+        String sortOrder = ListItemsSqlTable.SORT_ORDER_NAME_ASC;
+        ContentResolver cr = mContext.getContentResolver();
+        try {
+            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+        } catch (Exception e) {
+            Timber.e("getFavoriteListItemsCursor(): Exception: %s.", e.getMessage());
+        }
+        return cursor;
+    }
+
     @Override
     public List<ListItem> retrieveStruckOutListItems(ListTitle listTitle) {
         List<ListItem> struckOutListItems = new ArrayList<>();
@@ -308,7 +364,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
     }
 
     @Override
-    public int getNumberOfStruckOutListItems(ListTitle listTitle) {
+    public int retrieveNumberOfStruckOutListItems(ListTitle listTitle) {
         int struckOutListItems = 0;
         Cursor cursor = null;
         Uri uri = ListItemsSqlTable.CONTENT_URI;
@@ -326,7 +382,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
             }
 
         } catch (Exception e) {
-            Timber.e("getNumberOfStruckOutListItems(): Exception: %s.", e.getMessage());
+            Timber.e("retrieveNumberOfStruckOutListItems(): Exception: %s.", e.getMessage());
         }
 
         return struckOutListItems;
@@ -339,6 +395,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         setListItemLastSortKey(listTitle, listItemNextSortKey);
         return listItemNextSortKey;
     }
+
 
     public void setListItemLastSortKey(ListTitle listTitle, long sortKey) {
         ContentValues cv = new ContentValues();
@@ -392,10 +449,62 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     //endregion
 
-//    @Override
+
+    //region Update ListItem
 
     @Override
-    public boolean update(ListItem listItem) {
+    public void update(List<ListItem> listItems) {
+        List<ListItem> successfullyUpdatedListItemsInLocalStorage = updateInLocalStorage(listItems);
+        if (successfullyUpdatedListItemsInLocalStorage.size() > 0) {
+            updateInCloud(successfullyUpdatedListItemsInLocalStorage);
+        }
+    }
+
+    @Override
+    public void update(ListItem listItem) {
+        if (updateInLocalStorage(listItem) == 1) {
+            updateInCloud(listItem);
+        }
+    }
+
+    private boolean update(ListItem listItem, ContentValues cv) {
+
+        boolean result = false;
+
+        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+        int numberOfRecordsUpdated = updateInLocalStorage(listItem, cv);
+
+        if (numberOfRecordsUpdated == 1) {
+            result = true;
+            updateInCloud(listItem);
+        }
+
+        return result;
+
+    }
+
+
+    //region Update in Local Storage
+    @Override
+    public List<ListItem> updateInLocalStorage(List<ListItem> listItems) {
+        List<ListItem> successfullyUpdatedListItems = new ArrayList<>();
+        for (ListItem listItem : listItems) {
+            if (updateInLocalStorage(listItem) == 1) {
+                successfullyUpdatedListItems.add(listItem);
+            }
+        }
+
+        if (successfullyUpdatedListItems.size() == listItems.size()) {
+            Timber.i("updateInLocalStorage(): All %d ListItems updated.", listItems.size());
+        } else {
+            Timber.e("updateInLocalStorage(): Only %d of %d ListItems updated.",
+                    successfullyUpdatedListItems.size(), listItems.size());
+        }
+        return successfullyUpdatedListItems;
+    }
+
+    @Override
+    public int updateInLocalStorage(ListItem listItem) {
         ContentValues cv = new ContentValues();
 
         cv.put(ListItemsSqlTable.COL_NAME, listItem.getName());
@@ -410,29 +519,15 @@ public class ListItemRepository_Impl implements ListItemRepository,
         cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, (listItem.isMarkedForDeletion()) ? TRUE : FALSE);
         cv.put(ListItemsSqlTable.COL_STRUCK_OUT, (listItem.isStruckOut()) ? TRUE : FALSE);
 
-        return update(listItem, cv);
-    }
-
-    private boolean update(ListItem listItem, ContentValues cv) {
-
-        boolean result = false;
-        try {
-            cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-            int numberOfRecordsUpdated = updateSQLiteDb(listItem, cv);
-
-            if (numberOfRecordsUpdated == 1) {
-                result = true;
-                saveListItemToBackendless(listItem);
-            }
-        } catch (Exception e) {
-            Timber.e("update(): Exception: %s.", e.getMessage());
+        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+        int numberOfRecordsUpdated = updateInLocalStorage(listItem, cv);
+        if (numberOfRecordsUpdated != 1) {
+            Timber.e("updateInLocalStorage(): FAILED to update \"%s.\"", listItem.getName());
         }
-
-        return result;
-
+        return numberOfRecordsUpdated;
     }
 
-    private int updateSQLiteDb(ListItem listItem, ContentValues cv) {
+    private int updateInLocalStorage(ListItem listItem, ContentValues cv) {
         int numberOfRecordsUpdated = 0;
         try {
             Uri uri = ListItemsSqlTable.CONTENT_URI;
@@ -442,15 +537,48 @@ public class ListItemRepository_Impl implements ListItemRepository,
             numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
 
         } catch (Exception e) {
-            Timber.e("updateSQLiteDb(): Exception: %s.", e.getMessage());
+            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
         }
-        if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateSQLiteDb(): Error updating ListItem with uuid = %s", listItem.getUuid());
-        }
+
         return numberOfRecordsUpdated;
 
     }
+    //endregion
 
+    //region Update ListItem in Cloud
+
+    @Override
+    public void updateInCloud(List<ListItem> listItems) {
+        new SaveListItemListToBackendless_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, listItems).execute();
+    }
+
+    @Override
+    public void onListItemListSavedToBackendless(String successMessage, List<ListItem> successfullySavedListItems) {
+        Timber.i("onListItemListSavedToBackendless(): %s", successMessage);
+    }
+
+    @Override
+    public void onListItemListSaveToBackendlessFailed(String errorMessage, List<ListItem> successfullySavedListItems) {
+        Timber.e("onListItemListSaveToBackendlessFailed(): %s", errorMessage);
+    }
+
+    @Override
+    public void updateInCloud(ListItem listItem) {
+        new SaveListItemToBackendless_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, listItem).execute();
+    }
+
+    @Override
+    public void onListItemSavedToBackendless(String successMessage) {
+        Timber.i("onListItemSavedToBackendless(): %s", successMessage);
+    }
+
+    @Override
+    public void onListItemSaveToBackendlessFailed(String errorMessage) {
+        Timber.e("onListItemSavedToBackendless(): %s", errorMessage);
+    }
+    //endregion
 
     @Override
     public int toggle(ListItem listItem, String fieldName) {
@@ -512,9 +640,58 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return result;
     }
 
+    //endregion
+
+
+    //region Delete ListItem
+    @Override
+    public int delete(List<ListItem> listItems) {
+        List<ListItem> successfullyMarkedForDeletionListItems = deleteFromLocalStorage(listItems);
+        if (successfullyMarkedForDeletionListItems.size() > 0) {
+            deleteFromCloud(successfullyMarkedForDeletionListItems);
+        }
+
+        return successfullyMarkedForDeletionListItems.size();
+    }
 
     @Override
     public int delete(ListItem listItem) {
+        int numberOfDeletedListItems = deleteFromLocalStorage(listItem);
+        if (numberOfDeletedListItems == 1) {
+            if (listItem.isFavorite()) {
+                listItem.setMarkedForDeletion(true);
+                listItem.setStruckOut(false);
+                updateInCloud(listItem);
+            } else {
+                deleteFromCloud(listItem);
+            }
+        }
+
+        return numberOfDeletedListItems;
+    }
+
+    @Override
+    public List<ListItem> deleteFromLocalStorage(List<ListItem> listItems) {
+        List<ListItem> successfullyMarkedForDeletionListItems = new ArrayList<>();
+        for (ListItem listItem : listItems) {
+            if (deleteFromLocalStorage(listItem) == 1) {
+                successfullyMarkedForDeletionListItems.add(listItem);
+            }
+        }
+
+        if (successfullyMarkedForDeletionListItems.size() == listItems.size()) {
+            Timber.i("deleteFromLocalStorage(): Successfully marked all %d ListItems for deletion.",
+                    successfullyMarkedForDeletionListItems.size());
+        } else {
+            Timber.e("deleteFromLocalStorage(): Only marked %d of of %d ListItems for deletion.",
+                    successfullyMarkedForDeletionListItems.size(), listItems.size());
+        }
+
+        return successfullyMarkedForDeletionListItems;
+    }
+
+    @Override
+    public int deleteFromLocalStorage(ListItem listItem) {
         int numberOfDeletedListItems = 0;
         try {
             Uri uri = ListItemsSqlTable.CONTENT_URI;
@@ -525,14 +702,10 @@ public class ListItemRepository_Impl implements ListItemRepository,
             cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
             cv.put(ListItemsSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
             numberOfDeletedListItems = cr.update(uri, cv, selection, selectionArgs);
-
-            if (listItem.isFavorite()) {
-                listItem.setMarkedForDeletion(true);
-                listItem.setStruckOut(false);
-                saveListItemToBackendless(listItem);
+            if (numberOfDeletedListItems == 1) {
+                Timber.i("deleteFromLocalStorage(): Successfully marked \"%s\" for deletion.", listItem.getName());
             } else {
-                new DeleteListItemFromBackendless_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), listItem, this).execute();
+                Timber.e("deleteFromLocalStorage(): FAILED to marked \"%s\" for deletion.", listItem.getName());
             }
 
         } catch (Exception e) {
@@ -543,6 +716,18 @@ public class ListItemRepository_Impl implements ListItemRepository,
     }
 
     @Override
+    public void deleteFromCloud(List<ListItem> listItems) {
+        new DeleteListItemsFromBackendless_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, listItems).execute();
+    }
+
+    @Override
+    public void deleteFromCloud(ListItem listItem) {
+        new DeleteListItemFromBackendless_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, listItem).execute();
+    }
+
+    @Override
     public void onListItemDeletedFromBackendless(String successMessage) {
         Timber.i("onListItemDeletedFromBackendless(): %s.", successMessage);
     }
@@ -550,8 +735,18 @@ public class ListItemRepository_Impl implements ListItemRepository,
     @Override
     public void onListItemDeleteFromBackendlessFailed(String errorMessage) {
         Timber.e("onListItemDeleteFromBackendlessFailed(): %s.", errorMessage);
-
     }
+
+    @Override
+    public void onListItemsDeletedFromBackendless(String successMessage) {
+        Timber.i("onListItemsDeletedFromBackendless(): %s.", successMessage);
+    }
+
+    @Override
+    public void onListItemsDeleteFromBackendlessFailed(String errorMessage) {
+        Timber.e("onListItemsDeleteFromBackendlessFailed(): %s.", errorMessage);
+    }
+    //endregion
 
 
 }

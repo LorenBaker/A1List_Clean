@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/whiteSmoke"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <CheckBox
+        android:id="@+id/ckItemName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp"
+        android:clickable="true"
+        android:text="Test Item Name"
+        android:textColor="@color/black"
+        android:textSize="17sp" />
+
+
+</LinearLayout>

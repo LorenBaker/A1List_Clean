@@ -103,10 +103,10 @@ public class SaveAppSettingsToBackendless_InBackground extends AbstractInteracto
             numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
 
         } catch (Exception e) {
-            Timber.e("updateSQLiteDb(): Exception: %s.", e.getMessage());
+            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
         }
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateSQLiteDb(): Error updating AppSettings with uuid = %s", appSettings.getUuid());
+            Timber.e("updateInLocalStorage(): Error updating AppSettings with uuid = %s", appSettings.getUuid());
         }
     }
 

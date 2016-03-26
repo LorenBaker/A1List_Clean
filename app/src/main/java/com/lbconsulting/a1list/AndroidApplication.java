@@ -67,9 +67,10 @@ public class AndroidApplication extends Application {
 
         // TODO: Create release tree. See https://caster.io/episodes/episode-14-logging-with-timber/
 
+        // Note: these repositories must be created in the following order
         mAppSettingsRepository = new AppSettingsRepository_Impl(mContext);
         mListThemeRepository = new ListThemeRepository_Impl(mContext);
-        mListTitleRepository = new ListTitleRepository_Impl(mContext, mAppSettingsRepository, mListThemeRepository);
-        mListItemRepository = new ListItemRepository_Impl(mContext, mListTitleRepository);
+        mListTitleRepository = new ListTitleRepository_Impl(mContext);
+        mListItemRepository = new ListItemRepository_Impl(mContext);
     }
 }

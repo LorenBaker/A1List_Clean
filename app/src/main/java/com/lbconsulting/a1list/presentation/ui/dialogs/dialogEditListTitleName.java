@@ -18,10 +18,9 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.google.gson.Gson;
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
-import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.utils.MyEvents;
 
@@ -63,10 +62,7 @@ public class dialogEditListTitleName extends DialogFragment {
         super.onCreate(savedInstanceState);
         Timber.i("onCreate()");
 
-        AppSettingsRepository_Impl appSettingsRepository = new AppSettingsRepository_Impl(getActivity());
-        ListThemeRepository_Impl listThemeRepository = new ListThemeRepository_Impl(getActivity());
-        mListTitleRepository = new ListTitleRepository_Impl(getActivity(),appSettingsRepository, listThemeRepository);
-
+        mListTitleRepository = AndroidApplication.getListTitleRepository();
         Bundle args = getArguments();
         if (args.containsKey(ARG_LIST_TITLE_JSON)) {
             String listTitleJson = args.getString(ARG_LIST_TITLE_JSON);

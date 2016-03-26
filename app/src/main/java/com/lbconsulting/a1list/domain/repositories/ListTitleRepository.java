@@ -12,9 +12,9 @@ public interface ListTitleRepository {
 
     boolean insert(ListTitle listTitle);
 
-    boolean insertIntoSQLiteDb(ListTitle listTitle);
+    boolean insertIntoLocalStorage(ListTitle listTitle);
 
-    void insertIntoSQLiteDb(List<ListTitle> listTitles);
+    void insertIntoLocalStorage(List<ListTitle> listTitles);
 
     ListTitle getListTitleByUuid(String uuid);
 

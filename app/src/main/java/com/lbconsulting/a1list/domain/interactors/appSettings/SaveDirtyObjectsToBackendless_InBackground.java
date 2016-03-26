@@ -47,10 +47,10 @@ public class SaveDirtyObjectsToBackendless_InBackground extends AbstractInteract
             return;
         }
 
-        AppSettingsRepository_Impl appSettingsRepository = new AppSettingsRepository_Impl(AndroidApplication.getContext());
-        ListThemeRepository_Impl listThemeRepository = new ListThemeRepository_Impl(AndroidApplication.getContext());
-        ListTitleRepository_Impl listTitleRepository = new ListTitleRepository_Impl(AndroidApplication.getContext(), appSettingsRepository, listThemeRepository);
-        ListItemRepository_Impl listItemRepository = new ListItemRepository_Impl(AndroidApplication.getContext(), listTitleRepository);
+        AppSettingsRepository_Impl appSettingsRepository = AndroidApplication.getAppSettingsRepository();
+        ListThemeRepository_Impl listThemeRepository = AndroidApplication.getListThemeRepository();
+        ListTitleRepository_Impl listTitleRepository = AndroidApplication.getListTitleRepository();
+        ListItemRepository_Impl listItemRepository = AndroidApplication.getListItemRepository();
 
         AppSettings dirtyAppSettings = appSettingsRepository.retrieveDirtyAppSettings();
         List<ListTheme> dirtyListListThemes = listThemeRepository.retrieveDirtyListThemes();
@@ -240,10 +240,10 @@ public class SaveDirtyObjectsToBackendless_InBackground extends AbstractInteract
             numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
 
         } catch (Exception e) {
-            Timber.e("updateSQLiteDb(): Error updating \"%s\". Exception: %s.", listTheme.getName(), e.getMessage());
+            Timber.e("updateInLocalStorage(): Error updating \"%s\". Exception: %s.", listTheme.getName(), e.getMessage());
         }
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateSQLiteDb(): Error updating \"%s\"", listTheme.getName());
+            Timber.e("updateInLocalStorage(): Error updating \"%s\"", listTheme.getName());
         }
     }
 

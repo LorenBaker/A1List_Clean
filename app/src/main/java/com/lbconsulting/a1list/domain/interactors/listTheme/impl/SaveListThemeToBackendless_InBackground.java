@@ -105,10 +105,10 @@ public class SaveListThemeToBackendless_InBackground extends AbstractInteractor 
             numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
 
         } catch (Exception e) {
-            Timber.e("updateSQLiteDb(): Exception: %s.", e.getMessage());
+            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
         }
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateSQLiteDb(): Error updating ListTheme with uuid = %s", listTheme.getUuid());
+            Timber.e("updateInLocalStorage(): Error updating ListTheme with uuid = %s", listTheme.getUuid());
         }
     }
 

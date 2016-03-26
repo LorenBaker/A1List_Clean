@@ -124,7 +124,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 //            }
 //
 //            // update the SQLite db
-//            updateSQLiteDb(response, cv);
+//            updateInLocalStorage(response, cv);
 //
 //        } catch (BackendlessException e) {
 //            Timber.e("saveAppSettingsToBackendless(): FAILED to save \"%s\" to Backendless. BackendlessException: Code: %s; Message: %s.",
@@ -132,14 +132,14 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 //            // Set dirty flag to true in SQLite db
 //            ContentValues cv = new ContentValues();
 //            cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, TRUE);
-//            updateSQLiteDb(appSettings, cv);
+//            updateInLocalStorage(appSettings, cv);
 //
 //        } catch (Exception e) {
 //            Timber.e("saveAppSettingsToBackendless(): Exception: %s.", e.getMessage());
 //            // Set dirty flag to true in SQLite db
 //            ContentValues cv = new ContentValues();
 //            cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, TRUE);
-//            updateSQLiteDb(appSettings, cv);
+//            updateInLocalStorage(appSettings, cv);
 //        }
 //        return response;
 //    }
@@ -153,10 +153,10 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
             String[] selectionArgs = new String[]{appSettings.getUuid()};
             numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
         } catch (Exception e) {
-            Timber.e("updateSQLiteDb(): Exception: %s.", e.getMessage());
+            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
         }
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateSQLiteDb(): Error updating AppSettings with uuid = %s", appSettings.getUuid());
+            Timber.e("updateInLocalStorage(): Error updating AppSettings with uuid = %s", appSettings.getUuid());
         }
         return numberOfRecordsUpdated;
     }

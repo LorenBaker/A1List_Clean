@@ -129,10 +129,10 @@ public class SaveListItemListToBackendless_InBackground extends AbstractInteract
             numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
 
         } catch (Exception e) {
-            Timber.e("updateSQLiteDb(): Exception: %s.", e.getMessage());
+            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
         }
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateSQLiteDb(): Error updating ListItem with uuid = %s", listItem.getUuid());
+            Timber.e("updateInLocalStorage(): Error updating ListItem with uuid = %s", listItem.getUuid());
         }
     }
 

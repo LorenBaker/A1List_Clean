@@ -29,15 +29,15 @@ public class UpdateListItem_InBackground extends AbstractInteractor implements U
 
     @Override
     public void run() {
-
-        // update the provided ListThem in the SQLite db
-        if (mListItemRepository.update(mListItem)) {
-            String msg = String.format("\"%s\" successfully updated in SQL Db.", mListItem.getName());
-            postListItemUpdated(msg);
-        } else {
-            String msg = String.format("\"%s\" FAILED to updated in SQL Db.", mListItem.getName());
-            postListItemUpdateFailed(msg);
-        }
+        mListItemRepository.update(mListItem);
+//        // update the provided ListThem in the SQLite db
+//        if (mListItemRepository.update(mListItem)) {
+//            String msg = String.format("\"%s\" successfully updated in SQL Db.", mListItem.getName());
+//            postListItemUpdated(msg);
+//        } else {
+//            String msg = String.format("\"%s\" FAILED to updated in SQL Db.", mListItem.getName());
+//            postListItemUpdateFailed(msg);
+//        }
     }
 
     private void postListItemUpdated(final String message) {

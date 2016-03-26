@@ -6,6 +6,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToBackendless;
 import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToBackendless_InBackground;
@@ -42,12 +43,11 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     private final AppSettingsRepository_Impl mAppSettingsRepository;
     private final ListThemeRepository_Impl mListThemeRepository;
 
-    public ListTitleRepository_Impl(Context context, AppSettingsRepository_Impl appSettingsRepository,
-                                    ListThemeRepository_Impl listThemeRepository) {
+    public ListTitleRepository_Impl(Context context) {
         // private constructor
         this.mContext = context;
-        this.mAppSettingsRepository = appSettingsRepository;
-        this.mListThemeRepository = listThemeRepository;
+        this.mAppSettingsRepository = AndroidApplication.getAppSettingsRepository();
+        this.mListThemeRepository = AndroidApplication.getListThemeRepository();
     }
 
     // CRUD operations
@@ -56,7 +56,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     @Override
     public boolean insert(ListTitle listTitle) {
         // insert new listTitle into SQLite db
-        boolean successfullyInsertedIntoSQLiteDb = insertIntoSQLiteDb(listTitle);
+        boolean successfullyInsertedIntoSQLiteDb = insertIntoLocalStorage(listTitle);
         if (successfullyInsertedIntoSQLiteDb) {
             saveListTitleToBackendless(listTitle);
             saveAppSettingsToBackendless();
@@ -65,7 +65,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     }
 
     @Override
-    public boolean insertIntoSQLiteDb(ListTitle listTitle) {
+    public boolean insertIntoLocalStorage(ListTitle listTitle) {
         boolean result = false;
         long newListTitleSqlId = -1;
 
@@ -106,19 +106,19 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         if (newListTitleSqlId > -1) {
             // successfully saved new ListTitle to the SQLite db
             result = true;
-            Timber.i("insertIntoSQLiteDb(): Successfully inserted \"%s\" into the SQLite db.", listTitle.getName());
+            Timber.i("insertIntoLocalStorage(): Successfully inserted \"%s\" into the SQLite db.", listTitle.getName());
         } else {
             // failed to create listTitle in the SQLite db
-            Timber.i("insertIntoSQLiteDb(): FAILED to insert \"%s\" into the SQLite db.", listTitle.getName());
+            Timber.i("insertIntoLocalStorage(): FAILED to insert \"%s\" into the SQLite db.", listTitle.getName());
         }
 
         return result;
     }
 
     @Override
-    public void insertIntoSQLiteDb(List<ListTitle> listTitles) {
+    public void insertIntoLocalStorage(List<ListTitle> listTitles) {
         for (ListTitle listTitle : listTitles) {
-            insertIntoSQLiteDb(listTitle);
+            insertIntoLocalStorage(listTitle);
         }
     }
 
@@ -590,10 +590,10 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
 
         } catch (Exception e) {
-            Timber.e("updateSQLiteDb(): Exception: %s.", e.getMessage());
+            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
         }
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateSQLiteDb(): Error updating ListTitle with uuid = %s", listTitle.getUuid());
+            Timber.e("updateInLocalStorage(): Error updating ListTitle with uuid = %s", listTitle.getUuid());
         }
         return numberOfRecordsUpdated;
 

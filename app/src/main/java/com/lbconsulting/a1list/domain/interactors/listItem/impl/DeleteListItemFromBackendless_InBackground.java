@@ -24,7 +24,7 @@ public class DeleteListItemFromBackendless_InBackground extends AbstractInteract
     private final ListItem mListItem;
 
     public DeleteListItemFromBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                      ListItem listItem, Callback callback) {
+                                                       Callback callback, ListItem listItem) {
         super(threadExecutor, mainThread);
         mListItem = listItem;
         mCallback = callback;

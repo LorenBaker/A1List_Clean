@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -24,9 +25,8 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.appSettings.SaveDirtyObjectsToBackendless_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listItem.impl.DeleteStruckOutListItems_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listItem.impl.DeleteListItemsFromBackendless_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listItem.impl.UpdateListItem_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteStruckOutListItems;
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.InsertNewListItem;
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemListToBackendless;
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.UpdateListItem;
@@ -50,6 +50,7 @@ import com.lbconsulting.a1list.presentation.ui.activities.backendless.Backendles
 import com.lbconsulting.a1list.presentation.ui.adapters.SectionsPagerAdapter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListItemName;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
+import com.lbconsulting.a1list.presentation.ui.dialogs.dialogSelectFavorites;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.CsvParser;
@@ -70,7 +71,7 @@ import timber.log.Timber;
 public class MainActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView,
         CreateInitialListThemes.Callback, InsertNewListTitle.Callback, InsertNewListItem.Callback,
         SaveListTitleListToBackendless.Callback,
-        SaveListItemListToBackendless.Callback, DeleteStruckOutListItems.Callback, UpdateListItem.Callback {
+        SaveListItemListToBackendless.Callback, DeleteListItemsFromBackendless_InBackground.Callback, UpdateListItem.Callback {
     private static ListTitlesPresenter_Impl mMainActivityPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
@@ -421,7 +422,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             newListTitle = ListTitle.newInstance(listName, defaultListTheme, AndroidApplication.getAppSettingsRepository());
             listTitles.add(newListTitle);
         }
-        mListTitleRepository.insertIntoSQLiteDb(listTitles);
+        mListTitleRepository.insertIntoLocalStorage(listTitles);
 
         List<ListTitle> allListTitles = listTitleRepository.retrieveAllListTitles(false, true);
         new SaveListTitleListToBackendless_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(), this, allListTitles).execute();
@@ -447,7 +448,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         List<ListItem> listItems = new ArrayList<>();
         String listTitleName;
         for (ListTitle listTitle : listTitles) {
-            numberOfItemsPerList++;
             listTitleName = listTitle.getName();
             Timber.i("addItemsToListTitles(): adding items to \"%s\"", listTitle.getName());
             for (int i = 1; i < numberOfItemsPerList + 1; i++) {
@@ -460,8 +460,9 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
                 newListItem = ListItem.newInstance(itemName, listTitle, mListTitleRepository, false);
                 listItems.add(newListItem);
             }
+            numberOfItemsPerList++;
         }
-        mListItemRepository.insertIntoSQLiteDb(listItems);
+        mListItemRepository.insertIntoLocalStorage(listItems);
         Timber.i("addItemsToListTitles(): Starting to save dirty objects to Backendless.");
         new SaveDirtyObjectsToBackendless_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance()).execute();
 //        new SaveListItemListToBackendless_InBackground(ThreadExecutor.getInstance(),
@@ -502,24 +503,34 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     //endregion
 
     private void deleteStruckOutItems() {
-        new DeleteStruckOutListItems_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(),
-                this, mListItemRepository, mActiveListTitle).execute();
+        List<ListItem> struckOutListItems = mListItemRepository.retrieveStruckOutListItems(mActiveListTitle);
+        if (struckOutListItems.size() > 0) {
+            List<ListItem> successfullyMarkedListItems = mListItemRepository.deleteFromLocalStorage(struckOutListItems);
+            if (successfullyMarkedListItems.size() > 0) {
+                EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
+                new DeleteListItemsFromBackendless_InBackground(ThreadExecutor.getInstance(),
+                        MainThreadImpl.getInstance(), this, successfullyMarkedListItems).execute();
+            }
+        }
     }
 
     @Override
-    public void onStruckOutListItemsDeleted(String successMessage) {
-        Timber.i("onStruckOutListItemsDeleted(): %s.", successMessage);
-        EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
+    public void onListItemsDeletedFromBackendless(String successMessage) {
+        Timber.i("onListItemsDeletedFromBackendless(): %s.", successMessage);
     }
 
     @Override
-    public void onStruckOutListItemsDeletionFailed(String errorMessage) {
-        Timber.e("onStruckOutListItemsDeleted(): %s.", errorMessage);
-        EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
+    public void onListItemsDeleteFromBackendlessFailed(String errorMessage) {
+        Timber.e("onListItemsDeleteFromBackendlessFailed(): %s.", errorMessage);
     }
 
     private void showFavorites() {
-        Toast.makeText(this, "showFavorites clicked", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "showFavorites clicked", Toast.LENGTH_SHORT).show();
+        FragmentManager fm = getSupportFragmentManager();
+        Gson gson = new Gson();
+        String listTitleJson = gson.toJson(mActiveListTitle);
+        dialogSelectFavorites dialog = dialogSelectFavorites.newInstance(listTitleJson);
+        dialog.show(fm, "dialogSelectFavorites");
     }
 
     private void createNewList() {
