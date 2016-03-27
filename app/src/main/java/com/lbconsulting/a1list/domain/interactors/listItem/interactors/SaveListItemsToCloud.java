@@ -7,7 +7,7 @@ import com.lbconsulting.a1list.domain.model.ListItem;
 import java.util.List;
 
 
-public interface SaveListItemListToBackendless extends Interactor {
+public interface SaveListItemsToCloud extends Interactor {
 
 
     interface Callback {

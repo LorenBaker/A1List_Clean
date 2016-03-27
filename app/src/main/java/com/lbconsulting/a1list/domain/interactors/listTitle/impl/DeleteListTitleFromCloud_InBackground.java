@@ -9,7 +9,7 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.DeleteListTitleFromBackendless;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.DeleteListTitleFromCloud;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
@@ -19,12 +19,12 @@ import java.util.Date;
 /**
  * An interactor that saves the provided ListTitle to Backendless.
  */
-public class DeleteListTitleFromBackendless_InBackground extends AbstractInteractor implements DeleteListTitleFromBackendless {
+public class DeleteListTitleFromCloud_InBackground extends AbstractInteractor implements DeleteListTitleFromCloud {
     private final Callback mCallback;
     private final ListTitle mListTitle;
 
-    public DeleteListTitleFromBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                       ListTitle listTitle, Callback callback) {
+    public DeleteListTitleFromCloud_InBackground(Executor threadExecutor, MainThread mainThread,
+                                                 Callback callback,ListTitle listTitle) {
         super(threadExecutor, mainThread);
         mListTitle = listTitle;
         mCallback = callback;

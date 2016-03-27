@@ -10,7 +10,7 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitleListToBackendless;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitlesToCloud;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
@@ -24,12 +24,12 @@ import timber.log.Timber;
 /**
  * An interactor that saves the provided ListTitle to Backendless.
  */
-public class SaveListTitleListToBackendless_InBackground extends AbstractInteractor implements SaveListTitleListToBackendless {
+public class SaveListTitlesToCloud_InBackground extends AbstractInteractor implements SaveListTitlesToCloud {
     private final Callback mCallback;
     private final List<ListTitle> mListTitleList;
 
-    public SaveListTitleListToBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                       Callback callback, List<ListTitle> listTitleList) {
+    public SaveListTitlesToCloud_InBackground(Executor threadExecutor, MainThread mainThread,
+                                              Callback callback, List<ListTitle> listTitleList) {
         super(threadExecutor, mainThread);
         mListTitleList = listTitleList;
         mCallback = callback;
@@ -117,11 +117,11 @@ public class SaveListTitleListToBackendless_InBackground extends AbstractInterac
 
         if (mListTitleList.size() == successfullySavedListTitles.size()) {
             String successMessage = String.format("Successfully saved %d ListTitles to Backendless.", successfullySavedListTitles.size());
-            postListTitleListSavedToBackendless(successMessage, successfullySavedListTitles);
+            postListTitlesListSavedToBackendless(successMessage, successfullySavedListTitles);
         } else {
             String errorMessage = String.format("Only saved %d out of %d ListTitles to Backendless",
                     successfullySavedListTitles.size(), mListTitleList.size());
-            postListTitleListSaveToBackendlessFailed(errorMessage, successfullySavedListTitles);
+            postListTitlesListSaveToBackendlessFailed(errorMessage, successfullySavedListTitles);
         }
 
     }
@@ -143,20 +143,20 @@ public class SaveListTitleListToBackendless_InBackground extends AbstractInterac
         }
     }
 
-    private void postListTitleListSavedToBackendless(final String successMessage, final List<ListTitle> successfullySavedListTitles) {
+    private void postListTitlesListSavedToBackendless(final String successMessage, final List<ListTitle> successfullySavedListTitles) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListTitleListSavedToBackendless(successMessage, successfullySavedListTitles);
+                mCallback.onListTitlesListSavedToBackendless(successMessage, successfullySavedListTitles);
             }
         });
     }
 
-    private void postListTitleListSaveToBackendlessFailed(final String errorMessage, final List<ListTitle> successfullySavedListTitles) {
+    private void postListTitlesListSaveToBackendlessFailed(final String errorMessage, final List<ListTitle> successfullySavedListTitles) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListTitleListSaveToBackendlessFailed(errorMessage, successfullySavedListTitles);
+                mCallback.onListTitlesListSaveToBackendlessFailed(errorMessage, successfullySavedListTitles);
             }
         });
     }

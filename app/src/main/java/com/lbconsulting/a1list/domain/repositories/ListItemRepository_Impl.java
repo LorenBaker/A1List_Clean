@@ -8,14 +8,14 @@ import android.net.Uri;
 
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listItem.impl.DeleteListItemFromBackendless_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listItem.impl.DeleteListItemsFromBackendless_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listItem.impl.SaveListItemListToBackendless_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listItem.impl.SaveListItemToBackendless_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteListItemFromBackendless;
-import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteListItemsFromBackendless;
-import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemListToBackendless;
-import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemToBackendless;
+import com.lbconsulting.a1list.domain.interactors.listItem.impl.DeleteListItemFromCloud_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listItem.impl.DeleteListItemsFromCloud_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listItem.impl.SaveListItemToCloud_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listItem.impl.SaveListItemsToCloud_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteListItemFromCloud;
+import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteListItemsFromCloud;
+import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemToCloud;
+import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemsToCloud;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
@@ -33,10 +33,10 @@ import timber.log.Timber;
  * NOTE: All CRUD operations should run on a background thread
  */
 public class ListItemRepository_Impl implements ListItemRepository,
-        SaveListItemListToBackendless.Callback,
-        SaveListItemToBackendless.Callback,
-        DeleteListItemFromBackendless.Callback,
-        DeleteListItemsFromBackendless.Callback {
+        SaveListItemsToCloud.Callback,
+        SaveListItemToCloud.Callback,
+        DeleteListItemFromCloud.Callback,
+        DeleteListItemsFromCloud.Callback {
 
     private final int FALSE = 0;
     private final int TRUE = 1;
@@ -53,12 +53,12 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     //region Insert ListItem
     @Override
-    public int insert(List<ListItem> listItems) {
+    public List<ListItem> insert(List<ListItem> listItems) {
         List<ListItem> successfullyInsertedListItems = insertIntoLocalStorage(listItems);
         if (successfullyInsertedListItems.size() > 0) {
             insertInCloud(successfullyInsertedListItems);
         }
-        return successfullyInsertedListItems.size();
+        return successfullyInsertedListItems;
     }
 
     @Override
@@ -95,6 +95,27 @@ public class ListItemRepository_Impl implements ListItemRepository,
         long newListItemSqlId = -1;
 
         Uri uri = ListItemsSqlTable.CONTENT_URI;
+        ContentValues cv = makeListItemContentValues(listItem);
+        ContentResolver cr = mContext.getContentResolver();
+        Uri newListItemUri = cr.insert(uri, cv);
+
+        if (newListItemUri != null) {
+            newListItemSqlId = Long.parseLong(newListItemUri.getLastPathSegment());
+        }
+
+        if (newListItemSqlId > -1) {
+            // successfully saved new ListItem to the SQLite db
+            result = true;
+            Timber.i("insertIntoLocalStorage(): ListItemRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listItem.getName());
+        } else {
+            // failed to create listItem in the SQLite db
+            Timber.i("insertIntoLocalStorage(): ListItemRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listItem.getName());
+        }
+
+        return result;
+    }
+
+    private ContentValues makeListItemContentValues(ListItem listItem) {
         ContentValues cv = new ContentValues();
 
         cv.put(ListItemsSqlTable.COL_NAME, listItem.getName());
@@ -115,24 +136,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         if (updatedDateTime != null) {
             cv.put(ListItemsSqlTable.COL_UPDATED, updatedDateTime.getTime());
         }
-
-        ContentResolver cr = mContext.getContentResolver();
-        Uri newListItemUri = cr.insert(uri, cv);
-
-        if (newListItemUri != null) {
-            newListItemSqlId = Long.parseLong(newListItemUri.getLastPathSegment());
-        }
-
-        if (newListItemSqlId > -1) {
-            // successfully saved new ListItem to the SQLite db
-            result = true;
-            Timber.i("insertIntoLocalStorage(): ListItemRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listItem.getName());
-        } else {
-            // failed to create listItem in the SQLite db
-            Timber.i("insertIntoLocalStorage(): ListItemRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listItem.getName());
-        }
-
-        return result;
+        return cv;
     }
 
     @Override
@@ -147,7 +151,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     //endregion
 
-    //region Read
+
+    //region Read ListItem
     @Override
     public ListItem retrieveListItemByUuid(String uuid) {
         ListItem foundListItem = null;
@@ -179,7 +184,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         listItem.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_NAME)));
 
         String listTitleUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID));
-        ListTitle listTitle = mListTitleRepository.getListTitleByUuid(listTitleUuid);
+        ListTitle listTitle = mListTitleRepository.retrieveListTitleByUuid(listTitleUuid);
         listItem.setListTitle(listTitle);
 
         listItem.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MANUAL_SORT_KEY)));
@@ -404,6 +409,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
     }
 
     private ListItem getListItem(ListTitle listTitle, String listItemName) {
+        // TODO: Does this getListItem method's selection need ListItem not marked for deletion. How to handle favorites.
         ListItem result = null;
         Cursor cursor = null;
         Uri uri = ListItemsSqlTable.CONTENT_URI;
@@ -447,6 +453,16 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return isValidName;
     }
 
+    public boolean itemExists(ListTitle listTitle, String itemName) {
+        boolean itemExists = false;
+        ListItem listItemFromName = getListItem(listTitle, itemName);
+        if (listItemFromName != null) {
+            // The proposed ListItem name is in the SQLite db.
+            itemExists = true;
+        }
+        return itemExists;
+    }
+
     //endregion
 
 
@@ -468,9 +484,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
     }
 
     private boolean update(ListItem listItem, ContentValues cv) {
-
         boolean result = false;
-
         cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
         int numberOfRecordsUpdated = updateInLocalStorage(listItem, cv);
 
@@ -478,9 +492,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
             result = true;
             updateInCloud(listItem);
         }
-
         return result;
-
     }
 
 
@@ -505,21 +517,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     @Override
     public int updateInLocalStorage(ListItem listItem) {
-        ContentValues cv = new ContentValues();
-
-        cv.put(ListItemsSqlTable.COL_NAME, listItem.getName());
-        cv.put(ListItemsSqlTable.COL_UUID, listItem.getUuid());
-        cv.put(ListItemsSqlTable.COL_OBJECT_ID, listItem.getObjectId());
-        cv.put(ListItemsSqlTable.COL_LIST_TITLE_UUID, listItem.getListTitle().getUuid());
-        cv.put(ListItemsSqlTable.COL_MANUAL_SORT_KEY, listItem.getManualSortKey());
-
-        cv.put(ListItemsSqlTable.COL_CHECKED, (listItem.isChecked()) ? TRUE : FALSE);
-        cv.put(ListItemsSqlTable.COL_FAVORITE, (listItem.isFavorite()) ? TRUE : FALSE);
-        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-        cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, (listItem.isMarkedForDeletion()) ? TRUE : FALSE);
-        cv.put(ListItemsSqlTable.COL_STRUCK_OUT, (listItem.isStruckOut()) ? TRUE : FALSE);
-
-        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+        ContentValues cv = makeListItemContentValues(listItem);
         int numberOfRecordsUpdated = updateInLocalStorage(listItem, cv);
         if (numberOfRecordsUpdated != 1) {
             Timber.e("updateInLocalStorage(): FAILED to update \"%s.\"", listItem.getName());
@@ -549,7 +547,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     @Override
     public void updateInCloud(List<ListItem> listItems) {
-        new SaveListItemListToBackendless_InBackground(ThreadExecutor.getInstance(),
+        new SaveListItemsToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listItems).execute();
     }
 
@@ -565,7 +563,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     @Override
     public void updateInCloud(ListItem listItem) {
-        new SaveListItemToBackendless_InBackground(ThreadExecutor.getInstance(),
+        new SaveListItemToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listItem).execute();
     }
 
@@ -717,24 +715,24 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     @Override
     public void deleteFromCloud(List<ListItem> listItems) {
-        new DeleteListItemsFromBackendless_InBackground(ThreadExecutor.getInstance(),
+        new DeleteListItemsFromCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listItems).execute();
     }
 
     @Override
     public void deleteFromCloud(ListItem listItem) {
-        new DeleteListItemFromBackendless_InBackground(ThreadExecutor.getInstance(),
+        new DeleteListItemFromCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listItem).execute();
     }
 
     @Override
-    public void onListItemDeletedFromBackendless(String successMessage) {
-        Timber.i("onListItemDeletedFromBackendless(): %s.", successMessage);
+    public void onListItemDeletedFromCloud(String successMessage) {
+        Timber.i("onListItemDeletedFromCloud(): %s.", successMessage);
     }
 
     @Override
-    public void onListItemDeleteFromBackendlessFailed(String errorMessage) {
-        Timber.e("onListItemDeleteFromBackendlessFailed(): %s.", errorMessage);
+    public void onListItemDeleteFromCloudFailed(String errorMessage) {
+        Timber.e("onListItemDeleteFromCloudFailed(): %s.", errorMessage);
     }
 
     @Override
@@ -746,6 +744,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
     public void onListItemsDeleteFromBackendlessFailed(String errorMessage) {
         Timber.e("onListItemsDeleteFromBackendlessFailed(): %s.", errorMessage);
     }
+
+
     //endregion
 
 

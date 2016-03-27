@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.model;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
 
 import java.util.Date;
@@ -39,9 +40,9 @@ public class ListTitle {
         // A default constructor.
     }
 
-    public static ListTitle newInstance(String name, ListTheme defaultListTheme, AppSettingsRepository appSettings){
+    public static ListTitle newInstance(String name, ListTheme defaultListTheme){
         ListTitle newListTitle = new ListTitle();
-
+        AppSettingsRepository appSettings = AndroidApplication.getAppSettingsRepository();
         String newUuid = UUID.randomUUID().toString();
         // replace uuid "-" with "_" to distinguish it from Backendless objectId
         newUuid = newUuid.replace("-", "_");

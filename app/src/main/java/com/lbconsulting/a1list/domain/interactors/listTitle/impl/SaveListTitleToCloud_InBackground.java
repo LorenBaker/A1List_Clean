@@ -10,7 +10,7 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitleToBackendless;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitleToCloud;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
@@ -22,12 +22,12 @@ import timber.log.Timber;
 /**
  * An interactor that saves the provided ListTitle to Backendless.
  */
-public class SaveListTitleToBackendless_InBackground extends AbstractInteractor implements SaveListTitleToBackendless {
+public class SaveListTitleToCloud_InBackground extends AbstractInteractor implements SaveListTitleToCloud {
     private final Callback mCallback;
     private final ListTitle mListTitle;
 
-    public SaveListTitleToBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                   Callback callback, ListTitle listTitle) {
+    public SaveListTitleToCloud_InBackground(Executor threadExecutor, MainThread mainThread,
+                                             Callback callback, ListTitle listTitle) {
         super(threadExecutor, mainThread);
         mListTitle = listTitle;
         mCallback = callback;

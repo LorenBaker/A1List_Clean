@@ -19,12 +19,10 @@ import com.google.gson.Gson;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.impl.DeleteStruckOutListTitles_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.ToggleListTitleBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
@@ -43,7 +41,7 @@ import butterknife.OnClick;
 import timber.log.Timber;
 
 public class ManageListTitlesActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView,
-        DeleteStruckOutListTitles_InBackground.Callback, ToggleListTitleBooleanField_InBackground.Callback {
+        ToggleListTitleBooleanField_InBackground.Callback {
 
     private static ListTitlesPresenter_Impl mPresenter;
     @Bind(R.id.fab)
@@ -59,21 +57,12 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
     @Bind(R.id.tvActivityProgressBarMessage)
     TextView tvProgressBarMessage;
     private ListTitleArrayAdapter mListTitleAdapter;
-    private DeleteStruckOutListTitles_InBackground mDeleteStruckOutListTitles;
 
-    //    private AppSettingsRepository_Impl mAppSettingsRepository;
+    private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
     private int mNumberOfStruckOutListTitles;
 
-    // Note: these Toggle Methods run on the UI thread
-    // The update one field on one record in one SQLite table (ListTitlesSqlTable)
-    // After the toggle method complete, querying the SQLite ListTitlesSqlTable for all ListTitles
-    // is executed on a background thread. Upon its completion, the ListTitleArray adapter is notified
-    // of a data change.
-    //
-    // The app seemed more responsive running on the UI thread as opposed to running both the Toggle
-    // Methods and ListTitlesSqlTable query on background threads.
 
     //region Toggle Methods
     private DialogInterface.OnClickListener deleteListTitlesDialogClickListener = new DialogInterface.OnClickListener() {
@@ -81,17 +70,22 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
         public void onClick(DialogInterface dialog, int which) {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
-                    //Yes button clicked
-                    mDeleteStruckOutListTitles.execute();
-                    if (CommonMethods.isNetworkAvailable()) {
-                        String deletingThemeMessage = getResources().getQuantityString(
-                                R.plurals.deletingListTitles, mNumberOfStruckOutListTitles, mNumberOfStruckOutListTitles);
-                        showProgress(deletingThemeMessage);
+                    //The "Yes" button clicked
+                    List<ListTitle> struckOutListTitles = mListTitleRepository.retrieveStruckOutListTitles();
+                    if (struckOutListTitles.size() > 0) {
+                        List<ListTitle> listTitlesMarkedForDeletion = mListTitleRepository
+                                .deleteFromLocalStorage(struckOutListTitles);
+                        mPresenter.resume();
+                        hideProgress("");
+                        if (listTitlesMarkedForDeletion.size() > 0) {
+                            mListTitleRepository.deleteFromCloud(listTitlesMarkedForDeletion);
+                        }
                     }
+
                     break;
 
                 case DialogInterface.BUTTON_NEGATIVE:
-                    //No button clicked
+                    //The "No" button clicked
                     break;
             }
         }
@@ -113,58 +107,20 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
         mListTitleAdapter = new ListTitleArrayAdapter(this, lvListTitles, true);
         lvListTitles.setAdapter(mListTitleAdapter);
 
-        //region Messaging
-/*        MESSAGE_CHANNEL = MySettings.getActiveUserID();
-        Backendless.Messaging.subscribe(MESSAGE_CHANNEL,
-                new AsyncCallback<List<Message>>() {
-                    @Override
-                    public void handleResponse(List<Message> response) {
-                        for (Message message : response) {
-                            // TODO: ignore messages initiated from this device
-                            // TODO: design message payload. Make changes to SQLite db.
-                            String csvDataString = message.getData().toString();
-                            MessagePayload payload = new MessagePayload(csvDataString);
-//                            tvMessagesReceived.setText(tvMessagesReceived.getText() + "\n\n" + payload.toString());
-                        }
-                    }
-
-                    @Override
-                    public void handleFault(BackendlessFault fault) {
-                        Timber.e("Backendless.Messaging.subscribe()MessageCallback: BackendlessFault: %s", fault.getMessage());
-                    }
-                }, new AsyncCallback<Subscription>() {
-
-                    @Override
-                    public void handleResponse(Subscription response) {
-                        Timber.i("Backendless. Successful messaging.subscribe()SubscriptionCallback");
-                        mSubscription = response;
-                    }
-
-                    @Override
-                    public void handleFault(BackendlessFault fault) {
-                        Timber.e("Backendless.FAIL messaging.subscribe()SubscriptionCallback: BackendlessFault: %s", fault.getMessage());
-
-                    }
-                }
-        );*/
-        //endregion
-
-        AppSettingsRepository_Impl appSettingsRepository = AndroidApplication.getAppSettingsRepository();
+        mAppSettingsRepository = AndroidApplication.getAppSettingsRepository();
         mListThemeRepository = AndroidApplication.getListThemeRepository();
         mListTitleRepository = AndroidApplication.getListTitleRepository();
 
         boolean isListTitlesSortedAlphabetically = true;
-        AppSettings appSettings = appSettingsRepository.retrieveAppSettings();
+        AppSettings appSettings = mAppSettingsRepository.retrieveAppSettings();
         if (appSettings != null) {
             isListTitlesSortedAlphabetically = appSettings.isListTitlesSortedAlphabetically();
         }
         mPresenter = new ListTitlesPresenter_Impl(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, isListTitlesSortedAlphabetically);
 
-        mDeleteStruckOutListTitles = new DeleteStruckOutListTitles_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this);
 
-        mNumberOfStruckOutListTitles = mListTitleRepository.getNumberOfStruckOutListTitles();
+        mNumberOfStruckOutListTitles = mListTitleRepository.retrieveNumberOfStruckOutListTitles();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -178,9 +134,8 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
     @OnClick(R.id.fab)
     public void fab() {
         ListTheme defaultListTheme = mListThemeRepository.retrieveDefaultListTheme();
-        AppSettingsRepository appSettingsRepository = new AppSettingsRepository_Impl(this);
         ListTitle newListTitle = ListTitle.newInstance(
-                dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME, defaultListTheme, appSettingsRepository);
+                dialogEditListTitleName.DEFAULT_LIST_TITLE_NAME, defaultListTheme);
         startListTitleActivity(newListTitle);
     }
 
@@ -294,21 +249,21 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
     }
 
 
-    @Override
-    public void onStruckOutListTitlesDeleted(String successMessage) {
-        Timber.i("onStruckOutListTitlesDeleted(): %s.", successMessage);
-        mNumberOfStruckOutListTitles = 0;
-        mPresenter.resume();
-        hideProgress("");
-    }
-
-    @Override
-    public void onStruckOutListTitlesDeletionFailed(String errorMessage) {
-        Timber.e("onStruckOutListTitlesDeleted(): %s.", errorMessage);
-        mNumberOfStruckOutListTitles = mListTitleRepository.getNumberOfStruckOutListTitles();
-        mPresenter.resume();
-        hideProgress("");
-    }
+//    @Override
+//    public void onStruckOutListTitlesDeleted(String successMessage) {
+//        Timber.i("onStruckOutListTitlesDeleted(): %s.", successMessage);
+//        mNumberOfStruckOutListTitles = 0;
+//        mPresenter.resume();
+//        hideProgress("");
+//    }
+//
+//    @Override
+//    public void onStruckOutListTitlesDeletionFailed(String errorMessage) {
+//        Timber.e("onStruckOutListTitlesDeleted(): %s.", errorMessage);
+//        mNumberOfStruckOutListTitles = mListTitleRepository.retrieveNumberOfStruckOutListTitles();
+//        mPresenter.resume();
+//        hideProgress("");
+//    }
 
     @Override
     public void onListTitleBooleanFieldToggled(int toggleValue) {

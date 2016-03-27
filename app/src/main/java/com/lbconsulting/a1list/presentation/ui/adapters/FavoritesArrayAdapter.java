@@ -10,7 +10,7 @@ import android.widget.CheckBox;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listItem.impl.SaveListItemListToBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listItem.impl.SaveListItemsToCloud_InBackground;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
@@ -24,7 +24,7 @@ import timber.log.Timber;
 /**
  * An ArrayAdapter for displaying a ListAttributes.
  */
-public class FavoritesArrayAdapter extends ArrayAdapter<ListItem> implements SaveListItemListToBackendless_InBackground.Callback{
+public class FavoritesArrayAdapter extends ArrayAdapter<ListItem> implements SaveListItemsToCloud_InBackground.Callback{
 
     private final Context mContext;
     private final ListItemRepository_Impl mListItemRepository = AndroidApplication.getListItemRepository();
@@ -95,7 +95,7 @@ public class FavoritesArrayAdapter extends ArrayAdapter<ListItem> implements Sav
             listItems.add(listItem);
         }
         mListItemRepository.updateInLocalStorage(listItems);
-        new SaveListItemListToBackendless_InBackground(ThreadExecutor.getInstance(),
+        new SaveListItemsToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(),this,listItems).execute();
     }
 

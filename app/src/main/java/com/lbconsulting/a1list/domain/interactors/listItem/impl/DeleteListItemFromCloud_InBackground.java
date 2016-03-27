@@ -9,7 +9,7 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteListItemFromBackendless;
+import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteListItemFromCloud;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
@@ -19,12 +19,12 @@ import java.util.Date;
 /**
  * An interactor that saves the provided ListItem to Backendless.
  */
-public class DeleteListItemFromBackendless_InBackground extends AbstractInteractor implements DeleteListItemFromBackendless {
+public class DeleteListItemFromCloud_InBackground extends AbstractInteractor implements DeleteListItemFromCloud {
     private final Callback mCallback;
     private final ListItem mListItem;
 
-    public DeleteListItemFromBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                       Callback callback, ListItem listItem) {
+    public DeleteListItemFromCloud_InBackground(Executor threadExecutor, MainThread mainThread,
+                                                Callback callback, ListItem listItem) {
         super(threadExecutor, mainThread);
         mListItem = listItem;
         mCallback = callback;
@@ -75,7 +75,7 @@ public class DeleteListItemFromBackendless_InBackground extends AbstractInteract
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListItemDeletedFromBackendless(successMessage);
+                mCallback.onListItemDeletedFromCloud(successMessage);
             }
         });
     }
@@ -84,7 +84,7 @@ public class DeleteListItemFromBackendless_InBackground extends AbstractInteract
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListItemDeleteFromBackendlessFailed(errorMessage);
+                mCallback.onListItemDeleteFromCloudFailed(errorMessage);
             }
         });
     }

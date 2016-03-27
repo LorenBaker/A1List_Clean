@@ -1,5 +1,6 @@
 package com.lbconsulting.a1list.domain.model;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
 
 import java.util.Date;
@@ -30,7 +31,8 @@ public class ListItem {
 // A default constructor.
     }
 
-    public static ListItem newInstance(String name, ListTitle listTitle, ListTitleRepository listTitleRepository, boolean saveToBackendless) {
+    public static ListItem newInstance(String name, ListTitle listTitle, boolean saveNextSortKeyToBackendless) {
+        ListTitleRepository listTitleRepository = AndroidApplication.getListTitleRepository();
         ListItem newListItem = new ListItem();
 
         String newUuid = UUID.randomUUID().toString();
@@ -40,11 +42,7 @@ public class ListItem {
 
         newListItem.setName(name);
         newListItem.setListTitle(listTitle);
-        if (saveToBackendless) {
-            newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKey(listTitle.getUuid()));
-        } else {
-            newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKeyNoBackendless(listTitle.getUuid(), false));
-        }
+        newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKey(listTitle, saveNextSortKeyToBackendless));
         newListItem.setChecked(false);
         newListItem.setFavorite(false);
         newListItem.setMarkedForDeletion(false);

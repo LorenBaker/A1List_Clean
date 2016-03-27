@@ -31,7 +31,7 @@ public class RetrieveListTitle_InBackground extends AbstractInteractor implement
     public void run() {
 
         // retrieve the original ListTitle
-        final ListTitle listTitle = mListTitleRepository.getListTitleByUuid(mListTitleUuid);
+        final ListTitle listTitle = mListTitleRepository.retrieveListTitleByUuid(mListTitleUuid);
         // check if we have failed to retrieve the ListTitle
         if (listTitle == null) {
             // notify the failure on the main thread

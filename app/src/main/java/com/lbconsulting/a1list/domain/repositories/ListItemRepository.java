@@ -11,7 +11,7 @@ import java.util.List;
 public interface ListItemRepository {
 
     //region Insert ListItem
-    int insert(List<ListItem> listItems);
+    List<ListItem> insert(List<ListItem> listItems);
 
     boolean insert(ListItem listItem);
 
@@ -41,9 +41,9 @@ public interface ListItemRepository {
     //endregion
 
     //region Update ListItem
-    void update(ListItem listItem);
-
     void update(List<ListItem> listItems);
+
+    void update(ListItem listItem);
 
     List<ListItem> updateInLocalStorage(List<ListItem> listItems);
 

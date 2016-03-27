@@ -10,13 +10,24 @@ import java.util.List;
  */
 public interface ListTitleRepository {
 
+    //region Insert ListTitle
+    List<ListTitle> insert(List<ListTitle> listTitles);
+
     boolean insert(ListTitle listTitle);
+
+    List<ListTitle> insertIntoLocalStorage(List<ListTitle> listTitles);
 
     boolean insertIntoLocalStorage(ListTitle listTitle);
 
-    void insertIntoLocalStorage(List<ListTitle> listTitles);
+    void insertInCloud(List<ListTitle> listTitles);
 
-    ListTitle getListTitleByUuid(String uuid);
+    void insertInCloud(ListTitle listTitle);
+
+    //endregion
+
+
+    //region Retrieve ListTitle
+    ListTitle retrieveListTitleByUuid(String uuid);
 
     List<ListTitle> retrieveAllListTitles(boolean isMarkedForDeletion, boolean isListsSortedAlphabetically);
 
@@ -24,19 +35,43 @@ public interface ListTitleRepository {
 
     List<ListTitle> retrieveStruckOutListTitles();
 
-    int getNumberOfStruckOutListTitles();
+    int retrieveNumberOfStruckOutListTitles();
 
-    long retrieveListItemNextSortKey(String listTitleUuid);
+    long retrieveListItemNextSortKey(ListTitle listTitle,boolean saveToBackendless);
 
-    void setListItemLastSortKey(ListTitle listTitle, long sortKey);
+    //endregion
 
-    boolean update(ListTitle listTitle);
+
+    //region Update ListTitle
+    void update(List<ListTitle> listTitles);
+
+    void update(ListTitle listTitle);
+
+    List<ListTitle> updateInLocalStorage(List<ListTitle> listTitles);
+
+    int updateInLocalStorage(ListTitle listTitle);
+
+    void updateInCloud(List<ListTitle> listTitles);
+
+    void updateInCloud(ListTitle listTitle);
 
     int toggle(ListTitle listTitle, String fieldName);
 
     void replaceListTheme(ListTheme listTheme, ListTheme defaultListTheme);
+    //endregion
+
+    //region Delete ListTitle
+    int delete(List<ListTitle> listTitles);
 
     int delete(ListTitle listTitle);
 
-    long retrieveListItemNextSortKeyNoBackendless(String uuid, boolean saveToBackendless);
+    List<ListTitle> deleteFromLocalStorage(List<ListTitle> listTitles);
+
+    int deleteFromLocalStorage(ListTitle listTitle);
+
+    void deleteFromCloud(List<ListTitle> listTitles);
+
+    void deleteFromCloud(ListTitle listTitle);
+    //endregion
+
 }

@@ -19,14 +19,14 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveAllListThemes_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes;
-import com.lbconsulting.a1list.domain.interactors.listTitle.impl.InsertNewListTitle_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTitle.impl.UpdateListTitle_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeSpinnerArrayAdapter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
@@ -45,9 +45,7 @@ import timber.log.Timber;
 
 public class ListTitleActivity extends AppCompatActivity implements View.OnClickListener,
 //        ListThemesPresenter.ListThemeView,
-        RetrieveAllListThemes.Callback,
-        UpdateListTitle_InBackground.Callback,
-        InsertNewListTitle_InBackground.Callback {
+        RetrieveAllListThemes.Callback {
 
     public static final String ARG_LIST_TITLE_JSON = "argListTitleJson";
     public static final String ARG_MODE = "argMode";
@@ -225,16 +223,17 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         if (mListTitle != null) {
             new RetrieveAllListThemes_InBackground(ThreadExecutor.getInstance(),
                     MainThreadImpl.getInstance(), this).execute();
+
+            if (mMode == CREATE_NEW_LIST_TITLE) {
+                FragmentManager fm = getSupportFragmentManager();
+                Gson gson = new Gson();
+                String listTitleJson = gson.toJson(mListTitle);
+                dialogEditListTitleName existingListTitleDialog = dialogEditListTitleName.newInstance(listTitleJson);
+                existingListTitleDialog.show(fm, "dialogEditListTitleName");
+            }
+
         } else {
             Timber.e("onResume(): Unable to display ListTitle. mListTitle is null!");
-        }
-
-        if (mMode == CREATE_NEW_LIST_TITLE) {
-            FragmentManager fm = getSupportFragmentManager();
-            Gson gson = new Gson();
-            String listTitleJson = gson.toJson(mListTitle);
-            dialogEditListTitleName existingListTitleDialog = dialogEditListTitleName.newInstance(listTitleJson);
-            existingListTitleDialog.show(fm, "dialogEditListTitleName");
         }
     }
 
@@ -300,56 +299,24 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
-    //region Save ListTitle
+
     private void saveListTitle(ListTitle listTitle) {
 
-        showProgress(String.format("Saving \"%s\"", listTitle.getName()));
+//        showProgress(String.format("Saving \"%s\"", listTitle.getName()));
+        ListTitleRepository_Impl listTitleRepository = AndroidApplication.getListTitleRepository();
 
         switch (mMode) {
             case EDIT_EXISTING_LIST_TITLE:
-                new UpdateListTitle_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this, listTitle).execute();
+                listTitleRepository.update(listTitle);
                 break;
 
             case CREATE_NEW_LIST_TITLE:
-//                Toast.makeText(this, "btnSaveList: CREATE_NEW_LIST_TITLE clicked.", Toast.LENGTH_SHORT).show();
-                new InsertNewListTitle_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this, listTitle).execute();
+                listTitleRepository.insert(listTitle);
                 break;
         }
-    }
-
-
-    @Override
-    public void onListTitleInsertedIntoSQLiteDb(String successMessage) {
-        Timber.i("onListTitleInsertedIntoSQLiteDb(): %s", successMessage);
-        hideProgress();
         finish();
     }
 
-    @Override
-    public void onListTitleInsertionIntoSQLiteDbFailed(String errorMessage) {
-        Timber.e("onListTitleInsertionIntoSQLiteDbFailed(): %s.", errorMessage);
-        hideProgress();
-        String title = "";
-        CommonMethods.showOkDialog(this, title, errorMessage);
-    }
-
-    @Override
-    public void onListTitleUpdated(String successMessage) {
-        Timber.i("onListTitleUpdated(): %s", successMessage);
-        hideProgress();
-        finish();
-    }
-
-    @Override
-    public void onListTitleUpdateFailed(String errorMessage) {
-        Timber.e("onListTitleUpdateFailed(): %s.", errorMessage);
-        hideProgress();
-        String title = "";
-        CommonMethods.showOkDialog(this, title, errorMessage);
-    }
-    //endregion
 
     //region UI updates
     private void updateUI(ListTitle listTitle) {

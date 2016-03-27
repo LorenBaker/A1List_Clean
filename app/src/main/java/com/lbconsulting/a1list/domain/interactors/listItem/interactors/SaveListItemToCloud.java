@@ -4,15 +4,15 @@ package com.lbconsulting.a1list.domain.interactors.listItem.interactors;
 import com.lbconsulting.a1list.domain.interactors.base.Interactor;
 
 
-public interface DeleteListItemsFromBackendless extends Interactor {
+public interface SaveListItemToCloud extends Interactor {
 
 
     interface Callback {
 
         // interactor callback methods
-        void onListItemsDeletedFromBackendless(String successMessage);
+        void onListItemSavedToBackendless(String successMessage);
 
-        void onListItemsDeleteFromBackendlessFailed(String errorMessage);
+        void onListItemSaveToBackendlessFailed(String errorMessage);
 
     }
 

@@ -72,6 +72,9 @@
     <string name="listItemProposedName_isEmpty_error">The Item\'s name cannot be empty.\nPlease enter a unique listItem name.</string>
     <string name="listItemProposedName_isDefault_error">The Item\'s name cannot be \"%1s\".\nPlease enter a unique listItem name.</string>
     <string name="txtListItemName_hint">Item Name</string>
+    <string name="newItemName_isEmpty_error">The Item\'s name cannot be empty.\nPlease enter a unique Item name.</string>
+    <string name="newItemName_itemExists_error">Item \"%1s\" already exists.\nPlease enter a unique Item name.</string>
+    <string name="newListItemDialog_title">Create New Item</string>
 
     <!--Strings related to Color Picker-->
     <string name="onColorChanged">#%1s</string>
