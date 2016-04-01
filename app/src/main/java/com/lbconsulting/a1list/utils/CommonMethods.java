@@ -30,6 +30,8 @@ import timber.log.Timber;
  */
 public class CommonMethods {
 
+    public final static String NOT_AVAILABLE = "NOT_AVAILABLE";
+
 
     public static GradientDrawable getBackgroundDrawable(int startColor, int endColor) {
         int colors[] = new int[]{startColor, endColor};

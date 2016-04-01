@@ -29,15 +29,17 @@ public interface ListItemRepository {
 
     List<ListItem> retrieveAllListItems(ListTitle listTitle, boolean isMarkedForDeletion);
 
+    List<ListItem> retrieveListItems(ListTitle listTitle);
+
     List<ListItem> retrieveDirtyListItems();
 
-    List<ListItem> retrieveFavoriteListItems();
+    List<ListItem> retrieveFavoriteListItems(ListTitle listTitle);
 
     List<ListItem> retrieveStruckOutListItems(ListTitle listTitle);
 
     int retrieveNumberOfStruckOutListItems(ListTitle listTitle);
 
-    long retrieveListItemNextSortKey(ListTitle listTitle);
+//    long retrieveListItemNextSortKey(ListTitle listTitle);
     //endregion
 
     //region Update ListItem
@@ -68,5 +70,6 @@ public interface ListItemRepository {
     void deleteFromCloud(List<ListItem> listItems);
 
     void deleteFromCloud(ListItem listItem);
+
     //endregion
 }

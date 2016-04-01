@@ -18,7 +18,7 @@ import com.google.gson.Gson;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.impl.DeleteStruckOutListThemes_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTheme.impl.DeleteListThemesFromCloud_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ToggleListThemeBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
@@ -29,6 +29,10 @@ import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeArrayAdapter;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.CsvParser;
+import com.lbconsulting.a1list.utils.MyEvents;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +43,7 @@ import butterknife.OnClick;
 import timber.log.Timber;
 
 public class ManageListThemesActivity extends AppCompatActivity implements ListThemesPresenter.ListThemeView,
-        DeleteStruckOutListThemes_InBackground.Callback, ToggleListThemeBooleanField_InBackground.Callback {
+        DeleteListThemesFromCloud_InBackground.Callback, ToggleListThemeBooleanField_InBackground.Callback {
     private static ListThemesPresenter_Impl mPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
@@ -59,8 +63,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
 
 
     private ListThemeArrayAdapter mListThemeAdapter;
-    private DeleteStruckOutListThemes_InBackground mDeleteStruckOutListThemes;
-//    private ListTitleRepository_Impl mListTitleRepository;
+    //    private ListTitleRepository_Impl mListTitleRepository;
     //    private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     // Note: these Toggle Methods run on the UI thread
@@ -80,12 +83,22 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
                     //Yes button clicked
-                    mDeleteStruckOutListThemes.execute();
-                    if (CommonMethods.isNetworkAvailable()) {
-                        String deletingThemeMessage = getResources().getQuantityString(
-                                R.plurals.deletingListThemes, mNumberOfStruckOutListThemes, mNumberOfStruckOutListThemes);
-                        showProgress(deletingThemeMessage);
+                    List<ListTheme> struckOutListThemes = mListThemeRepository.retrieveStruckOutListThemes();
+                    if (struckOutListThemes.size() > 0) {
+                        List<ListTheme> successfullyMarkedListThemes = mListThemeRepository.deleteFromLocalStorage(struckOutListThemes);
+                        if (successfullyMarkedListThemes.size() > 0) {
+                            mPresenter.resume();
+                            mNumberOfStruckOutListThemes = mListThemeRepository.retrieveNumberOfStruckOutListThemes();
+                            new DeleteListThemesFromCloud_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(),
+                                    ManageListThemesActivity.this, successfullyMarkedListThemes).execute();
+                        }
                     }
+//                    mDeleteStruckOutListThemes.execute();
+//                    if (CommonMethods.isNetworkAvailable()) {
+//                        String deletingThemeMessage = getResources().getQuantityString(
+//                                R.plurals.deletingListThemes, mNumberOfStruckOutListThemes, mNumberOfStruckOutListThemes);
+//                        showProgress(deletingThemeMessage);
+//                    }
                     break;
 
                 case DialogInterface.BUTTON_NEGATIVE:
@@ -94,6 +107,16 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
             }
         }
     };
+
+    @Override
+    public void onListThemesDeletedFromCloud(String successMessage) {
+        Timber.i("onListThemesDeletedFromCloud(): %s", successMessage);
+    }
+
+    @Override
+    public void onListThemesDeleteFromCloudFailed(String errorMessage) {
+        Timber.e("onListThemesDeleteFromCloudFailed(): %s", errorMessage);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,9 +131,10 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         setContentView(R.layout.activity_manage_list_themes);
 
         ButterKnife.bind(this);
-
+        EventBus.getDefault().register(this);
         mListThemeAdapter = new ListThemeArrayAdapter(this, lvThemes, true, mFab);
         lvThemes.setAdapter(mListThemeAdapter);
+
 
         //region Messaging
 /*        MESSAGE_CHANNEL = MySettings.getActiveUserID();
@@ -155,10 +179,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         mPresenter = new ListThemesPresenter_Impl(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this);
 
-        mDeleteStruckOutListThemes = new DeleteStruckOutListThemes_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this);
-
-        mNumberOfStruckOutListThemes = mListThemeRepository.getNumberOfStruckOutListThemes();
+        mNumberOfStruckOutListThemes = mListThemeRepository.retrieveNumberOfStruckOutListThemes();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -168,6 +189,10 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         }
     }
 
+    @Subscribe
+    public void onEvent(MyEvents.incrementStrikeOutCount event) {
+        mNumberOfStruckOutListThemes += event.getIncrement();
+    }
     @OnClick(R.id.fab)
     public void fab() {
         String message = "Create New ListTheme action button clicked.";
@@ -226,6 +251,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     protected void onDestroy() {
         super.onDestroy();
         Timber.i("onDestroy()");
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -285,26 +311,27 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         finish();
     }
 
-    @Override
-    public void onStruckOutListThemesDeleted(String successMessage) {
-        Timber.i("onStruckOutListThemesDeleted(): %s.", successMessage);
-        mNumberOfStruckOutListThemes = 0;
-        mPresenter.resume();
-        hideProgress("");
-    }
-
-    @Override
-    public void onStruckOutListThemesDeletionFailed(String errorMessage) {
-        Timber.e("onStruckOutListThemesDeleted(): %s.", errorMessage);
-        mNumberOfStruckOutListThemes = mListThemeRepository.getNumberOfStruckOutListThemes();
-        mPresenter.resume();
-        hideProgress("");
-    }
+//    @Override
+//    public void onStruckOutListThemesDeleted(String successMessage) {
+//        Timber.i("onStruckOutListThemesDeleted(): %s.", successMessage);
+//        mNumberOfStruckOutListThemes = 0;
+//        mPresenter.resume();
+//        hideProgress("");
+//    }
+//
+//    @Override
+//    public void onStruckOutListThemesDeletionFailed(String errorMessage) {
+//        Timber.e("onStruckOutListThemesDeleted(): %s.", errorMessage);
+//        mNumberOfStruckOutListThemes = mListThemeRepository.retrieveNumberOfStruckOutListThemes();
+//        mPresenter.resume();
+//        hideProgress("");
+//    }
 
     @Override
     public void onListThemeBooleanFieldToggled(int toggleValue) {
         mNumberOfStruckOutListThemes += toggleValue;
     }
+
 
     private class MessagePayload {
         private String mCreationTime;

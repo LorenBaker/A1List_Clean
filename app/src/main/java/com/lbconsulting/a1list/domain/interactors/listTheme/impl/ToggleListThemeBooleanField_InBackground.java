@@ -4,7 +4,7 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ToggleListThemeBooleanField_Interactor;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ToggleListThemeBooleanField;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
@@ -12,7 +12,7 @@ import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
  * This is an interactor toggles a ListTheme's strikeout attribute.
  * <p/>
  */
-public class ToggleListThemeBooleanField_InBackground extends AbstractInteractor implements ToggleListThemeBooleanField_Interactor {
+public class ToggleListThemeBooleanField_InBackground extends AbstractInteractor implements ToggleListThemeBooleanField {
 
     private final ListThemeRepository mListThemeRepository;
     private final Callback mCallback;

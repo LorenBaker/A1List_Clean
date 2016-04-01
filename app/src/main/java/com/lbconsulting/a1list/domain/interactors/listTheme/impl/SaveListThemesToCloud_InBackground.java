@@ -10,7 +10,7 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.SaveListThemeListToBackendless;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.SaveListThemesToCloud;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.storage.ListThemesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
@@ -24,12 +24,12 @@ import timber.log.Timber;
 /**
  * An interactor that saves the provided ListTheme List to Backendless.
  */
-public class SaveListThemeListToBackendless_InBackground extends AbstractInteractor implements SaveListThemeListToBackendless {
+public class SaveListThemesToCloud_InBackground extends AbstractInteractor implements SaveListThemesToCloud {
     private final Callback mCallback;
     private final List<ListTheme> mListThemeList;
 
-    public SaveListThemeListToBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                       Callback callback, List<ListTheme> listThemeList) {
+    public SaveListThemesToCloud_InBackground(Executor threadExecutor, MainThread mainThread,
+                                              Callback callback, List<ListTheme> listThemeList) {
         super(threadExecutor, mainThread);
         mListThemeList = listThemeList;
         mCallback = callback;
@@ -140,7 +140,7 @@ public class SaveListThemeListToBackendless_InBackground extends AbstractInterac
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListThemeListSavedToBackendless(successMessage, successfullySavedListThemes);
+                mCallback.onListThemesSavedToCloud(successMessage, successfullySavedListThemes);
             }
         });
     }
@@ -149,7 +149,7 @@ public class SaveListThemeListToBackendless_InBackground extends AbstractInterac
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListThemeListSaveToBackendlessFailed(errorMessage, successfullySavedListThemes);
+                mCallback.onListThemesSaveToCloudFailed(errorMessage, successfullySavedListThemes);
             }
         });
     }

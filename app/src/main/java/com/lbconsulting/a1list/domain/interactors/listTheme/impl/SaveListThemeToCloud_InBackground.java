@@ -10,7 +10,7 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.SaveListThemeToBackendless;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.SaveListThemeToCloud;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.storage.ListThemesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
@@ -22,12 +22,12 @@ import timber.log.Timber;
 /**
  * An interactor that saves the provided ListTheme to Backendless.
  */
-public class SaveListThemeToBackendless_InBackground extends AbstractInteractor implements SaveListThemeToBackendless {
+public class SaveListThemeToCloud_InBackground extends AbstractInteractor implements SaveListThemeToCloud {
     private final Callback mCallback;
     private final ListTheme mListTheme;
 
-    public SaveListThemeToBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                   Callback callback, ListTheme listTheme) {
+    public SaveListThemeToCloud_InBackground(Executor threadExecutor, MainThread mainThread,
+                                             Callback callback, ListTheme listTheme) {
         super(threadExecutor, mainThread);
         mListTheme = listTheme;
         mCallback = callback;
@@ -75,7 +75,7 @@ public class SaveListThemeToBackendless_InBackground extends AbstractInteractor 
                 updateSQLiteDb(response, cv);
 
                 String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
-                postListThemeSavedToBackendless(successMessage);
+                postListThemeSavedToCloud(successMessage);
 
             } catch (Exception e) {
                 // Set dirty flag to true in SQLite db
@@ -84,14 +84,14 @@ public class SaveListThemeToBackendless_InBackground extends AbstractInteractor 
                 updateSQLiteDb(mListTheme, cv);
 
                 String errorMessage = String.format("saveListThemeToBackendless(): \"%s\" FAILED to save to Backendless. Exception: %s", mListTheme.getName(), e.getMessage());
-                postListThemeSaveToBackendlessFailed(errorMessage);
+                postListThemeSaveToCloudFailed(errorMessage);
             }
 
         } catch (BackendlessException e) {
 
             String errorMessage = String.format("FAILED to save \"%s\" to Backendless. BackendlessException: Code: %s; Message: %s.",
                     mListTheme.getName(), e.getCode(), e.getMessage());
-            postListThemeSaveToBackendlessFailed(errorMessage);
+            postListThemeSaveToCloudFailed(errorMessage);
         }
     }
 
@@ -112,20 +112,20 @@ public class SaveListThemeToBackendless_InBackground extends AbstractInteractor 
         }
     }
 
-    private void postListThemeSavedToBackendless(final String successMessage) {
+    private void postListThemeSavedToCloud(final String successMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListThemeSavedToBackendless(successMessage);
+                mCallback.onListThemeSavedToCloud(successMessage);
             }
         });
     }
 
-    private void postListThemeSaveToBackendlessFailed(final String errorMessage) {
+    private void postListThemeSaveToCloudFailed(final String errorMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListThemeSaveToBackendlessFailed(errorMessage);
+                mCallback.onListThemeSaveToCloudFailed(errorMessage);
             }
         });
     }

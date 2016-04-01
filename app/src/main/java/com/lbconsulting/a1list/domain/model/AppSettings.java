@@ -1,5 +1,8 @@
 package com.lbconsulting.a1list.domain.model;
 
+import com.lbconsulting.a1list.utils.CommonMethods;
+import com.lbconsulting.a1list.utils.MySettings;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -12,6 +15,7 @@ public class AppSettings {
     private String uuid;
     private String objectId;
 
+    private String name;
     private long timeBetweenSynchronizations;
     private long listTitleLastSortKey;
     private boolean listTitlesSortedAlphabetically;
@@ -31,9 +35,11 @@ public class AppSettings {
         // replace uuid "-" with "_" to distinguish it from Backendless objectId
         newUuid = newUuid.replace("-", "_");
         newAppSettings.setUuid(newUuid);
-
+        newAppSettings.setName(MySettings.getActiveUserName());
         newAppSettings.setTimeBetweenSynchronizations(0);
         newAppSettings.setListTitleLastSortKey(0);
+        newAppSettings.setListTitlesSortedAlphabetically(true);
+        newAppSettings.setLastListTitleViewedUuid(CommonMethods.NOT_AVAILABLE);
 
         return newAppSettings;
     }
@@ -61,6 +67,14 @@ public class AppSettings {
 
     public void setObjectId(String objectId) {
         this.objectId = objectId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getLastListTitleViewedUuid() {

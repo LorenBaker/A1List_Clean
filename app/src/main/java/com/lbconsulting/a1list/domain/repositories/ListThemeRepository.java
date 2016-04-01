@@ -9,11 +9,23 @@ import java.util.List;
  */
 public interface ListThemeRepository {
 
+    //region Insert ListTheme
+    List<ListTheme> insert(List<ListTheme> listThemes);
+
     boolean insert(ListTheme listTheme);
 
-    boolean insertIntoSQLiteDb(ListTheme listTheme);
+    List<ListTheme> insertIntoLocalStorage(List<ListTheme> listThemes);
 
-    ListTheme getListThemeByUuid(String uuid);
+    boolean insertIntoLocalStorage(ListTheme listTheme);
+
+    void insertInCloud(List<ListTheme> listThemes);
+
+    void insertInCloud(ListTheme listTheme);
+    //endregion
+
+
+    //region Retrieve ListTheme
+    ListTheme retrieveListThemeByUuid(String uuid);
 
     List<ListTheme> retrieveAllListThemes(boolean isMarkedForDeletion);
 
@@ -23,19 +35,41 @@ public interface ListThemeRepository {
 
     List<ListTheme> retrieveStruckOutListThemes();
 
-    int getNumberOfStruckOutListThemes();
+    int retrieveNumberOfStruckOutListThemes();
+    //endregion
 
-//    boolean update(ListTheme listTheme, ContentValues contentValues);
+    //region Update ListTheme
+    void update(List<ListTheme> listThemes);
 
-    boolean update(ListTheme listTheme);
+    void update(ListTheme listTheme);
+
+    List<ListTheme> updateInLocalStorage(List<ListTheme> listThemes);
+
+    int updateInLocalStorage(ListTheme listTheme);
+
+    void updateInCloud(List<ListTheme> listThemes);
+
+    void updateInCloud(ListTheme listTheme);
 
     int toggle(ListTheme listTheme, String fieldName);
 
     void clearDefaultFlag();
 
     int applyTextSizeAndMarginsToAllListThemes(ListTheme listTheme);
+    //endregion
+
+    //region Delete ListTheme
+    int delete(List<ListTheme> listThemes);
 
     int delete(ListTheme listTheme);
+
+    List<ListTheme> deleteFromLocalStorage(List<ListTheme> listThemes);
+
+    int deleteFromLocalStorage(ListTheme listTheme, ListTheme defaultListTheme);
+
+    void deleteFromCloud(List<ListTheme> listThemes);
+
+    void deleteFromCloud(ListTheme listTheme);
 
 
 }

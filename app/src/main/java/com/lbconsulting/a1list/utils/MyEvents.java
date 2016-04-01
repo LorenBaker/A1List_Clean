@@ -9,6 +9,19 @@ import com.lbconsulting.a1list.domain.model.ListTitle;
  */
 public class MyEvents {
 
+    public static class incrementStrikeOutCount{
+
+        private final int mIncrement;
+
+        public incrementStrikeOutCount(int increment){
+            mIncrement = increment;
+        }
+
+        public int getIncrement() {
+            return mIncrement;
+        }
+    }
+
     public static class showEditListItemDialog {
         private final ListItem mListItem;
 

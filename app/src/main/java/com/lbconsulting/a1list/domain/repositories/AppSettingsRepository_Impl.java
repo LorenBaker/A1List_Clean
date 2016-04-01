@@ -7,7 +7,7 @@ import android.database.Cursor;
 import android.net.Uri;
 
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToCloud_InBackground;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.storage.AppSettingsSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
@@ -22,7 +22,7 @@ import timber.log.Timber;
  * NOTE: All CRUD operations should run on a background thread
  */
 public class AppSettingsRepository_Impl implements AppSettingsRepository,
-        SaveAppSettingsToBackendless_InBackground.Callback {
+        SaveAppSettingsToCloud_InBackground.Callback {
 
     private final int FALSE = 0;
     private final int TRUE = 1;
@@ -33,36 +33,24 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         this.mContext = context;
     }
 
+    //region Insert AppSettings
     @Override
     public boolean insert(AppSettings appSettings) {
-        boolean successfullyInsertedIntoSQLiteDb = insertIntoSQLiteDb(appSettings);
-        if(successfullyInsertedIntoSQLiteDb){
-            saveAppSettingsToBackendless(appSettings);
+        boolean successfullyInsertedAppSettingsIntoCloud = insertIntoLocalStorage(appSettings);
+        if (successfullyInsertedAppSettingsIntoCloud) {
+            updateInCloud(appSettings);
         }
-        return successfullyInsertedIntoSQLiteDb;
+        return successfullyInsertedAppSettingsIntoCloud;
     }
 
     @Override
-    public boolean insertIntoSQLiteDb(AppSettings appSettings) {
+    public boolean insertIntoLocalStorage(AppSettings appSettings) {
         // insert new appSettings into SQLite db
         boolean result = false;
         long newAppSettingsId = -1;
 
         Uri uri = AppSettingsSqlTable.CONTENT_URI;
-        ContentValues cv = new ContentValues();
-
-        cv.put(AppSettingsSqlTable.COL_UUID, appSettings.getUuid());
-        cv.put(AppSettingsSqlTable.COL_OBJECT_ID, appSettings.getObjectId());
-        cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, TRUE);
-
-        cv.put(AppSettingsSqlTable.COL_TIME_BETWEEN_SYNCHRONIZATIONS, appSettings.getTimeBetweenSynchronizations());
-        cv.put(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY, appSettings.getListTitleLastSortKey());
-
-        Date updatedDateTime = appSettings.getUpdated();
-        if (updatedDateTime != null) {
-            cv.put(AppSettingsSqlTable.COL_UPDATED, updatedDateTime.getTime());
-        }
-
+        ContentValues cv = makeContentValues(appSettings);
         ContentResolver cr = mContext.getContentResolver();
         Uri newAppSettingsUri = cr.insert(uri, cv);
 
@@ -73,78 +61,67 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         if (newAppSettingsId > -1) {
             // successfully saved new AppSettings to the SQLite db
             result = true;
-            Timber.i("insert(): AppSettingsRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", appSettings.getUuid());
+            Timber.i("insert(): AppSettingsRepository_Impl: Successfully inserted user %s's AppSettings into local storage.", appSettings.getName());
         } else {
             // failed to create appSettings in the SQLite db
-            Timber.e("insert(): AppSettingsRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", appSettings.getUuid());
+            Timber.e("insert(): AppSettingsRepository_Impl: FAILED to insert user %s's AppSettings into local storage.", appSettings.getName());
         }
         return result;
     }
 
-    private void saveAppSettingsToBackendless(AppSettings appSettings) {
+    private ContentValues makeContentValues(AppSettings appSettings) {
 
-        new SaveAppSettingsToBackendless_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), appSettings, this).execute();
+        ContentValues cv = new ContentValues();
+
+        cv.put(AppSettingsSqlTable.COL_OBJECT_ID, appSettings.getObjectId());
+        cv.put(AppSettingsSqlTable.COL_UUID, appSettings.getUuid());
+        cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, TRUE);
+
+        cv.put(AppSettingsSqlTable.COL_NAME, appSettings.getName());
+        cv.put(AppSettingsSqlTable.COL_TIME_BETWEEN_SYNCHRONIZATIONS, appSettings.getTimeBetweenSynchronizations());
+
+        cv.put(AppSettingsSqlTable.COL_LAST_LIST_TITLE_VIEWED_UUID, appSettings.getLastListTitleViewedUuid());
+        int listTitlesSortedAlphabeticallyValue = (appSettings.isListTitlesSortedAlphabetically()? TRUE : FALSE);
+        cv.put(AppSettingsSqlTable.COL_LIST_TITLES_SORTED_ALPHABETICALLY,
+                listTitlesSortedAlphabeticallyValue);
+        cv.put(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY, appSettings.getListTitleLastSortKey());
+
+        Date updatedDateTime = appSettings.getUpdated();
+        if (updatedDateTime != null) {
+            cv.put(AppSettingsSqlTable.COL_UPDATED, updatedDateTime.getTime());
+        }
+        return cv;
     }
 
     @Override
-    public void onAppSettingsSavedToBackendless(String successMessage) {
+    public void insertInCloud(AppSettings appSettings) {
+        updateInCloud(appSettings);
+    }
+    //endregion
 
+    //region Update AppSettings
+    @Override
+    public void update(AppSettings appSettings) {
+        if(appSettings!=null) {
+            if (updateInLocalStorage(appSettings) == 1) {
+                updateInCloud(appSettings);
+            }
+        }
     }
 
     @Override
-    public void onAppSettingsSaveToBackendlessFailed(String errorMessage) {
-
+    public int updateInLocalStorage(AppSettings appSettings) {
+        ContentValues cv = makeContentValues(appSettings);
+        int numberOfRecordsUpdated = updateInLocalStorage(appSettings, cv);
+        if (numberOfRecordsUpdated == 1) {
+            Timber.i("updateInLocalStorage(): Successfully updated user %s's AppSettings into SQLiteDb.", appSettings.getName());
+        }else{
+            Timber.e("updateInLocalStorage(): FAILED to update user %s's AppSettings into SQLiteDb.", appSettings.getName());
+        }
+        return numberOfRecordsUpdated;
     }
 
-//    private AppSettings saveAppSettingsToBackendless(AppSettings appSettings) {
-//        // saveAppSettingsToBackendless object synchronously
-//        AppSettings response = null;
-//        try {
-//            String objectId = appSettings.getObjectId();
-//            boolean isNew = objectId == null || objectId.isEmpty();
-//            response = Backendless.Data.of(AppSettings.class).save(appSettings);
-//            Timber.i("saveAppSettingsToBackendless(): successfully saved \"%s\" to Backendless.", response.getUuid());
-//
-//            // Update the SQLite db: set dirty to false, and updated date and time
-//            ContentValues cv = new ContentValues();
-//            Date updatedDate = response.getUpdated();
-//            if (updatedDate == null) {
-//                updatedDate = response.getCreated();
-//            }
-//            if (updatedDate != null) {
-//                long updatedValue = updatedDate.getTime();
-//                cv.put(AppSettingsSqlTable.COL_UPDATED, updatedValue);
-//            }
-//            cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, FALSE);
-//
-//            // If a new AppSettings, update SQLite db with objectID
-//            if (isNew) {
-//                cv.put(AppSettingsSqlTable.COL_OBJECT_ID, response.getObjectId());
-//            }
-//
-//            // update the SQLite db
-//            updateInLocalStorage(response, cv);
-//
-//        } catch (BackendlessException e) {
-//            Timber.e("saveAppSettingsToBackendless(): FAILED to save \"%s\" to Backendless. BackendlessException: Code: %s; Message: %s.",
-//                    appSettings.getUuid(), e.getCode(), e.getMessage());
-//            // Set dirty flag to true in SQLite db
-//            ContentValues cv = new ContentValues();
-//            cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, TRUE);
-//            updateInLocalStorage(appSettings, cv);
-//
-//        } catch (Exception e) {
-//            Timber.e("saveAppSettingsToBackendless(): Exception: %s.", e.getMessage());
-//            // Set dirty flag to true in SQLite db
-//            ContentValues cv = new ContentValues();
-//            cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, TRUE);
-//            updateInLocalStorage(appSettings, cv);
-//        }
-//        return response;
-//    }
-
-    private int updateSQLiteDb(AppSettings appSettings, ContentValues cv) {
+    private int updateInLocalStorage(AppSettings appSettings, ContentValues cv) {
         int numberOfRecordsUpdated = 0;
         try {
             Uri uri = AppSettingsSqlTable.CONTENT_URI;
@@ -156,7 +133,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
             Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
         }
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateInLocalStorage(): Error updating AppSettings with uuid = %s", appSettings.getUuid());
+            Timber.e("updateInLocalStorage(): Error updating user %s's AppSettings into local storage", appSettings.getName());
         }
         return numberOfRecordsUpdated;
     }
@@ -171,14 +148,18 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         appSettings.setUuid(cursor.getString(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_UUID)));
 
+        appSettings.setName(cursor.getString(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_NAME)));
+
         appSettings.setLastListTitleViewedUuid(cursor.getString(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_LAST_LIST_TITLE_VIEWED_UUID)));
 
         appSettings.setTimeBetweenSynchronizations(cursor.getLong(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_TIME_BETWEEN_SYNCHRONIZATIONS)));
 
-        appSettings.setListTitlesSortedAlphabetically(cursor.getInt(
-                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_LIST_TITLES_SORTED_ALPHABETICALLY)) > 0);
+        boolean listTitlesSortedAlphabeticallyValue = cursor.getInt(
+                cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_LIST_TITLES_SORTED_ALPHABETICALLY)) > 0;
+        appSettings.setListTitlesSortedAlphabetically(listTitlesSortedAlphabeticallyValue);
 
         appSettings.setListTitleLastSortKey(cursor.getLong(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY)));
@@ -191,37 +172,43 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         return appSettings;
     }
 
+
     @Override
-    public boolean update(AppSettings appSettings, ContentValues cv) {
-        boolean result = false;
-        try {
-            cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, TRUE);
-            int numberOfRecordsUpdated = updateSQLiteDb(appSettings, cv);
-
-            if (numberOfRecordsUpdated == 1) {
-                result = true;
-                saveAppSettingsToBackendless(appSettings);
-                // TODO: Send update message to other devices
-            }else{
-                Timber.e("update(): FAILED to update AppSettings.");
-            }
-        } catch (Exception e) {
-            Timber.e("update(): Exception: %s.", e.getMessage());
-        }
-
-        return result;
+    public void updateInCloud(AppSettings appSettings) {
+        new SaveAppSettingsToCloud_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(),
+                this, appSettings).execute();
     }
 
     @Override
-    public boolean update(AppSettings appSettings) {
-        ContentValues cv = new ContentValues();
-        cv.put(AppSettingsSqlTable.COL_TIME_BETWEEN_SYNCHRONIZATIONS, appSettings.getTimeBetweenSynchronizations());
-        cv.put(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY, appSettings.getListTitleLastSortKey());
+    public void onAppSettingsSavedToCloud(String successMessage) {
+        Timber.i("onAppSettingsSavedToCloud(): %s", successMessage);
+    }
 
-        return update(appSettings, cv);
+    @Override
+    public void onAppSettingsSaveToCloudFailed(String errorMessage) {
+        Timber.e("onAppSettingsSaveToCloudFailed(): %s", errorMessage);
+    }
+    //endregion
+
+
+    //region Retrieve AppSettings
+        @Override
+    public AppSettings retrieveAppSettings() {
+        AppSettings appSettings = null;
+        Cursor cursor = getAllAppSettingsCursor();
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            appSettings = appSettingsFromCursor(cursor);
+        }
+        if (cursor != null && !cursor.isClosed()) {
+            cursor.close();
+        }
+        return appSettings;
     }
 
     private Cursor getAllAppSettingsCursor() {
+        // Note: Because of Backendless security settings, there should only be one AppSettings
+        // record for any user.
         Cursor cursor = null;
         Uri uri = AppSettingsSqlTable.CONTENT_URI;
         String[] projection = AppSettingsSqlTable.PROJECTION_ALL;
@@ -238,19 +225,6 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         return cursor;
     }
 
-    @Override
-    public AppSettings retrieveAppSettings() {
-        AppSettings appSettings = null;
-        Cursor cursor = getAllAppSettingsCursor();
-        if (cursor != null && cursor.getCount() > 0) {
-            cursor.moveToFirst();
-            appSettings = appSettingsFromCursor(cursor);
-        }
-        if (cursor != null && !cursor.isClosed()) {
-            cursor.close();
-        }
-        return appSettings;
-    }
 
     @Override
     public long retrieveTimeBetweenSynchronizations() {
@@ -268,7 +242,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
     }
 
     @Override
-    public long retrieveListTitleNextSortKey() {
+    public long retrieveNextListTitleSortKey() {
         AppSettings appSettings = null;
         long listTitleNextSortKey = 0;
 
@@ -287,28 +261,15 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         ContentValues cv = new ContentValues();
         cv.put(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY, listTitleNextSortKey);
         cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, TRUE);
-        int numberOfRecordsUpdated = updateSQLiteDb(appSettings, cv);
+        int numberOfRecordsUpdated = updateInLocalStorage(appSettings, cv);
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("retrieveListTitleNextSortKey(): number of AppSettings records updated does not equal 1.");
+            Timber.e("retrieveNextListTitleSortKey(): number of AppSettings records updated does not equal 1.");
         }
 
-//        setListTitleLastSortKey(appSettings, listTitleNextSortKey);
         return listTitleNextSortKey;
     }
 
-    @Override
-    public void setListTitleLastSortKey(AppSettings appSettings, long sortKey) {
-        ContentValues cv = new ContentValues();
-        cv.put(AppSettingsSqlTable.COL_LIST_TITLE_LAST_SORT_KEY, sortKey);
-        update(appSettings, cv);
-    }
 
-    @Override
-    public void setLastListTitleViewedUuid(AppSettings appSettings,String listTitleUuid) {
-        ContentValues cv = new ContentValues();
-        cv.put(AppSettingsSqlTable.COL_LAST_LIST_TITLE_VIEWED_UUID, listTitleUuid);
-        update(appSettings, cv);
-    }
     @Override
     public AppSettings retrieveDirtyAppSettings() {
         AppSettings appSettings = null;
@@ -330,36 +291,6 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         }
         return appSettings;
     }
-
-
-
-
-//    @Override
-//    public long retrieveListItemNextSortKey() {
-//        AppSettings appSettings = null;
-//        long listItemNextSortKey = 0;
-//
-//        Cursor cursor = getAllAppSettingsCursor();
-//        if (cursor != null && cursor.getCount() > 0) {
-//            cursor.moveToFirst();
-//            appSettings = appSettingsFromCursor(cursor);
-//            listItemNextSortKey = appSettings.getListItemLastSortKey() + 1;
-//            appSettings.setListItemLastSortKey(listItemNextSortKey);
-//        }
-//        if (cursor != null && !cursor.isClosed()) {
-//            cursor.close();
-//        }
-//        setListItemLastSortKey(appSettings, listItemNextSortKey);
-//        return listItemNextSortKey;
-//    }
-//
-//
-//    @Override
-//    public void setListItemLastSortKey(AppSettings appSettings, long sortKey) {
-//        ContentValues cv = new ContentValues();
-//        cv.put(AppSettingsSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, sortKey);
-//        update(appSettings, cv);
-//    }
-
+    //endregion
 
 }

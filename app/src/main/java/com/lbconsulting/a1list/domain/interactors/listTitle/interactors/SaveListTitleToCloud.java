@@ -10,9 +10,9 @@ public interface SaveListTitleToCloud extends Interactor {
     interface Callback {
 
         // interactor callback methods
-        void onListTitleSavedToBackendless(String successMessage);
+        void onListTitleSavedToCloud(String successMessage);
 
-        void onListTitleSaveToBackendlessFailed(String errorMessage);
+        void onListTitleSaveToCloudFailed(String errorMessage);
 
     }
 

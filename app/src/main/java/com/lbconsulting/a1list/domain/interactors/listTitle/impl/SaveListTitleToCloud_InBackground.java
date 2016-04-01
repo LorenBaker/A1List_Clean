@@ -52,7 +52,11 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
         String objectId = mListTitle.getObjectId();
         boolean isNew = objectId == null || objectId.isEmpty();
         try {
+            Timber.d("run(): Starting to save ListTitle \"%s\" with uuid = %s and objectId = %s.",
+                    mListTitle.getName(),mListTitle.getUuid(), mListTitle.getObjectId());
             response = Backendless.Data.of(ListTitle.class).save(mListTitle);
+            Timber.d("run() Saved ListTitle \"%s\" with uuid = %s and objectId = %s.",
+                    mListTitle.getName(),mListTitle.getUuid(), mListTitle.getObjectId());
             try {
                 // Update the SQLite db: set dirty to false, and updated date and time
                 ContentValues cv = new ContentValues();
@@ -75,7 +79,7 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
                 updateSQLiteDb(response, cv);
 
                 String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
-                postListTitleSavedToBackendless(successMessage);
+                postListTitleSavedToCloud(successMessage);
 
             } catch (Exception e) {
                 // Set dirty flag to true in SQLite db
@@ -84,14 +88,14 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
                 updateSQLiteDb(mListTitle, cv);
 
                 String errorMessage = String.format("saveListTitleToBackendless(): \"%s\" FAILED to save to Backendless. Exception: %s", mListTitle.getName(), e.getMessage());
-                postListTitleSaveToBackendlessFailed(errorMessage);
+                postListTitleSaveToCloudFailed(errorMessage);
             }
 
         } catch (BackendlessException e) {
 
             String errorMessage = String.format("FAILED to save \"%s\" to Backendless. BackendlessException: Code: %s; Message: %s.",
                     mListTitle.getName(), e.getCode(), e.getMessage());
-            postListTitleSaveToBackendlessFailed(errorMessage);
+            postListTitleSaveToCloudFailed(errorMessage);
         }
     }
 
@@ -112,20 +116,20 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
         }
     }
 
-    private void postListTitleSavedToBackendless(final String successMessage) {
+    private void postListTitleSavedToCloud(final String successMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListTitleSavedToBackendless(successMessage);
+                mCallback.onListTitleSavedToCloud(successMessage);
             }
         });
     }
 
-    private void postListTitleSaveToBackendlessFailed(final String errorMessage) {
+    private void postListTitleSaveToCloudFailed(final String errorMessage) {
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListTitleSaveToBackendlessFailed(errorMessage);
+                mCallback.onListTitleSaveToCloudFailed(errorMessage);
             }
         });
     }

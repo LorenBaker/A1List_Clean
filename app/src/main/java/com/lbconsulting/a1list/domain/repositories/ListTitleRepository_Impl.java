@@ -17,6 +17,7 @@ import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.DeleteLi
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitleToCloud;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitlesToCloud;
 import com.lbconsulting.a1list.domain.model.AppSettings;
+import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
@@ -86,9 +87,9 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         }
 
         if (successfullyInsertedListTitles.size() == listTitles.size()) {
-            Timber.i("insertIntoLocalStorage(): Successfully inserted all %d ListTitles.", listTitles.size());
+            Timber.i("insertIntoLocalStorage(): Successfully inserted all %d ListTitles into the SQLite db.", listTitles.size());
         } else {
-            Timber.e("insertIntoLocalStorage(): Only inserted %d out of %d ListTitles.",
+            Timber.e("insertIntoLocalStorage(): Only inserted %d out of %d ListTitles into the SQLite db.",
                     successfullyInsertedListTitles.size(), listTitles.size());
         }
         return successfullyInsertedListTitles;
@@ -194,7 +195,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         listTitle.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_NAME)));
 
         String listThemeUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_THEME_UUID));
-        ListTheme listTheme = mListThemeRepository.getListThemeByUuid(listThemeUuid);
+        ListTheme listTheme = mListThemeRepository.retrieveListThemeByUuid(listThemeUuid);
         listTitle.setListTheme(listTheme);
 
         listTitle.setListLockString(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_LOCKED_STRING)));
@@ -524,9 +525,9 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         }
 
         if (successfullyUpdatedListTitles.size() == listTitles.size()) {
-            Timber.i("updateInLocalStorage(): All %d ListTitles updated.", listTitles.size());
+            Timber.i("updateInLocalStorage(): All %d ListTitles successfully updated in SQLiteDb.", listTitles.size());
         } else {
-            Timber.e("updateInLocalStorage(): Only %d of %d ListTitles updated.",
+            Timber.e("updateInLocalStorage(): Only %d of %d ListTitles successfully updated in SQLiteDb.",
                     successfullyUpdatedListTitles.size(), listTitles.size());
         }
         return successfullyUpdatedListTitles;
@@ -536,8 +537,10 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     public int updateInLocalStorage(ListTitle listTitle) {
         ContentValues cv = makeListTitleContentValues(listTitle);
         int numberOfRecordsUpdated = updateInLocalStorage(listTitle, cv);
-        if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateInLocalStorage(): FAILED to update \"%s.\"", listTitle.getName());
+        if (numberOfRecordsUpdated == 1) {
+            Timber.i("updateInLocalStorage(): Successfully updated \"%s\" in SQLiteDb.", listTitle.getName());
+        }else{
+            Timber.e("updateInLocalStorage(): FAILED to update \"%s\" in SQLiteDb.", listTitle.getName());
         }
         return numberOfRecordsUpdated;
 
@@ -577,26 +580,27 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
 
     @Override
     public void updateInCloud(ListTitle listTitle) {
+
         new SaveListTitleToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listTitle).execute();
     }
 
     @Override
-    public void onListTitleSavedToBackendless(String successMessage) {
-        Timber.i("onListTitleSavedToBackendless(): %s", successMessage);
+    public void onListTitleSavedToCloud(String successMessage) {
+        Timber.i("onListTitleSavedToCloud(): %s", successMessage);
     }
 
     @Override
-    public void onListTitleSaveToBackendlessFailed(String errorMessage) {
-        Timber.e("onListTitleSavedToBackendless(): %s", errorMessage);
+    public void onListTitleSaveToCloudFailed(String errorMessage) {
+        Timber.e("onListTitleSavedToCloud(): %s", errorMessage);
     }
 
     @Override
-    public int toggle(ListTitle listTheme, String fieldName) {
+    public int toggle(ListTitle listTitle, String fieldName) {
         int result = 0;
-        ListTitle currentListTitle = retrieveListTitleByUuid(listTheme.getUuid());
+        ListTitle currentListTitle = retrieveListTitleByUuid(listTitle.getUuid());
         if (currentListTitle == null) {
-            Timber.e("toggle(): Unable to toggle field \"%s\". Could not find ListTitle \"%s\".", fieldName, listTheme.getName());
+            Timber.e("toggle(): Unable to toggle field \"%s\". Could not find ListTitle \"%s\".", fieldName, listTitle.getName());
             return 0;
         }
 
@@ -612,7 +616,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
-                updateInLocalStorage(listTheme, cv);
+                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY,TRUE);
+                updateInLocalStorage(listTitle, cv);
                 break;
 
             case ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION:
@@ -623,7 +628,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, newValue ? TRUE : FALSE);
-                updateInLocalStorage(listTheme, cv);
+                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY,TRUE);
+                updateInLocalStorage(listTitle, cv);
                 break;
 
             case ListTitlesSqlTable.COL_LIST_LOCKED:
@@ -634,7 +640,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, newValue ? TRUE : FALSE);
-                updateInLocalStorage(listTheme, cv);
+                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY,TRUE);
+                updateInLocalStorage(listTitle, cv);
                 break;
 
             case ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE:
@@ -645,7 +652,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, newValue ? TRUE : FALSE);
-                updateInLocalStorage(listTheme, cv);
+                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY,TRUE);
+                updateInLocalStorage(listTitle, cv);
                 break;
 
             case ListTitlesSqlTable.COL_MARKED_FOR_DELETION:
@@ -656,7 +664,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
-                updateInLocalStorage(listTheme, cv);
+                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY,TRUE);
+                updateInLocalStorage(listTitle, cv);
                 break;
 
             case ListTitlesSqlTable.COL_SORT_ALPHABETICALLY:
@@ -667,7 +676,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, newValue ? TRUE : FALSE);
-                updateInLocalStorage(listTheme, cv);
+                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY,TRUE);
+                updateInLocalStorage(listTitle, cv);
                 break;
 
             case ListTitlesSqlTable.COL_STRUCK_OUT:
@@ -678,7 +688,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
-                updateInLocalStorage(listTheme, cv);
+                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY,TRUE);
+                updateInLocalStorage(listTitle, cv);
                 break;
 
             default:
@@ -692,10 +703,11 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     public void replaceListTheme(ListTheme deletedListTheme, ListTheme defaultListTheme) {
         // retrieve all ListTitles that use the deleted ListTheme
         List<ListTitle> listTitles = retrieveAllListTitles(deletedListTheme);
-        for (ListTitle listTitle : listTitles) {
-            ContentValues cv = new ContentValues();
-            cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, defaultListTheme.getUuid());
-            updateInLocalStorage(listTitle, cv);
+        if(listTitles.size()>0) {
+            for (ListTitle listTitle : listTitles) {
+                listTitle.setListTheme(defaultListTheme);
+            }
+            update(listTitles);
         }
     }
     //endregion
@@ -713,6 +725,13 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
 
     @Override
     public int delete(ListTitle listTitle) {
+        // TODO: get all the favorite items in the listTitle and remove the favorite flag.
+        // delete any items that are held in the listTitle to be deleted.
+        ListItemRepository_Impl listItemRepository = AndroidApplication.getListItemRepository();
+        List<ListItem> itemsForDeletion = listItemRepository.retrieveListItems(listTitle);
+        if(itemsForDeletion.size()>0){
+            listItemRepository.delete(itemsForDeletion);
+        }
         int numberOfDeletedListTitles = deleteFromLocalStorage(listTitle);
         if (numberOfDeletedListTitles == 1) {
             deleteFromCloud(listTitle);
@@ -725,7 +744,13 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     public List<ListTitle> deleteFromLocalStorage(List<ListTitle> listTitles) {
         List<ListTitle> successfullyMarkedListTitles = new ArrayList<>();
 
+        ListItemRepository_Impl listItemRepository = AndroidApplication.getListItemRepository();
         for (ListTitle listTitle : listTitles) {
+            List<ListItem> itemsForDeletion = listItemRepository.retrieveListItems(listTitle);
+            if(itemsForDeletion.size()>0){
+                listItemRepository.delete(itemsForDeletion);
+            }
+
             if (deleteFromLocalStorage(listTitle) == 1) {
                 successfullyMarkedListTitles.add(listTitle);
             }

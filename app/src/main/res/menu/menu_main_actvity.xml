@@ -25,6 +25,13 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_addTestItems"
+        android:icon="@android:drawable/ic_menu_add"
+        android:orderInCategory="100"
+        android:title="Add Test Items"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_newList"
         android:icon="@android:drawable/ic_menu_add"
         android:orderInCategory="100"

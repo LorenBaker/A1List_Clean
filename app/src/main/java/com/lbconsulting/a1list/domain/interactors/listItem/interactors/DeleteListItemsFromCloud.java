@@ -10,9 +10,9 @@ public interface DeleteListItemsFromCloud extends Interactor {
     interface Callback {
 
         // interactor callback methods
-        void onListItemsDeletedFromBackendless(String successMessage);
+        void onListItemsDeletedFromCloud(String successMessage);
 
-        void onListItemsDeleteFromBackendlessFailed(String errorMessage);
+        void onListItemsDeleteFromCloudFailed(String errorMessage);
 
     }
 

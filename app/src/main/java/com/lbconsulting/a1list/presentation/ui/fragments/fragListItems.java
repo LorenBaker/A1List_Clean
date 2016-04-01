@@ -13,14 +13,12 @@ import android.widget.ListView;
 import com.google.gson.Gson;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
-import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
-import com.lbconsulting.a1list.presentation.presenters.impl.ListItemsPresenter_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListItemsPresenter;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListItemsArrayAdapter;
-import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.MyEvents;
 
@@ -41,13 +39,13 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
     private static final String ARG_LIST_TITLE_POSITION = "argListTitlePosition";
     LinearLayout llListItems;
     ListView lvListItems;
-    private ListItemsPresenter_Impl mPresenter;
+    //    private ListItemsPresenter_Impl mPresenter;
     private ListTitle mListTitle;
     private int mPosition;
     private ListItemsArrayAdapter mListItemsArrayAdapter;
 
     private ListTitleRepository_Impl mListTitleRepository;
-//    private ListItemRepository_Impl mListItemRepository;
+    private ListItemRepository_Impl mListItemRepository;
 
 
     public fragListItems() {
@@ -84,12 +82,10 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
         EventBus.getDefault().register(this);
 
         mListTitleRepository = AndroidApplication.getListTitleRepository();
-//        AppSettingsRepository_Impl appSettingsRepository = new AppSettingsRepository_Impl(getActivity());
-//        ListThemeRepository_Impl listThemeRepository = new ListThemeRepository_Impl(getActivity());
-//        mListItemRepository = new ListItemRepository_Impl(getActivity(), mListTitleRepository);
+        mListItemRepository = AndroidApplication.getListItemRepository();
 
-        mPresenter = new ListItemsPresenter_Impl(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, mListTitle);
+//        mPresenter = new ListItemsPresenter_Impl(ThreadExecutor.getInstance(),
+//                MainThreadImpl.getInstance(), this, mListTitle);
 
         Timber.i("onCreate() complete for \"%s\"", mListTitle.getName());
     }
@@ -97,7 +93,9 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
     @Subscribe
     public void onEvent(MyEvents.updateFragListItemsUI event) {
         if (event.getListTitleUuid() == null || mListTitle.getUuid().equals(event.getListTitleUuid())) {
-            mPresenter.resume();
+            List<ListItem> listItems = mListItemRepository.retrieveAllListItems(mListTitle, false);
+            displayListItems(listItems);
+//            mPresenter.resume();
         }
     }
 
@@ -210,7 +208,11 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
     public void onResume() {
         super.onResume();
         Timber.i("onResume()for ListTitle \"%s\".", mListTitle.getName());
-        mPresenter.resume();
+
+        List<ListItem> listItems = mListItemRepository.retrieveAllListItems(mListTitle, false);
+        displayListItems(listItems);
+
+//        mPresenter.resume();
 //        refreshListTitle(mListTitleUuid, "onResume");
     }
 
@@ -218,6 +220,9 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
     public void onPause() {
         super.onPause();
         Timber.i("onPause()for ListTitle \"%s\".", mListTitle.getName());
+
+        // Get the most recent listTitle from the local repository ... it's objectId should not be null.
+        mListTitle = mListTitleRepository.retrieveListTitleByUuid(mListTitle.getUuid());
 
         int index = lvListItems.getFirstVisiblePosition();
         View v = lvListItems.getChildAt(0);

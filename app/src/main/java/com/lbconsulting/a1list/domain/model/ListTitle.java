@@ -53,7 +53,7 @@ public class ListTitle {
         newListTitle.setChecked(false);
         newListTitle.setForceViewInflation(false);
         newListTitle.setMarkedForDeletion(false);
-        newListTitle.setManualSortKey(appSettings.retrieveListTitleNextSortKey());
+        newListTitle.setManualSortKey(appSettings.retrieveNextListTitleSortKey());
         newListTitle.setSortListItemsAlphabetically(true);
         newListTitle.setListLockString(LIST_NOT_LOCK);
         newListTitle.setListPrivateToThisDevice(false);

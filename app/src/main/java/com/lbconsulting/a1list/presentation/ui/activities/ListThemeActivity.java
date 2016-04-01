@@ -19,15 +19,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ApplyTextSizeAndMarginsToAllListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.impl.InsertNewListTheme_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.impl.UpdateListTheme_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.ApplyTextSizeAndMarginsToAllListThemes;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.InsertNewListTheme;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.UpdateListTheme_Interactor;
 import com.lbconsulting.a1list.domain.model.ListTheme;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogColorPicker;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListThemeName;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogNumberPicker;
@@ -45,8 +43,6 @@ import timber.log.Timber;
 
 
 public class ListThemeActivity extends AppCompatActivity implements View.OnClickListener,
-        UpdateListTheme_Interactor.Callback,
-        InsertNewListTheme.Callback,
         ApplyTextSizeAndMarginsToAllListThemes.Callback {
 
     public static final String ARG_LIST_THEME_JSON = "argListThemeJson";
@@ -106,7 +102,7 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
     private int mMode;
     private ListTheme mListTheme;
-//    private ListThemeRepository_Impl mListThemeRepository;
+    private ListThemeRepository_Impl mListThemeRepository;
 
 
     @Override
@@ -156,7 +152,7 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
                 break;
         }
 
-//        mListThemeRepository = new ListThemeRepository_Impl(this);
+        mListThemeRepository = AndroidApplication.getListThemeRepository();
 
         setSupportActionBar(mToolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -364,19 +360,17 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
         switch (mMode) {
             case EDIT_EXISTING_LIST_THEME:
-                new UpdateListTheme_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this, mListTheme).execute();
+                mListThemeRepository.update(mListTheme);
                 break;
 
             case CREATE_NEW_LIST_THEME:
-                new InsertNewListTheme_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this,  mListTheme).execute();
+                mListThemeRepository.insert(mListTheme);
                 break;
         }
 
         if (ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
             new ApplyTextSizeAndMarginsToAllListThemes_InBackground(ThreadExecutor.getInstance(),
-                    MainThreadImpl.getInstance(), this,  mListTheme).execute();
+                    MainThreadImpl.getInstance(), this, mListTheme).execute();
         }
     }
 
@@ -384,37 +378,37 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
     //region Background Implementation Overrides
 
 
-    @Override
-    public void onListThemeInsertedIntoSQLiteDb(String successMessage) {
-        Timber.i("onListThemeInsertedIntoSQLiteDb(): %s",successMessage);
-        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
-            finish();
-        }
-    }
+//    @Override
+//    public void onListThemeInsertedIntoLocalStorage(String successMessage) {
+//        Timber.i("onListThemeInsertedIntoLocalStorage(): %s", successMessage);
+//        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
+//            finish();
+//        }
+//    }
+//
+//    @Override
+//    public void onListThemeInsertionIntoLocalStorageFailed(String errorMessage) {
+//        Timber.e("onListThemeInsertionIntoLocalStorageFailed(): \"%s\"", errorMessage);
+//        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
+//            finish();
+//        }
+//    }
 
-    @Override
-    public void onListThemeInsertionIntoSQLiteDbFailed(String errorMessage) {
-        Timber.e("onListThemeInsertionIntoSQLiteDbFailed(): \"%s\"", errorMessage);
-        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
-            finish();
-        }
-    }
-
-    @Override
-    public void onListThemeUpdated(String message) {
-        Timber.i("onListThemeUpdated(): %s", message);
-        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
-            finish();
-        }
-    }
-
-    @Override
-    public void onListThemeUpdateFailed(String errorMessage) {
-        Timber.e("onListThemeUpdateFailed(): %s.", errorMessage);
-        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
-            finish();
-        }
-    }
+//    @Override
+//    public void onListThemeUpdated(String message) {
+//        Timber.i("onListThemeUpdated(): %s", message);
+//        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
+//            finish();
+//        }
+//    }
+//
+//    @Override
+//    public void onListThemeUpdateFailed(String errorMessage) {
+//        Timber.e("onListThemeUpdateFailed(): %s.", errorMessage);
+//        if (!ckApplyTextSizeAndMarginsToAllListThemes.isChecked()) {
+//            finish();
+//        }
+//    }
 
     @Override
     public void onTextSizeAndMarginsApplied(String successMessage) {
@@ -486,9 +480,9 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
         btnTextSize.setText(res.getString(R.string.btnTextSize_text,
                 (float) listTheme.getTextSize()));
 
-        if(listTheme.isBold()){
+        if (listTheme.isBold()) {
             btnTextStyle.setText(res.getString(R.string.btnTextStyle_text_bold));
-        }else{
+        } else {
             btnTextStyle.setText(res.getString(R.string.btnTextStyle_text_normal));
         }
 

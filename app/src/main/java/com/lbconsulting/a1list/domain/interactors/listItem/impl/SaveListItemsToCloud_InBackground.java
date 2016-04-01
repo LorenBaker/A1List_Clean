@@ -12,6 +12,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemsToCloud;
 import com.lbconsulting.a1list.domain.model.ListItem;
+import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
@@ -58,8 +59,29 @@ public class SaveListItemsToCloud_InBackground extends AbstractInteractor implem
         List<ListItem> successfullySavedListItems = new ArrayList<>();
 
         for (ListItem listItem : mListItemList) {
-            // saveListItemToBackendless
 
+            // Check if the ListTitle associated with the ListItem has been saved in Backendless
+            ListTitle listTitle = listItem.getListTitle();
+            String listTitleObjectID = listTitle.getObjectId();
+            if (listTitleObjectID == null || listTitleObjectID.isEmpty()) {
+                // The ListTitle has not been saved to Backendless ... so
+                // Retrieve the ListTitle from local storage and check again.
+                listTitle = AndroidApplication.getListTitleRepository().retrieveListTitleByUuid(listTitle.getUuid());
+                if (listTitleObjectID == null || listTitleObjectID.isEmpty()) {
+                    // The ListTitle from the Local Storage has NOT been saved to Backendless ... so
+                    // The ListItem cannot be saved to Backendless.
+                    Timber.i("run(): Cannot save ListItem \"%s\" to Backendless because ListTitle \"%s\" has not previously been saved to Backendless.",
+                            listItem.getName(), listTitle.getName());
+                    // continue with the next ListItem
+                    continue;
+                } else {
+                    // The ListTitle from the Local Storage has been saved to Backendless ... so
+                    // associated it with the ListItem
+                    listItem.setListTitle(listTitle);
+                }
+            }
+
+            // saveListItemToBackendless
             String objectId = listItem.getObjectId();
             boolean isNew = objectId == null || objectId.isEmpty();
             try {

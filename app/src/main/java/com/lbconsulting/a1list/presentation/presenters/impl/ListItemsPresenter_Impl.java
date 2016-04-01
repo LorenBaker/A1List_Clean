@@ -38,7 +38,7 @@ public class ListItemsPresenter_Impl extends AbstractPresenter implements ListIt
 
     @Override
     public void resume() {
-        mView.showProgress(String.format("Retrieving Items for \"%s\".", mListTitle.getName()));
+//        mView.showProgress(String.format("Retrieving Items for \"%s\".", mListTitle.getName()));
         mRetrieveAllListItems_inBackground.execute();
     }
 

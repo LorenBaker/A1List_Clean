@@ -78,7 +78,7 @@ public class DeleteListItemsFromCloud_InBackground extends AbstractInteractor im
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListItemsDeletedFromBackendless(successMessage);
+                mCallback.onListItemsDeletedFromCloud(successMessage);
             }
         });
     }
@@ -87,7 +87,7 @@ public class DeleteListItemsFromCloud_InBackground extends AbstractInteractor im
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onListItemsDeleteFromBackendlessFailed(errorMessage);
+                mCallback.onListItemsDeleteFromCloudFailed(errorMessage);
             }
         });
     }

@@ -21,12 +21,12 @@ import timber.log.Timber;
 /**
  * An interactor that saves the provided AppSettings to Backendless.
  */
-public class SaveAppSettingsToBackendless_InBackground extends AbstractInteractor implements SaveAppSettingsToBackendless {
+public class SaveAppSettingsToCloud_InBackground extends AbstractInteractor implements SaveAppSettingsToCloud {
     private final Callback mCallback;
     private final AppSettings mAppSettings;
 
-    public SaveAppSettingsToBackendless_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                     AppSettings appSettings, Callback callback) {
+    public SaveAppSettingsToCloud_InBackground(Executor threadExecutor, MainThread mainThread,
+                                                Callback callback,AppSettings appSettings) {
         super(threadExecutor, mainThread);
         mAppSettings = appSettings;
         mCallback = callback;
@@ -72,7 +72,7 @@ public class SaveAppSettingsToBackendless_InBackground extends AbstractInteracto
                 // update the SQLite db
                 updateSQLiteDb(response, cv);
 
-                String successMessage = String.format("Successfully saved AppSettings with Uuid = \"%s\" to Backendless.", response.getUuid());
+                String successMessage = String.format("Successfully saved \"%s's\" AppSettings to Backendless.", response.getName());
                 postAppSettingsSavedToBackendless(successMessage);
 
             } catch (Exception e) {
@@ -114,7 +114,7 @@ public class SaveAppSettingsToBackendless_InBackground extends AbstractInteracto
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onAppSettingsSavedToBackendless(successMessage);
+                mCallback.onAppSettingsSavedToCloud(successMessage);
             }
         });
     }
@@ -123,7 +123,7 @@ public class SaveAppSettingsToBackendless_InBackground extends AbstractInteracto
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onAppSettingsSaveToBackendlessFailed(errorMessage);
+                mCallback.onAppSettingsSaveToCloudFailed(errorMessage);
             }
         });
     }

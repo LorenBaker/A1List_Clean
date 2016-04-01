@@ -56,7 +56,7 @@ public class RetrieveAllListThemes_InBackground extends AbstractInteractor imple
         mMainThread.post(new Runnable() {
             @Override
             public void run() {
-                mCallback.onRetrievalFailed("No Themes retrieved!");
+                mCallback.onAllListThemesRetrievalFailed("No Themes retrieved!");
             }
         });
     }

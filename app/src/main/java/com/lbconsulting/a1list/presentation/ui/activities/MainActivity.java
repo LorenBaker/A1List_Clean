@@ -24,14 +24,8 @@ import com.google.gson.Gson;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.appSettings.SaveDirtyObjectsToBackendless_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listItem.impl.DeleteListItemsFromCloud_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listItem.interactors.InsertNewListItem;
-import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemsToCloud;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.CreateInitialListThemes_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes;
-import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitlesToCloud_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitlesToCloud;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
@@ -66,9 +60,7 @@ import butterknife.OnClick;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView,
-        CreateInitialListThemes.Callback, InsertNewListItem.Callback,
-        SaveListTitlesToCloud.Callback,
-        SaveListItemsToCloud.Callback, DeleteListItemsFromCloud_InBackground.Callback {
+        CreateInitialListThemes.Callback {
     private static ListTitlesPresenter_Impl mMainActivityPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
@@ -93,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     private int mPosition;
     private ListTitle mActiveListTitle;
 
-    // TODO: Add share from groupon
+    // TODO: Add share from Groupon
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,7 +99,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
-
         EventBus.getDefault().register(this);
 
         setSupportActionBar(mToolbar);
@@ -125,6 +116,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         mMainActivityPresenter = new ListTitlesPresenter_Impl(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, isListTitlesSortedAlphabetically);
 
+        showActiveUser();
 
         //region Messaging
 //        MESSAGE_CHANNEL = MySettings.getActiveUserID();
@@ -163,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         //endregion
 
 
-        showActiveUser();
     }
 
     @Subscribe
@@ -175,8 +166,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     public void onEvent(MyEvents.updateListItem event) {
         mListItemRepository.update(event.getListItem());
         EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
-//        new UpdateListItem_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(),
-//                this, event.getListItem()).execute();
     }
 
     @Subscribe
@@ -190,10 +179,18 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 
     @OnClick(R.id.fab)
     public void fab() {
-        String message = "Create new ListItem clicked.";
-        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
+//        String message = "Create new ListItem clicked.";
+//        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
 
         if (mActiveListTitle != null) {
+            // Check if the ListTitle has been saved in Backendless
+            String listTitleObjectID = mActiveListTitle.getObjectId();
+            if (listTitleObjectID == null || listTitleObjectID.isEmpty()) {
+                // The mActiveListTitle has not been saved to Backendless ... so
+                // Retrieve the ListTitle from local storage.
+                mActiveListTitle = mListTitleRepository.retrieveListTitleByUuid(mActiveListTitle.getUuid());
+            }
+
             showNewListItemDialog(mActiveListTitle);
         }
     }
@@ -222,7 +219,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 
     private void initializeApp() {
         Timber.i("initializeApp()");
-        showProgress("Loading initial Themes.");
+//        showProgress("Loading initial Themes.");
         new CreateInitialListThemes_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this).execute();
     }
@@ -238,14 +235,15 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     @Override
     public void onListThemesCreationFailed(String errorMessage) {
         Timber.e("onListThemesCreationFailed(): %s.", errorMessage);
-        hideProgress("");
+//        hideProgress("");
     }
 
     @Override
-    public void displayAllListTitles(List<ListTitle> listTitles) {
+    public void onPresenterAllListTitlesRetrieved(List<ListTitle> listTitles) {
         // Create the adapter that will return a fragListItems fragments
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), listTitles);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setOffscreenPageLimit(3);
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -302,14 +300,19 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 
     @Override
     protected void onPause() {
+        // TODO: Start service that saves any dirty objects to Backendless
         super.onPause();
         Timber.i("onPause()");
         MySettings.setStartedFromRegistrationActivity(false);
         if (mSectionsPagerAdapter != null) {
             ListTitle listTitle = mSectionsPagerAdapter.getListTitle(mPosition);
-            AppSettings appSettings = mAppSettingsRepository.retrieveAppSettings();
-            appSettings.setLastListTitleViewedUuid(listTitle.getUuid());
-            mAppSettingsRepository.setLastListTitleViewedUuid(appSettings, listTitle.getUuid());
+            if (listTitle != null) {
+                AppSettings appSettings = mAppSettingsRepository.retrieveAppSettings();
+                if (appSettings != null) {
+                    appSettings.setLastListTitleViewedUuid(listTitle.getUuid());
+                    mAppSettingsRepository.update(appSettings);
+                }
+            }
         }
     }
 
@@ -395,6 +398,11 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         } else if (id == R.id.action_addTestLists) {
             addTestLists();
             return true;
+
+        } else if (id == R.id.action_addTestItems) {
+            List<ListTitle> listTitles = mListTitleRepository.retrieveAllListTitles(false, true);
+            addItemsToListTitles(listTitles);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -407,7 +415,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 
         ListTheme defaultListTheme;
 
-        ListTitleRepository_Impl listTitleRepository = AndroidApplication.getListTitleRepository();
         ListTitle newListTitle;
 
         Timber.i("addTestLists(): Starting to add test lists.");
@@ -418,31 +425,18 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
                 listNumber = "0" + listNumber;
             }
             String listName = "List " + listNumber;
-            Timber.i("addTestLists(): adding \"%s\"", listName);
             newListTitle = ListTitle.newInstance(listName, defaultListTheme);
             listTitles.add(newListTitle);
         }
-        mListTitleRepository.insertIntoLocalStorage(listTitles);
+        mListTitleRepository.insert(listTitles);
 
-        List<ListTitle> allListTitles = listTitleRepository.retrieveAllListTitles(false, true);
-        new SaveListTitlesToCloud_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(), this, allListTitles).execute();
     }
 
-    @Override
-    public void onListTitlesListSavedToBackendless(String successMessage, List<ListTitle> successfullySavedListTitles) {
-        Timber.i("onListTitlesListSavedToBackendless(): %s.", successMessage);
-        Timber.i("addTestLists(): Starting to add test items to %d ListTitles.", successfullySavedListTitles.size());
-        addItemsToListTitles(successfullySavedListTitles);
-    }
 
-    @Override
-    public void onListTitlesListSaveToBackendlessFailed(String errorMessage, List<ListTitle> successfullySavedListTitles) {
-        Timber.e("onListTitlesListSavedToBackendless(): %s.", errorMessage);
-        Timber.i("addTestLists(): Starting to add test items to %d ListTitles.", successfullySavedListTitles.size());
-        addItemsToListTitles(successfullySavedListTitles);
-    }
 
     private void addItemsToListTitles(List<ListTitle> listTitles) {
+        // TODO: Remove addItemsToListTitles
+        Timber.i("addItemsToListTitles(): Starting to add test ListItems.");
         int numberOfItemsPerList = 5;
         ListItem newListItem;
         List<ListItem> listItems = new ArrayList<>();
@@ -456,76 +450,31 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
                     itemNumber = "0" + itemNumber;
                 }
                 String itemName = listTitleName + ": Item " + itemNumber;
-                Timber.i("addTestLists(): adding to \"%s\"", itemName);
                 newListItem = ListItem.newInstance(itemName, listTitle, false);
                 listItems.add(newListItem);
             }
             numberOfItemsPerList++;
         }
-        mListItemRepository.insertIntoLocalStorage(listItems);
-        Timber.i("addItemsToListTitles(): Starting to save dirty objects to Backendless.");
-        new SaveDirtyObjectsToBackendless_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance()).execute();
-//        new SaveListItemsToCloud_InBackground(ThreadExecutor.getInstance(),
-//                MainThreadImpl.getInstance(), listItems, this).execute();
-    }
+        mListItemRepository.insert(listItems);
 
-    @Override
-    public void onListItemListSavedToBackendless(String successMessage, List<ListItem> successfullySavedListItems) {
-        Timber.e("onListItemListSavedToBackendless(): %s.", successMessage);
         mMainActivityPresenter.resume();
+
     }
 
-    @Override
-    public void onListItemListSaveToBackendlessFailed(String errorMessage, List<ListItem> successfullySavedListItems) {
-        Timber.e("onListItemListSaveToBackendlessFailed(): %s.", errorMessage);
-        mMainActivityPresenter.resume();
-    }
 
-//    @Override
-//    public void onListTitleInsertedIntoSQLiteDb(String successMessage) {
-//        Timber.i("onListTitleInsertedIntoSQLiteDb(): %s.", successMessage);
-//    }
-//
-//    @Override
-//    public void onListTitleInsertionIntoSQLiteDbFailed(String errorMessage) {
-//        Timber.e("onListTitleInsertionIntoSQLiteDbFailed(): %s.", errorMessage);
-//    }
-
-    @Override
-    public void onListItemInsertedIntoSQLiteDb(String successMessage) {
-        Timber.i("onListItemInsertedIntoSQLiteDb(): %s.", successMessage);
-    }
-
-    @Override
-    public void onListItemInsertionIntoSQLiteDbFailed(String errorMessage) {
-        Timber.e("onListItemInsertionIntoSQLiteDbFailed(): %s.", errorMessage);
-    }
     //endregion
 
     private void deleteStruckOutItems() {
         List<ListItem> struckOutListItems = mListItemRepository.retrieveStruckOutListItems(mActiveListTitle);
+        Timber.i("deleteStruckOutItems(): Found %d struck out ListItems to delete.", struckOutListItems.size());
         if (struckOutListItems.size() > 0) {
-            List<ListItem> successfullyMarkedListItems = mListItemRepository.deleteFromLocalStorage(struckOutListItems);
-            if (successfullyMarkedListItems.size() > 0) {
-                EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
-                new DeleteListItemsFromCloud_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this, successfullyMarkedListItems).execute();
-            }
+            mListItemRepository.delete(struckOutListItems);
+            EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
         }
     }
 
-    @Override
-    public void onListItemsDeletedFromBackendless(String successMessage) {
-        Timber.i("onListItemsDeletedFromBackendless(): %s.", successMessage);
-    }
-
-    @Override
-    public void onListItemsDeleteFromBackendlessFailed(String errorMessage) {
-        Timber.e("onListItemsDeleteFromBackendlessFailed(): %s.", errorMessage);
-    }
 
     private void showFavorites() {
-//        Toast.makeText(this, "showFavorites clicked", Toast.LENGTH_SHORT).show();
         FragmentManager fm = getSupportFragmentManager();
         Gson gson = new Gson();
         String listTitleJson = gson.toJson(mActiveListTitle);

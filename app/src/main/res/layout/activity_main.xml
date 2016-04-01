@@ -35,7 +35,8 @@
 
     <include
         android:id="@+id/activityProgressBar"
-        layout="@layout/activity_progress_bar" />
+        layout="@layout/activity_progress_bar"
+        android:visibility="gone"/>
 
     <!--<include-->
         <!--android:id="@+id/mainActivityContent"-->

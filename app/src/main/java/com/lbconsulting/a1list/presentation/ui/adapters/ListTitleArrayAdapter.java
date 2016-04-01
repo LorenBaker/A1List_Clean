@@ -19,14 +19,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
-import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.impl.ToggleListTitleBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.activities.ListTitleActivity;
-import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
+import com.lbconsulting.a1list.utils.MyEvents;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
 
@@ -42,15 +43,14 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
     private final ListView mListView;
     private final boolean mShowBtnEditListTitleName;
     private ListTitle mSelectedListTitle;
-
-    private ToggleListTitleBooleanField_InBackground.Callback mCallback;
+    private ListTitleRepository_Impl mListTitleRepository;
 
     public ListTitleArrayAdapter(Context context, ListView listView, boolean showBtnEditListTitleName) {
         super(context, 0);
         this.mContext = context;
-        this.mCallback = (ToggleListTitleBooleanField_InBackground.Callback) context;
         this.mListView = listView;
         this.mShowBtnEditListTitleName = showBtnEditListTitleName;
+        this.mListTitleRepository = AndroidApplication.getListTitleRepository();
         Timber.i("ListTitleArrayAdapter(): Initialized");
     }
 
@@ -149,15 +149,17 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
             public void onClick(View v) {
                 mSelectedListTitle = (ListTitle) v.getTag();
                 mSelectedListTitle.setStruckOut(!mSelectedListTitle.isStruckOut());
+                int strikeOutIncrement;
                 if (mSelectedListTitle.isStruckOut()) {
+                    strikeOutIncrement = 1;
                     setStrikeOut((TextView) v, mSelectedListTitle.getListTheme().isBold());
                 } else {
+                    strikeOutIncrement = -1;
                     setNoStrikeOut((TextView) v, mSelectedListTitle.getListTheme().isBold(),
                             mSelectedListTitle.getListTheme().getTextColor());
                 }
-                new ToggleListTitleBooleanField_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), mCallback,
-                        mSelectedListTitle, ListTitlesSqlTable.COL_STRUCK_OUT).execute();
+                EventBus.getDefault().post(new MyEvents.incrementStrikeOutCount(strikeOutIncrement));
+                mListTitleRepository.update(mSelectedListTitle);
 
             }
         });

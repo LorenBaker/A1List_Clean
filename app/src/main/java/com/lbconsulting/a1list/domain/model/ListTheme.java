@@ -19,7 +19,6 @@ public class ListTheme {
     private float textSize; //float
     private float horizontalPaddingInDp; //float dp. Need to convert to float px
     private float verticalPaddingInDp; //float dp. Need to convert to float px
-//    private boolean themeDirty;
     private boolean bold;
     private boolean checked;
     private boolean defaultTheme;

@@ -17,5 +17,4 @@ public interface RetrieveListTheme extends Interactor {
 
     }
 
-    // TODO: Add interactor methods here
 }

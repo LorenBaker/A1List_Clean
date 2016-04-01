@@ -1,7 +1,5 @@
 package com.lbconsulting.a1list.domain.repositories;
 
-import android.content.ContentValues;
-
 import com.lbconsulting.a1list.domain.model.AppSettings;
 
 /**
@@ -9,23 +7,30 @@ import com.lbconsulting.a1list.domain.model.AppSettings;
  */
 public interface AppSettingsRepository {
 
+    //region Insert AppSettings
     boolean insert(AppSettings appSettings);
 
-    boolean insertIntoSQLiteDb(AppSettings appSettings);
+    boolean insertIntoLocalStorage(AppSettings appSettings);
 
-    boolean update(AppSettings appSettings, ContentValues contentValues);
+    void insertInCloud(AppSettings appSettings);
+    //endregion
 
-    boolean update(AppSettings appSettings);
-
+    //region Retrieve AppSettings
     AppSettings retrieveAppSettings();
-
-    long retrieveTimeBetweenSynchronizations();
-
-    long retrieveListTitleNextSortKey();
-
-    void setListTitleLastSortKey(AppSettings appSettings, long sortKey);
 
     AppSettings retrieveDirtyAppSettings();
 
-    void setLastListTitleViewedUuid(AppSettings appSettings,String listTitleUuid);
+    long retrieveNextListTitleSortKey();
+
+    long retrieveTimeBetweenSynchronizations();
+    //endregion
+
+    //region Update AppSettings
+    void update(AppSettings appSettings);
+
+    int updateInLocalStorage(AppSettings appSettings);
+
+    void updateInCloud(AppSettings appSettings);
+    //endregion
+
 }

@@ -19,15 +19,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
-import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ToggleListThemeBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
-import com.lbconsulting.a1list.domain.storage.ListThemesSqlTable;
 import com.lbconsulting.a1list.presentation.ui.activities.ListThemeActivity;
-import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
+import com.lbconsulting.a1list.utils.MyEvents;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ import timber.log.Timber;
 /**
  * An ArrayAdapter for displaying a ListTheme.
  */
-public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
+public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
 
     private final Context mContext;
     private final ListView mListView;
@@ -45,17 +45,15 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
     private final View mSnackbarView;
     private ListTheme mSelectedTheme;
     private ListThemeRepository_Impl mListThemeRepository;
-    private ToggleListThemeBooleanField_InBackground.Callback mCallback;
 
     public ListThemeArrayAdapter(Context context, ListView listView, boolean showBtnEditThemeName,
                                  View snackbarView) {
         super(context, 0);
         this.mContext = context;
-        this.mCallback = (ToggleListThemeBooleanField_InBackground.Callback) context;
         this.mListView = listView;
         this.mShowBtnEditThemeName = showBtnEditThemeName;
         mSnackbarView = snackbarView;
-        mListThemeRepository = new ListThemeRepository_Impl(context);
+        mListThemeRepository = AndroidApplication.getListThemeRepository();
         Timber.i("ListThemeArrayAdapter(): Initialized");
     }
 
@@ -137,9 +135,9 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
 //                mListView.setDivider(null);
 //                mListView.setDividerHeight(0);
 //            } else {
-                holder.llRowThemeName.setBackground(getBackgroundDrawable(mSelectedTheme.getStartColor(), mSelectedTheme.getEndColor()));
-                mListView.setDivider(new ColorDrawable(ContextCompat.getColor(mContext, R.color.greyLight3_50Transparent)));
-                mListView.setDividerHeight(1);
+            holder.llRowThemeName.setBackground(getBackgroundDrawable(mSelectedTheme.getStartColor(), mSelectedTheme.getEndColor()));
+            mListView.setDivider(new ColorDrawable(ContextCompat.getColor(mContext, R.color.greyLight3_50Transparent)));
+            mListView.setDividerHeight(1);
 //            }
 
             if (mSelectedTheme.isStruckOut()) {
@@ -154,14 +152,16 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme>  {
             public void onClick(View v) {
                 mSelectedTheme = (ListTheme) v.getTag();
                 mSelectedTheme.setStruckOut(!mSelectedTheme.isStruckOut());
+                int strikeOutIncrement;
                 if (mSelectedTheme.isStruckOut()) {
+                    strikeOutIncrement = 1;
                     setStrikeOut((TextView) v, mSelectedTheme.isBold());
                 } else {
+                    strikeOutIncrement = -1;
                     setNoStrikeOut((TextView) v, mSelectedTheme.isBold(), mSelectedTheme.getTextColor());
                 }
-                new ToggleListThemeBooleanField_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), mCallback,
-                        mSelectedTheme, ListThemesSqlTable.COL_STRUCK_OUT).execute();
+                EventBus.getDefault().post(new MyEvents.incrementStrikeOutCount(strikeOutIncrement));
+                mListThemeRepository.update(mSelectedTheme);
 
             }
         });

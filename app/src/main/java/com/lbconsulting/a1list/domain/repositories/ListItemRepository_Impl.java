@@ -19,7 +19,6 @@ import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListI
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
-import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 
 import java.util.ArrayList;
@@ -81,9 +80,9 @@ public class ListItemRepository_Impl implements ListItemRepository,
         }
 
         if (successfullyInsertedListItems.size() == listItems.size()) {
-            Timber.i("insertIntoLocalStorage(): Successfully inserted all %d ListItems.", listItems.size());
+            Timber.i("insertIntoLocalStorage(): Successfully inserted all %d ListItems into the SQLite db.", listItems.size());
         } else {
-            Timber.e("insertIntoLocalStorage(): Only inserted %d out of %d ListItems.",
+            Timber.e("insertIntoLocalStorage(): Only inserted %d out of %d ListItems into the SQLite db.",
                     successfullyInsertedListItems.size(), listItems.size());
         }
         return successfullyInsertedListItems;
@@ -109,7 +108,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
             Timber.i("insertIntoLocalStorage(): ListItemRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listItem.getName());
         } else {
             // failed to create listItem in the SQLite db
-            Timber.i("insertIntoLocalStorage(): ListItemRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listItem.getName());
+            Timber.e("insertIntoLocalStorage(): ListItemRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listItem.getName());
         }
 
         return result;
@@ -243,42 +242,6 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return listItems;
     }
 
-    @Override
-    public List<ListItem> retrieveDirtyListItems() {
-        List<ListItem> dirtyListItems = new ArrayList<>();
-        Cursor cursor = getDirtyListItemsCursor();
-        ListItem listItem;
-        if (cursor != null && cursor.getCount() > 0) {
-            while (cursor.moveToNext()) {
-                listItem = listItemFromCursor(cursor);
-                dirtyListItems.add(listItem);
-            }
-        }
-        if (cursor != null) {
-            cursor.close();
-        }
-
-        return dirtyListItems;
-    }
-
-    @Override
-    public List<ListItem> retrieveFavoriteListItems() {
-        List<ListItem> favoriteListItems = new ArrayList<>();
-        Cursor cursor = getFavoriteListItemsCursor();
-        ListItem listItem;
-        if (cursor != null && cursor.getCount() > 0) {
-            while (cursor.moveToNext()) {
-                listItem = listItemFromCursor(cursor);
-                favoriteListItems.add(listItem);
-            }
-        }
-        if (cursor != null) {
-            cursor.close();
-        }
-
-        return favoriteListItems;
-    }
-
     private Cursor getAllListItemsCursor(ListTitle listTitle, boolean isMarkedForDeletion) {
         Cursor cursor = null;
         Uri uri = ListItemsSqlTable.CONTENT_URI;
@@ -303,6 +266,58 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return cursor;
     }
 
+    @Override
+    public List<ListItem> retrieveListItems(ListTitle listTitle) {
+        List<ListItem> listItemsInList = new ArrayList<>();
+        Cursor cursor = getListItemsInListCursor(listTitle);
+        ListItem listItem;
+        if (cursor != null && cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                listItem = listItemFromCursor(cursor);
+                listItemsInList.add(listItem);
+            }
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return listItemsInList;
+    }
+
+    private Cursor getListItemsInListCursor(ListTitle listTitle) {
+        Cursor cursor = null;
+        Uri uri = ListItemsSqlTable.CONTENT_URI;
+        String[] projection = ListItemsSqlTable.PROJECTION_ALL;
+        String selection = ListItemsSqlTable.COL_LIST_TITLE_UUID + " = ?";
+        String selectionArgs[] = new String[]{listTitle.getUuid()};
+        String sortOrder = null;
+        ContentResolver cr = mContext.getContentResolver();
+        try {
+            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+        } catch (Exception e) {
+            Timber.e("getListItemsInListCursor(): Exception: %s.", e.getMessage());
+        }
+        return cursor;
+    }
+
+    @Override
+    public List<ListItem> retrieveDirtyListItems() {
+        List<ListItem> dirtyListItems = new ArrayList<>();
+        Cursor cursor = getDirtyListItemsCursor();
+        ListItem listItem;
+        if (cursor != null && cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                listItem = listItemFromCursor(cursor);
+                dirtyListItems.add(listItem);
+            }
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return dirtyListItems;
+    }
+
     private Cursor getDirtyListItemsCursor() {
         Cursor cursor = null;
         Uri uri = ListItemsSqlTable.CONTENT_URI;
@@ -319,12 +334,31 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return cursor;
     }
 
-    private Cursor getFavoriteListItemsCursor() {
+    @Override
+    public List<ListItem> retrieveFavoriteListItems(ListTitle listTitle) {
+        List<ListItem> favoriteListItems = new ArrayList<>();
+        Cursor cursor = getFavoriteListItemsCursor(listTitle);
+        ListItem listItem;
+        if (cursor != null && cursor.getCount() > 0) {
+            while (cursor.moveToNext()) {
+                listItem = listItemFromCursor(cursor);
+                favoriteListItems.add(listItem);
+            }
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
+
+        return favoriteListItems;
+    }
+
+
+    private Cursor getFavoriteListItemsCursor(ListTitle listTitle) {
         Cursor cursor = null;
         Uri uri = ListItemsSqlTable.CONTENT_URI;
         String[] projection = ListItemsSqlTable.PROJECTION_ALL;
-        String selection = ListItemsSqlTable.COL_FAVORITE + " = ?";
-        String selectionArgs[] = new String[]{String.valueOf(TRUE)};
+        String selection = ListItemsSqlTable.COL_FAVORITE + " = ? AND " + ListItemsSqlTable.COL_LIST_TITLE_UUID + " = ?";
+        String selectionArgs[] = new String[]{String.valueOf(TRUE), listTitle.getUuid()};
         String sortOrder = ListItemsSqlTable.SORT_ORDER_NAME_ASC;
         ContentResolver cr = mContext.getContentResolver();
         try {
@@ -393,20 +427,20 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return struckOutListItems;
     }
 
-    @Override
-    public long retrieveListItemNextSortKey(ListTitle listTitle) {
-        long listItemNextSortKey = listTitle.getListItemLastSortKey() + 1;
-        listTitle.setListItemLastSortKey(listItemNextSortKey);
-        setListItemLastSortKey(listTitle, listItemNextSortKey);
-        return listItemNextSortKey;
-    }
+//    @Override
+//    public long retrieveListItemNextSortKey(ListTitle listTitle) {
+//        long listItemNextSortKey = listTitle.getListItemLastSortKey() + 1;
+//        listTitle.setListItemLastSortKey(listItemNextSortKey);
+//        setListItemLastSortKey(listTitle, listItemNextSortKey);
+//        return listItemNextSortKey;
+//    }
 
 
-    public void setListItemLastSortKey(ListTitle listTitle, long sortKey) {
-        ContentValues cv = new ContentValues();
-        cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, sortKey);
-        mListTitleRepository.update(listTitle);
-    }
+//    public void setListItemLastSortKey(ListTitle listTitle, long sortKey) {
+//        ContentValues cv = new ContentValues();
+//        cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, sortKey);
+//        mListTitleRepository.update(listTitle);
+//    }
 
     private ListItem getListItem(ListTitle listTitle, String listItemName) {
         // TODO: Does this getListItem method's selection need ListItem not marked for deletion. How to handle favorites.
@@ -483,18 +517,6 @@ public class ListItemRepository_Impl implements ListItemRepository,
         }
     }
 
-    private boolean update(ListItem listItem, ContentValues cv) {
-        boolean result = false;
-        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-        int numberOfRecordsUpdated = updateInLocalStorage(listItem, cv);
-
-        if (numberOfRecordsUpdated == 1) {
-            result = true;
-            updateInCloud(listItem);
-        }
-        return result;
-    }
-
 
     //region Update in Local Storage
     @Override
@@ -519,8 +541,10 @@ public class ListItemRepository_Impl implements ListItemRepository,
     public int updateInLocalStorage(ListItem listItem) {
         ContentValues cv = makeListItemContentValues(listItem);
         int numberOfRecordsUpdated = updateInLocalStorage(listItem, cv);
-        if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateInLocalStorage(): FAILED to update \"%s.\"", listItem.getName());
+        if (numberOfRecordsUpdated == 1) {
+            Timber.i("updateInLocalStorage(): Successfully updated \"%s\" in the SQLiteDb.", listItem.getName());
+        }else{
+            Timber.e("updateInLocalStorage(): FAILED to update \"%s\" in the SQLiteDb.", listItem.getName());
         }
         return numberOfRecordsUpdated;
     }
@@ -593,7 +617,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
                     result--;
                 }
                 cv.put(ListItemsSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
-                update(listItem, cv);
+                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+                updateInLocalStorage(listItem, cv);
                 break;
 
             case ListItemsSqlTable.COL_FAVORITE:
@@ -604,7 +629,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
                     result--;
                 }
                 cv.put(ListItemsSqlTable.COL_FAVORITE, newValue ? TRUE : FALSE);
-                update(listItem, cv);
+                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+                updateInLocalStorage(listItem, cv);
                 break;
 
 
@@ -616,7 +642,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
                     result--;
                 }
                 cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
-                update(listItem, cv);
+                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+                updateInLocalStorage(listItem, cv);
                 break;
 
 
@@ -628,7 +655,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
                     result--;
                 }
                 cv.put(ListItemsSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
-                update(listItem, cv);
+                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+                updateInLocalStorage(listItem, cv);
                 break;
 
             default:
@@ -645,8 +673,23 @@ public class ListItemRepository_Impl implements ListItemRepository,
     @Override
     public int delete(List<ListItem> listItems) {
         List<ListItem> successfullyMarkedForDeletionListItems = deleteFromLocalStorage(listItems);
-        if (successfullyMarkedForDeletionListItems.size() > 0) {
-            deleteFromCloud(successfullyMarkedForDeletionListItems);
+        List<ListItem> listItemsForCloudUpdate = new ArrayList<>();
+        List<ListItem> listItemsForCloudDeletion = new ArrayList<>();
+
+        for (ListItem markedListItem : successfullyMarkedForDeletionListItems) {
+            if (markedListItem.isFavorite()) {
+                listItemsForCloudUpdate.add(markedListItem);
+            } else {
+                listItemsForCloudDeletion.add(markedListItem);
+            }
+        }
+
+        if (listItemsForCloudUpdate.size() > 0) {
+            updateInCloud(listItemsForCloudUpdate);
+        }
+
+        if (listItemsForCloudDeletion.size() > 0) {
+            deleteFromCloud(listItemsForCloudDeletion);
         }
 
         return successfullyMarkedForDeletionListItems.size();
@@ -678,10 +721,10 @@ public class ListItemRepository_Impl implements ListItemRepository,
         }
 
         if (successfullyMarkedForDeletionListItems.size() == listItems.size()) {
-            Timber.i("deleteFromLocalStorage(): Successfully marked all %d ListItems for deletion.",
+            Timber.i("deleteFromLocalStorage(): Successfully marked all %d ListItems for deletion in SQLiteDb.",
                     successfullyMarkedForDeletionListItems.size());
         } else {
-            Timber.e("deleteFromLocalStorage(): Only marked %d of of %d ListItems for deletion.",
+            Timber.e("deleteFromLocalStorage(): Only marked %d of of %d ListItems for deletion in SQLiteDb.",
                     successfullyMarkedForDeletionListItems.size(), listItems.size());
         }
 
@@ -701,9 +744,9 @@ public class ListItemRepository_Impl implements ListItemRepository,
             cv.put(ListItemsSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
             numberOfDeletedListItems = cr.update(uri, cv, selection, selectionArgs);
             if (numberOfDeletedListItems == 1) {
-                Timber.i("deleteFromLocalStorage(): Successfully marked \"%s\" for deletion.", listItem.getName());
+                Timber.i("deleteFromLocalStorage(): Successfully marked \"%s\" for deletion in SQLiteDb.", listItem.getName());
             } else {
-                Timber.e("deleteFromLocalStorage(): FAILED to marked \"%s\" for deletion.", listItem.getName());
+                Timber.e("deleteFromLocalStorage(): FAILED to marked \"%s\" for deletion in SQLiteDb.", listItem.getName());
             }
 
         } catch (Exception e) {
@@ -736,13 +779,13 @@ public class ListItemRepository_Impl implements ListItemRepository,
     }
 
     @Override
-    public void onListItemsDeletedFromBackendless(String successMessage) {
-        Timber.i("onListItemsDeletedFromBackendless(): %s.", successMessage);
+    public void onListItemsDeletedFromCloud(String successMessage) {
+        Timber.i("onListItemsDeletedFromCloud(): %s.", successMessage);
     }
 
     @Override
-    public void onListItemsDeleteFromBackendlessFailed(String errorMessage) {
-        Timber.e("onListItemsDeleteFromBackendlessFailed(): %s.", errorMessage);
+    public void onListItemsDeleteFromCloudFailed(String errorMessage) {
+        Timber.e("onListItemsDeleteFromCloudFailed(): %s.", errorMessage);
     }
 
 

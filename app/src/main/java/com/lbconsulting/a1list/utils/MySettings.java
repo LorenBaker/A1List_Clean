@@ -122,10 +122,8 @@ public class MySettings {
         editor.putString(SETTING_ACTIVE_USER_EMAIL, NOT_AVAILABLE);
         editor.apply();
     }
-
-    public static String getActiveUserNameAndEmail() {
+    public static String getActiveUserName() {
         String result = "";
-        String email = mPreferences.getString(SETTING_ACTIVE_USER_EMAIL, NOT_AVAILABLE);
         String firstName = mPreferences.getString(SETTING_ACTIVE_USER_FIRST_NAME, NOT_AVAILABLE);
         String lastName = mPreferences.getString(SETTING_ACTIVE_USER_LAST_NAME, NOT_AVAILABLE);
 
@@ -136,6 +134,11 @@ public class MySettings {
         } else if (firstName.equals(MySettings.NOT_AVAILABLE) && !lastName.equals(MySettings.NOT_AVAILABLE)) {
             result = lastName;
         }
+        return result;
+    }
+    public static String getActiveUserNameAndEmail() {
+        String result = getActiveUserName();
+        String email = mPreferences.getString(SETTING_ACTIVE_USER_EMAIL, NOT_AVAILABLE);
 
         if (!email.equals(MySettings.NOT_AVAILABLE)) {
             result = result + " (" + email + ")";

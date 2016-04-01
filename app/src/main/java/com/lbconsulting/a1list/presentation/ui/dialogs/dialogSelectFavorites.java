@@ -117,7 +117,7 @@ public class dialogSelectFavorites extends DialogFragment {
 
         lvFavorites.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.whiteSmoke));
 
-        List<ListItem> favorites = mListItemRepository.retrieveFavoriteListItems();
+        List<ListItem> favorites = mListItemRepository.retrieveFavoriteListItems(mListTitle);
         mFavoritesArrayAdapter = new FavoritesArrayAdapter(getActivity(), favorites);
         lvFavorites.setAdapter(mFavoritesArrayAdapter);
 

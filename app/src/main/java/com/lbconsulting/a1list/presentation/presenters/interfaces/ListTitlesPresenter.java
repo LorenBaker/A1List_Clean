@@ -12,6 +12,6 @@ public interface ListTitlesPresenter extends BasePresenter {
     interface ListTitleView extends BaseView {
 
         // Add your view methods
-        void displayAllListTitles(List<ListTitle> allListTitles);
+        void onPresenterAllListTitlesRetrieved(List<ListTitle> allListTitles);
     }
 }

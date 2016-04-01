@@ -29,7 +29,7 @@ public class RetrieveListTheme_InBackground extends AbstractInteractor implement
 
     @Override
     public void run() {
-        final ListTheme listTheme = mListThemeRepository.getListThemeByUuid(mListThemeUuid);
+        final ListTheme listTheme = mListThemeRepository.retrieveListThemeByUuid(mListThemeUuid);
         if (listTheme != null) {
             postListThemeRetrieved(listTheme);
         } else {

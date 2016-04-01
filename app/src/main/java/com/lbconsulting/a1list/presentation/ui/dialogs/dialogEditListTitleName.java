@@ -42,6 +42,8 @@ public class dialogEditListTitleName extends DialogFragment {
     private AlertDialog mEditListTitleDialog;
     private ListTitleRepository_Impl mListTitleRepository;
     private ListTitle mListTitle;
+    private boolean mCreatingNewListTitle;
+    private String mDialogTitle;
 
     public dialogEditListTitleName() {
         // Empty constructor required for DialogFragment
@@ -68,7 +70,15 @@ public class dialogEditListTitleName extends DialogFragment {
             String listTitleJson = args.getString(ARG_LIST_TITLE_JSON);
             Gson gson = new Gson();
             mListTitle = gson.fromJson(listTitleJson, ListTitle.class);
-            if (mListTitle == null) {
+            if (mListTitle != null) {
+                mCreatingNewListTitle = false;
+                mDialogTitle ="Edit List Name";
+                String objectID = mListTitle.getObjectId();
+                if (objectID == null || objectID.isEmpty()) {
+                    mCreatingNewListTitle = true;
+                    mDialogTitle ="Create New List";
+                }
+            } else {
                 Timber.e("onCreate(): FAILED to retrieve ListTitle");
             }
         }
@@ -116,7 +126,7 @@ public class dialogEditListTitleName extends DialogFragment {
             String errorMsg = getActivity().getString(R.string.newListTitleName_isEmpty_error);
             txtListTitleName_input_layout.setError(errorMsg);
 
-        } else if(proposedListTitleName.equals(DEFAULT_LIST_TITLE_NAME)){
+        } else if (proposedListTitleName.equals(DEFAULT_LIST_TITLE_NAME)) {
             String errorMsg = String.format(getActivity()
                             .getString(R.string.newListTitleName_isDefault_error),
                     DEFAULT_LIST_TITLE_NAME);
@@ -174,7 +184,7 @@ public class dialogEditListTitleName extends DialogFragment {
 
         // build the dialog
         mEditListTitleDialog = new AlertDialog.Builder(getActivity())
-                .setTitle(" ")
+                .setTitle(mDialogTitle)
                 .setView(view)
                 .setPositiveButton(R.string.btnEnter_title, null)
                 .setNegativeButton(R.string.btnCancel_title, null)

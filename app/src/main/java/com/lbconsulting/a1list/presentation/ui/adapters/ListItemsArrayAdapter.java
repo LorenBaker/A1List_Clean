@@ -17,15 +17,12 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
-import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listItem.impl.ToggleListItemBooleanField_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listItem.interactors.ToggleListItemBooleanField;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
-import com.lbconsulting.a1list.threading.MainThreadImpl;
+import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.MyEvents;
 
@@ -43,16 +40,14 @@ import timber.log.Timber;
  * An ArrayAdapter for displaying a ListItems.
  */
 //implements Swappable
-public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements ToggleListItemBooleanField.Callback {
+public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> {
 
     private final Context mContext;
     private final ListView mListView;
     private final String mListName;
     private ListTheme mListTheme;
     private ListTitle mListTitle;
-
-//    private ListItemRepository_Impl mListItemRepository;
-//    private boolean mIsForceViewInflation;
+    private ListItemRepository_Impl mListItemRepository;
 
     public ListItemsArrayAdapter(Context context, ListView listView, ListTitle listTitle) {
         super(context, 0);
@@ -60,8 +55,7 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
         this.mListView = listView;
         this.mListTitle = listTitle;
         this.mListName = listTitle.getName();
-//        mListItemRepository = AndroidApplication.getListItemRepository();
-//        this.mIsForceViewInflation = listTitle.isForceViewInflation();
+        mListItemRepository = AndroidApplication.getListItemRepository();
         Timber.i("ListItemsArrayAdapter() initialized for List: \"%s\".", mListName);
     }
 
@@ -75,10 +69,9 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
             addAll(data);
             Timber.i("setData(): Loaded %d ListItems for ListTitle \"%s\".", data.size(), mListName);
         }
-
     }
 
-    public List<ListItem> getListItems(){
+    public List<ListItem> getListItems() {
         List<ListItem> listItems = new ArrayList<>();
         for (int i = 0; i < getCount(); i++) {
             ListItem listItem = getItem(i);
@@ -135,8 +128,6 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
         ListItem item = getItem(position);
 
         // Check if an existing view is being reused, otherwise inflate the view
-        // mIsForceViewInflation is used when the Attributes have changed
-//        mIsForceViewInflation = mListTitle.isForceViewInflation();
         if (convertView == null) {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.row_list_item, parent, false);
             holder = new ListItemViewHolder(convertView);
@@ -185,7 +176,6 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
         holder.tvListItemName.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                mListTitle.setIsForceViewInflation(false);
                 ListItem clickedItem = (ListItem) v.getTag();
                 if (clickedItem != null) {
                     clickedItem.setStruckOut(!clickedItem.isStruckOut());
@@ -194,9 +184,7 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
                     } else {
                         setNoStrikeOut((TextView) v);
                     }
-                    new ToggleListItemBooleanField_InBackground(ThreadExecutor.getInstance(),
-                            MainThreadImpl.getInstance(), ListItemsArrayAdapter.this,
-                            clickedItem, ListItemsSqlTable.COL_STRUCK_OUT).execute();
+                    mListItemRepository.update(clickedItem);
                 }
             }
         });
@@ -204,7 +192,6 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
         holder.btnFavorite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                mListTitle.setIsForceViewInflation(false);
                 ListItem clickedItem = (ListItem) v.getTag();
                 if (clickedItem != null) {
                     clickedItem.setFavorite(!clickedItem.isFavorite());
@@ -213,9 +200,7 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
                     } else {
                         setAsNotFavorite((ImageButton) v);
                     }
-                    new ToggleListItemBooleanField_InBackground(ThreadExecutor.getInstance(),
-                            MainThreadImpl.getInstance(), ListItemsArrayAdapter.this,
-                            clickedItem, ListItemsSqlTable.COL_FAVORITE).execute();
+                    mListItemRepository.update(clickedItem);
                 }
             }
         });
@@ -225,8 +210,6 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
             public void onClick(View v) {
                 ListItem selectedListItem = (ListItem) v.getTag();
                 EventBus.getDefault().post(new MyEvents.showEditListItemDialog(selectedListItem));
-//                Toast.makeText(mContext, "btnEditItemName Clicked", Toast.LENGTH_SHORT).show();
-//                EventBus.getDefault().post(new MyEvents.showEditListItemDialog(selectedListItem.getItemUuid()));
             }
         });
 
@@ -291,10 +274,6 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> implements Tog
 //        EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mListTitle.getUuid()));
 //    }
 
-    @Override
-    public void onListItemBooleanFieldToggled(int toggleValue) {
-        // do nothing
-    }
 
     private class ListItemViewHolder {
         // TODO: Use Butter knife

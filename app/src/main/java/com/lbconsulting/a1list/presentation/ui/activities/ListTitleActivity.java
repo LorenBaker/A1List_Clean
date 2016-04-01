@@ -6,7 +6,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -24,8 +23,10 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveAllListThemes_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes;
+import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeSpinnerArrayAdapter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
@@ -143,19 +144,19 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         }
 
         setSupportActionBar(mToolbar);
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-            switch (mMode) {
-                case EDIT_EXISTING_LIST_TITLE:
-                    actionBar.setTitle(String.format("Edit \"%s\"", mListTitle.getName()));
-                    break;
-
-                case CREATE_NEW_LIST_TITLE:
-                    actionBar.setTitle("Create New List");
-                    break;
-            }
-        }
+//        ActionBar actionBar = getSupportActionBar();
+//        if (actionBar != null) {
+//            actionBar.setDisplayHomeAsUpEnabled(true);
+//            switch (mMode) {
+//                case EDIT_EXISTING_LIST_TITLE:
+//                    actionBar.setTitle(String.format("Edit \"%s\"", mListTitle.getName()));
+//                    break;
+//
+//                case CREATE_NEW_LIST_TITLE:
+//                    actionBar.setTitle("Create New List");
+//                    break;
+//            }
+//        }
 
         switch (mMode) {
             case EDIT_EXISTING_LIST_TITLE:
@@ -248,8 +249,8 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
     }
 
     @Override
-    public void onRetrievalFailed(String errorMessage) {
-        Timber.e("onRetrievalFailed(): %s.", errorMessage);
+    public void onAllListThemesRetrievalFailed(String errorMessage) {
+        Timber.e("onAllListThemesRetrievalFailed(): %s.", errorMessage);
     }
 
     @Override
@@ -301,8 +302,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 
 
     private void saveListTitle(ListTitle listTitle) {
-
-//        showProgress(String.format("Saving \"%s\"", listTitle.getName()));
+        Timber.i("saveListTitle()");
         ListTitleRepository_Impl listTitleRepository = AndroidApplication.getListTitleRepository();
 
         switch (mMode) {
@@ -312,6 +312,10 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 
             case CREATE_NEW_LIST_TITLE:
                 listTitleRepository.insert(listTitle);
+                AppSettingsRepository_Impl appSettingsRepository = AndroidApplication.getAppSettingsRepository();
+                AppSettings appSettings = appSettingsRepository.retrieveAppSettings();
+                appSettings.setLastListTitleViewedUuid(listTitle.getUuid());
+                appSettingsRepository.update(appSettings);
                 break;
         }
         finish();

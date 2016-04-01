@@ -47,7 +47,7 @@ public class SaveListTitlesToCloud_InBackground extends AbstractInteractor imple
             return;
         }
         if (mListTitleList == null) {
-            Timber.e("run(): Unable to save listTitleList. listTitleList is null!");
+            Timber.e("run(): Unable to save listTitles to the Cloud. ListTitles is null!");
             return;
         }
         if (mListTitleList.size() == 0) {

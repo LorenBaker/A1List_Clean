@@ -72,7 +72,7 @@ public class ListThemesPresenter_Impl extends AbstractPresenter implements ListT
     }
 
     @Override
-    public void onRetrievalFailed(String errorMessage) {
+    public void onAllListThemesRetrievalFailed(String errorMessage) {
         mView.hideProgress("");
         onError(errorMessage);
     }

@@ -7,14 +7,15 @@ import com.lbconsulting.a1list.domain.model.ListTheme;
 import java.util.List;
 
 
-public interface RetrieveAllListThemes extends Interactor {
+public interface SaveListThemesToCloud extends Interactor {
+
 
     interface Callback {
 
         // interactor callback methods
-        void onAllListThemesRetrieved(List<ListTheme> listThemes);
+        void onListThemesSavedToCloud(String successMessage, List<ListTheme> successfullySavedListThemes);
 
-        void onAllListThemesRetrievalFailed(String errorMessage);
+        void onListThemesSaveToCloudFailed(String errorMessage, List<ListTheme> successfullySavedListThemes);
 
     }
 

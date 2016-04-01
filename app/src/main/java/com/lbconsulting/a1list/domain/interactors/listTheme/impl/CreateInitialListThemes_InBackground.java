@@ -8,16 +8,16 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
-import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToBackendless;
-import com.lbconsulting.a1list.domain.interactors.appSettings.SaveDirtyObjectsToBackendless_InBackground;
+import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToCloud;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.SaveListThemeListToBackendless;
+import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.SaveListThemesToCloud;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import timber.log.Timber;
@@ -26,7 +26,7 @@ import timber.log.Timber;
  * An interactor that retrieves all ListThemes
  */
 public class CreateInitialListThemes_InBackground extends AbstractInteractor implements CreateInitialListThemes,
-        SaveAppSettingsToBackendless.Callback, SaveListThemeListToBackendless.Callback {
+        SaveAppSettingsToCloud.Callback, SaveListThemesToCloud.Callback {
 
     private final Callback mCallback;
     private final AppSettingsRepository mAppSettingsRepository;
@@ -34,7 +34,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
     //    private final ListTitleRepository mListTitleRepository;
     private final Context mContext;
 
-    private List<ListTheme> mAllListThemes;
+    private List<ListTheme> mListThemesInsertedIntoLocalStoarage;
 
     public CreateInitialListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
                                                 Callback callback) {
@@ -50,12 +50,13 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
         try {
             // create app settings
             AppSettings appSettings = AppSettings.newInstance();
-            if (!mAppSettingsRepository.insertIntoSQLiteDb(appSettings)) {
+            if (!mAppSettingsRepository.insertIntoLocalStorage(appSettings)) {
                 Timber.e("run(): FAILED to create AppSettings!");
             }
 
             //region create initial ListThemes
-            int requestedInsertListThemeCount = 0;
+//            int requestedInsertListThemeCount = 0;
+            List<ListTheme> newListThemes = new ArrayList<>();
             ListTheme newListTheme;
 
             // TODO: create resource strings for the initial ListThemes
@@ -63,225 +64,171 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                     Color.parseColor("#4c898e"), Color.parseColor("#125156"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Opal",
                     Color.parseColor("#cbdcd4"), Color.parseColor("#91a69d"),
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Shades of Blue",
                     -5777934, -10841921,
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Off White",
                     ContextCompat.getColor(mContext, R.color.white), -2436147,
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, true, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Whiskey",
                     Color.parseColor("#e9ac6d"), Color.parseColor("#ad7940"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Shakespeare",
                     Color.parseColor("#73c5d3"), Color.parseColor("#308d9e"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Sorbus",
                     Color.parseColor("#f0725b"), Color.parseColor("#bc3c21"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Dark Khaki",
                     Color.parseColor("#ced285"), Color.parseColor("#9b9f55"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Lemon Chiffon",
                     Color.parseColor("#fdfcdd"), Color.parseColor("#e3e2ac"),
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Paprika",
                     Color.parseColor("#994552"), Color.parseColor("#5f0c16"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Medium Wood",
                     Color.parseColor("#bfaa75"), Color.parseColor("#8a7246"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Breaker Bay",
                     Color.parseColor("#6d8b93"), Color.parseColor("#31535c"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Sandrift",
                     Color.parseColor("#cbb59d"), Color.parseColor("#92806c"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Pale Brown",
                     Color.parseColor("#ac956c"), Color.parseColor("#705c39"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Seagull",
                     Color.parseColor("#94dcea"), Color.parseColor("#4ea0ab"),
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Beige",
                     Color.parseColor("#fefefe"), Color.parseColor("#d3d8c2"),
                     ContextCompat.getColor(mContext, R.color.black),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Orange",
                     Color.parseColor("#ff6c52"), Color.parseColor("#e0341e"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Arsenic",
                     Color.parseColor("#545c67"), Color.parseColor("#1d242c"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
 
             newListTheme = ListTheme.newInstance("Acapulco",
                     Color.parseColor("#8dbab3"), Color.parseColor("#58857e"),
                     ContextCompat.getColor(mContext, R.color.white),
                     17f, 10f, 10f, false, false, false);
-            requestedInsertListThemeCount++;
-            if (!mListThemeRepository.insertIntoSQLiteDb(newListTheme)) {
-                Timber.e("run(): FAILED to create ListTheme \"%s\"!", newListTheme.getName());
-            }
+            newListThemes.add(newListTheme);
+
             //endregion
 
 
-            mAllListThemes = mListThemeRepository.retrieveAllListThemes(false);
+            mListThemesInsertedIntoLocalStoarage = mListThemeRepository.insert(newListThemes);
             String createdListThemeMessage;
             // check if we have failed to retrieve any ListThemes
-            if (mAllListThemes == null) {
+            if (mListThemesInsertedIntoLocalStoarage == null) {
                 // notify the failure on the main thread
                 posListThemesCreationFailed("No Themes created!");
 
             } else {
                 // we have created ListThemes. Notify the UI on the main thread.
-                if (mAllListThemes.size() != requestedInsertListThemeCount) {
-                    createdListThemeMessage = String.format("Only %d out of %d requested Themes created in the local database.", mAllListThemes.size(), requestedInsertListThemeCount);
-
+                if (mListThemesInsertedIntoLocalStoarage.size() == newListThemes.size()) {
+                    createdListThemeMessage = String.format("All %d Themes created in the local storage.",
+                            newListThemes.size());
                 } else {
-                    createdListThemeMessage = String.format("All %d Themes created in the local database.", requestedInsertListThemeCount);
+                    createdListThemeMessage = String.format("Only %d out of %d requested Themes created in the local storage.",
+                            mListThemesInsertedIntoLocalStoarage.size(), newListThemes.size());
                 }
 
                 postInitialListThemesCreated(createdListThemeMessage);
-
-                new SaveDirtyObjectsToBackendless_InBackground(mThreadExecutor,mMainThread).execute();
-
-//                AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
-//                if (dirtyAppSettings != null) {
-//                    new SaveAppSettingsToBackendless_InBackground(mThreadExecutor, mMainThread, dirtyAppSettings, this).execute();
-//                }
             }
+
+            AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
+            if (dirtyAppSettings != null) {
+                mAppSettingsRepository.updateInCloud(dirtyAppSettings);
+            }
+
+//                new SaveDirtyObjectsToBackendless_InBackground(mThreadExecutor, mMainThread).execute();
+
         } catch (Exception e) {
             Timber.e("run(): Exception: %s.", e.getMessage());
         }
     }
 
     @Override
-    public void onAppSettingsSavedToBackendless(final String successMessage) {
-        Timber.i("onAppSettingsSavedToBackendless(): %s", successMessage);
-        new SaveListThemeListToBackendless_InBackground(mThreadExecutor, mMainThread, this, mAllListThemes).execute();
+    public void onAppSettingsSavedToCloud(final String successMessage) {
+        Timber.i("onAppSettingsSavedToCloud(): %s", successMessage);
+        new SaveListThemesToCloud_InBackground(mThreadExecutor, mMainThread, this, mListThemesInsertedIntoLocalStoarage).execute();
     }
 
     @Override
-    public void onAppSettingsSaveToBackendlessFailed(final String errorMessage) {
-        Timber.e("onAppSettingsSaveToBackendlessFailed(): %s", errorMessage);
-        new SaveListThemeListToBackendless_InBackground(mThreadExecutor, mMainThread, this, mAllListThemes).execute();
+    public void onAppSettingsSaveToCloudFailed(final String errorMessage) {
+        Timber.e("onAppSettingsSaveToCloudFailed(): %s", errorMessage);
+        new SaveListThemesToCloud_InBackground(mThreadExecutor, mMainThread, this, mListThemesInsertedIntoLocalStoarage).execute();
     }
 
     @Override
-    public void onListThemeListSavedToBackendless(String successMessage, List<ListTheme> successfullySavedListThemes) {
-        Timber.i("onListThemeListSavedToBackendless(): %s", successMessage);
+    public void onListThemesSavedToCloud(String successMessage, List<ListTheme> successfullySavedListThemes) {
+        Timber.i("onListThemesSavedToCloud(): %s", successMessage);
     }
 
     @Override
-    public void onListThemeListSaveToBackendlessFailed(String errorMessage, List<ListTheme> successfullySavedListThemes) {
-        Timber.e("onListThemeListSaveToBackendlessFailed(): %s", errorMessage);
+    public void onListThemesSaveToCloudFailed(String errorMessage, List<ListTheme> successfullySavedListThemes) {
+        Timber.e("onListThemesSaveToCloudFailed(): %s", errorMessage);
     }
 
     private void postInitialListThemesCreated(final String successMessage) {

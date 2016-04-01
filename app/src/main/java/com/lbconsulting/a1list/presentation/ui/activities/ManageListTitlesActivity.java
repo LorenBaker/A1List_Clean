@@ -19,7 +19,6 @@ import com.google.gson.Gson;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listTitle.impl.ToggleListTitleBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
@@ -32,6 +31,10 @@ import com.lbconsulting.a1list.presentation.ui.adapters.ListTitleArrayAdapter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
+import com.lbconsulting.a1list.utils.MyEvents;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.List;
 
@@ -40,8 +43,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-public class ManageListTitlesActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView,
-        ToggleListTitleBooleanField_InBackground.Callback {
+public class ManageListTitlesActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView {
 
     private static ListTitlesPresenter_Impl mPresenter;
     @Bind(R.id.fab)
@@ -104,6 +106,8 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
         setContentView(R.layout.activity_manage_list_titles);
         ButterKnife.bind(this);
 
+        EventBus.getDefault().register(this);
+
         mListTitleAdapter = new ListTitleArrayAdapter(this, lvListTitles, true);
         lvListTitles.setAdapter(mListTitleAdapter);
 
@@ -129,6 +133,11 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
             getSupportActionBar().setTitle("Manage Lists");
         }
 
+    }
+
+    @Subscribe
+    public void onEvent(MyEvents.incrementStrikeOutCount event) {
+        mNumberOfStruckOutListTitles += event.getIncrement();
     }
 
     @OnClick(R.id.fab)
@@ -176,7 +185,7 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
     }
 
     @Override
-    public void displayAllListTitles(List<ListTitle> allListTitles) {
+    public void onPresenterAllListTitlesRetrieved(List<ListTitle> allListTitles) {
         // mPresenter's results
         mListTitleAdapter.setData(allListTitles);
         mListTitleAdapter.notifyDataSetChanged();
@@ -192,6 +201,7 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
     protected void onDestroy() {
         super.onDestroy();
         Timber.i("onDestroy()");
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -248,26 +258,5 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
                 .show();
     }
 
-
-//    @Override
-//    public void onStruckOutListTitlesDeleted(String successMessage) {
-//        Timber.i("onStruckOutListTitlesDeleted(): %s.", successMessage);
-//        mNumberOfStruckOutListTitles = 0;
-//        mPresenter.resume();
-//        hideProgress("");
-//    }
-//
-//    @Override
-//    public void onStruckOutListTitlesDeletionFailed(String errorMessage) {
-//        Timber.e("onStruckOutListTitlesDeleted(): %s.", errorMessage);
-//        mNumberOfStruckOutListTitles = mListTitleRepository.retrieveNumberOfStruckOutListTitles();
-//        mPresenter.resume();
-//        hideProgress("");
-//    }
-
-    @Override
-    public void onListTitleBooleanFieldToggled(int toggleValue) {
-        mNumberOfStruckOutListTitles += toggleValue;
-    }
 
 }

@@ -12,6 +12,7 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemToCloud;
 import com.lbconsulting.a1list.domain.model.ListItem;
+import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
@@ -36,10 +37,10 @@ public class SaveListItemToCloud_InBackground extends AbstractInteractor impleme
 
     @Override
     public void run() {
-        // saveListItemToBackendless
-        ListItem response;
         int TRUE = 1;
         int FALSE = 0;
+
+        ListItem response;
 
         if (mListItem == null) {
             Timber.e("run(): Unable to save ListItem. ListItem is null!");
@@ -49,6 +50,28 @@ public class SaveListItemToCloud_InBackground extends AbstractInteractor impleme
             return;
         }
 
+        // Check if the ListTitle associated with the ListItem has been saved in Backendless
+        ListTitle listTitle = mListItem.getListTitle();
+        String listTitleObjectID = listTitle.getObjectId();
+        if (listTitleObjectID == null || listTitleObjectID.isEmpty()) {
+            // The ListTitle has not been saved to Backendless ... so
+            // Retrieve the ListTitle from local storage and check again.
+            listTitle = AndroidApplication.getListTitleRepository().retrieveListTitleByUuid(listTitle.getUuid());
+            if (listTitleObjectID == null || listTitleObjectID.isEmpty()) {
+                // The ListTitle from the Local Storage has NOT been saved to Backendless ... so
+                // The ListItem cannot be saved to Backendless.
+                Timber.i("run(): Cannot save ListItem \"%s\" to Backendless because ListTitle \"%s\" has not previously been saved to Backendless.",
+                        mListItem.getName(), listTitle.getName());
+                // Do not continue.
+                return;
+            } else {
+                // The ListTitle from the Local Storage has been saved to Backendless ... so
+                // associated it with the ListItem
+                mListItem.setListTitle(listTitle);
+            }
+        }
+
+        // saveListItemToBackendless
         String objectId = mListItem.getObjectId();
         boolean isNew = objectId == null || objectId.isEmpty();
         try {
@@ -65,6 +88,7 @@ public class SaveListItemToCloud_InBackground extends AbstractInteractor impleme
                     cv.put(ListItemsSqlTable.COL_UPDATED, updated);
                 }
 
+
                 cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, FALSE);
 
                 // If a new ListItem, update SQLite db with objectID
@@ -80,6 +104,7 @@ public class SaveListItemToCloud_InBackground extends AbstractInteractor impleme
             } catch (Exception e) {
                 // Set dirty flag to true in SQLite db
                 ContentValues cv = new ContentValues();
+
                 cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
                 updateSQLiteDb(mListItem, cv);
 
