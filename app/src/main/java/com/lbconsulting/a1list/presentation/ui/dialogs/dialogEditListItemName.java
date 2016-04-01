@@ -70,6 +70,8 @@ public class dialogEditListItemName extends DialogFragment {
             String listItemJson = args.getString(ARG_LIST_ITEM_JSON);
             Gson gson = new Gson();
             mListItem = gson.fromJson(listItemJson, ListItem.class);
+            // make sure we have the latest ListItem
+            mListItem = mListItemRepository.retrieveListItemByUuid(mListItem.getUuid());
             if (mListItem == null) {
                 Timber.e("onCreate(): FAILED to retrieve ListItem");
             }
@@ -92,7 +94,8 @@ public class dialogEditListItemName extends DialogFragment {
                         String listItemProposedName = txtListItemName.getText().toString().trim();
                         if (okToReviseListItemName(listItemProposedName)) {
                             mListItem.setName(listItemProposedName);
-                            EventBus.getDefault().post(new MyEvents.updateListItem(mListItem));
+                            mListItemRepository.update(mListItem);
+                            EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mListItem.getListTitle().getUuid()));
                             dismiss();
                         }
                     }

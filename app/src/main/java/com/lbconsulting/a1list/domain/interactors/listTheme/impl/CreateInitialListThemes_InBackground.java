@@ -50,7 +50,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
         try {
             // create app settings
             AppSettings appSettings = AppSettings.newInstance();
-            if (!mAppSettingsRepository.insertIntoLocalStorage(appSettings)) {
+            if (!mAppSettingsRepository.insert(appSettings)) {
                 Timber.e("run(): FAILED to create AppSettings!");
             }
 
@@ -199,7 +199,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
 
             AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
             if (dirtyAppSettings != null) {
-                mAppSettingsRepository.updateInCloud(dirtyAppSettings);
+                mAppSettingsRepository.updateInCloud(dirtyAppSettings, false);
             }
 
 //                new SaveDirtyObjectsToBackendless_InBackground(mThreadExecutor, mMainThread).execute();

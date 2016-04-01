@@ -34,17 +34,17 @@ public class MyEvents {
         }
     }
 
-    public static class updateListItem {
-        private final ListItem mListItem;
-
-        public updateListItem(ListItem listItem) {
-            mListItem = listItem;
-        }
-
-        public ListItem getListItem() {
-            return mListItem;
-        }
-    }
+//    public static class updateListItem {
+//        private final ListItem mListItem;
+//
+//        public updateListItem(ListItem listItem) {
+//            mListItem = listItem;
+//        }
+//
+//        public ListItem getListItem() {
+//            return mListItem;
+//        }
+//    }
 
 
     public static class replaceListTitle {

@@ -38,7 +38,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
     public boolean insert(AppSettings appSettings) {
         boolean successfullyInsertedAppSettingsIntoCloud = insertIntoLocalStorage(appSettings);
         if (successfullyInsertedAppSettingsIntoCloud) {
-            updateInCloud(appSettings);
+            insertInCloud(appSettings);
         }
         return successfullyInsertedAppSettingsIntoCloud;
     }
@@ -95,7 +95,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 
     @Override
     public void insertInCloud(AppSettings appSettings) {
-        updateInCloud(appSettings);
+        updateInCloud(appSettings,true);
     }
     //endregion
 
@@ -104,7 +104,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
     public void update(AppSettings appSettings) {
         if(appSettings!=null) {
             if (updateInLocalStorage(appSettings) == 1) {
-                updateInCloud(appSettings);
+                updateInCloud(appSettings,false);
             }
         }
     }
@@ -174,7 +174,22 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 
 
     @Override
-    public void updateInCloud(AppSettings appSettings) {
+    public void updateInCloud(AppSettings appSettings, boolean isNew) {
+        
+        if(!isNew){
+            if (appSettings.getObjectId() == null || appSettings.getObjectId().isEmpty()) {
+                AppSettings existingAppSettings = retrieveAppSettings();
+                appSettings.setObjectId(existingAppSettings.getObjectId());
+            }
+            if (appSettings.getObjectId() == null || appSettings.getObjectId().isEmpty()) {
+                // The appSettings is not new AND there is no Backendless objectId available ... so,
+                // Unable to update the appSettings in Backendless
+                Timber.e("updateInCloud(): Unable to update \"%s\" AppSettings in the Cloud. No Backendless objectId available!",
+                        appSettings.getName());
+                return;
+            }
+        }
+
         new SaveAppSettingsToCloud_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(),
                 this, appSettings).execute();
     }

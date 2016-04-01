@@ -30,7 +30,7 @@ public interface AppSettingsRepository {
 
     int updateInLocalStorage(AppSettings appSettings);
 
-    void updateInCloud(AppSettings appSettings);
+    void updateInCloud(AppSettings appSettings, boolean isNew);
     //endregion
 
 }

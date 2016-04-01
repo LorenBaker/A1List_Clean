@@ -47,11 +47,11 @@ public interface ListThemeRepository {
 
     int updateInLocalStorage(ListTheme listTheme);
 
-    void updateInCloud(List<ListTheme> listThemes);
+    void updateInCloud(List<ListTheme> listThemes, boolean isNew);
 
-    void updateInCloud(ListTheme listTheme);
+    void updateInCloud(ListTheme listTheme, boolean isNew);
 
-    int toggle(ListTheme listTheme, String fieldName);
+//    int toggle(ListTheme listTheme, String fieldName);
 
     void clearDefaultFlag();
 

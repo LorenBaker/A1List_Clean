@@ -51,9 +51,9 @@ public interface ListTitleRepository {
 
     int updateInLocalStorage(ListTitle listTitle);
 
-    void updateInCloud(List<ListTitle> listTitles);
+    void updateInCloud(List<ListTitle> listTitles, boolean isNew);
 
-    void updateInCloud(ListTitle listTitle);
+    void updateInCloud(ListTitle listTitle, boolean isNew);
 
     int toggle(ListTitle listTitle, String fieldName);
 

@@ -64,7 +64,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
     public boolean insert(ListTheme listTheme) {
         boolean successfullySavedIntoLocalStorage = insertIntoLocalStorage(listTheme);
         if (successfullySavedIntoLocalStorage) {
-            updateInCloud(listTheme);
+            insertInCloud(listTheme);
         }
         return successfullySavedIntoLocalStorage;
     }
@@ -142,12 +142,12 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 
     @Override
     public void insertInCloud(List<ListTheme> listThemes) {
-        updateInCloud(listThemes);
+        updateInCloud(listThemes, true);
     }
 
     @Override
     public void insertInCloud(ListTheme listTheme) {
-        updateInCloud(listTheme);
+        updateInCloud(listTheme, true);
     }
     //endregion
 
@@ -523,14 +523,14 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
     public void update(List<ListTheme> listThemes) {
         List<ListTheme> successfullyUpdatedListThemesInLocalStorage = updateInLocalStorage(listThemes);
         if (successfullyUpdatedListThemesInLocalStorage.size() > 0) {
-            updateInCloud(successfullyUpdatedListThemesInLocalStorage);
+            updateInCloud(successfullyUpdatedListThemesInLocalStorage,false);
         }
     }
 
     @Override
     public void update(ListTheme listTheme) {
         if (updateInLocalStorage(listTheme) == 1) {
-            updateInCloud(listTheme);
+            updateInCloud(listTheme,false);
         }
     }
 
@@ -581,95 +581,95 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 
     }
 
-    public int toggle(ListTheme listTheme, String fieldName) {
-        int result = 0;
-        ListTheme currentListTheme = retrieveListThemeByUuid(listTheme.getUuid());
-        if (currentListTheme == null) {
-            Timber.e("toggle(): Unable to toggle field \"%s\". Could not find ListTheme \"%s\".", fieldName, listTheme.getName());
-            return 0;
-        }
-
-        boolean newValue;
-        ContentValues cv = new ContentValues();
-        switch (fieldName) {
-            case ListThemesSqlTable.COL_BOLD:
-                newValue = !currentListTheme.isBold();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListThemesSqlTable.COL_BOLD, newValue ? TRUE : FALSE);
-                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
-                updateInLocalStorage(listTheme, cv);
-                break;
-
-            case ListThemesSqlTable.COL_CHECKED:
-                newValue = !currentListTheme.isChecked();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListThemesSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
-                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
-                updateInLocalStorage(listTheme, cv);
-                break;
-
-            case ListThemesSqlTable.COL_DEFAULT_THEME:
-                newValue = !currentListTheme.isDefaultTheme();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListThemesSqlTable.COL_DEFAULT_THEME, newValue ? TRUE : FALSE);
-                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
-                updateInLocalStorage(listTheme, cv);
-                break;
-
-            case ListThemesSqlTable.COL_MARKED_FOR_DELETION:
-                newValue = !currentListTheme.isMarkedForDeletion();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListThemesSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
-                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
-                updateInLocalStorage(listTheme, cv);
-                break;
-
-            case ListThemesSqlTable.COL_TRANSPARENT:
-                newValue = !currentListTheme.isTransparent();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListThemesSqlTable.COL_TRANSPARENT, newValue ? TRUE : FALSE);
-                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
-                updateInLocalStorage(listTheme, cv);
-                break;
-
-            case ListThemesSqlTable.COL_STRUCK_OUT:
-                newValue = !currentListTheme.isStruckOut();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListThemesSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
-                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
-                updateInLocalStorage(listTheme, cv);
-                break;
-
-            default:
-                Timber.e("toggle(): Unknown Field Name! \"%s\"", fieldName);
-                break;
-        }
-        return result;
-    }
+//    public int toggle(ListTheme listTheme, String fieldName) {
+//        int result = 0;
+//        ListTheme currentListTheme = retrieveListThemeByUuid(listTheme.getUuid());
+//        if (currentListTheme == null) {
+//            Timber.e("toggle(): Unable to toggle field \"%s\". Could not find ListTheme \"%s\".", fieldName, listTheme.getName());
+//            return 0;
+//        }
+//
+//        boolean newValue;
+//        ContentValues cv = new ContentValues();
+//        switch (fieldName) {
+//            case ListThemesSqlTable.COL_BOLD:
+//                newValue = !currentListTheme.isBold();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListThemesSqlTable.COL_BOLD, newValue ? TRUE : FALSE);
+//                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
+//                updateInLocalStorage(listTheme, cv);
+//                break;
+//
+//            case ListThemesSqlTable.COL_CHECKED:
+//                newValue = !currentListTheme.isChecked();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListThemesSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
+//                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
+//                updateInLocalStorage(listTheme, cv);
+//                break;
+//
+//            case ListThemesSqlTable.COL_DEFAULT_THEME:
+//                newValue = !currentListTheme.isDefaultTheme();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListThemesSqlTable.COL_DEFAULT_THEME, newValue ? TRUE : FALSE);
+//                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
+//                updateInLocalStorage(listTheme, cv);
+//                break;
+//
+//            case ListThemesSqlTable.COL_MARKED_FOR_DELETION:
+//                newValue = !currentListTheme.isMarkedForDeletion();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListThemesSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
+//                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
+//                updateInLocalStorage(listTheme, cv);
+//                break;
+//
+//            case ListThemesSqlTable.COL_TRANSPARENT:
+//                newValue = !currentListTheme.isTransparent();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListThemesSqlTable.COL_TRANSPARENT, newValue ? TRUE : FALSE);
+//                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
+//                updateInLocalStorage(listTheme, cv);
+//                break;
+//
+//            case ListThemesSqlTable.COL_STRUCK_OUT:
+//                newValue = !currentListTheme.isStruckOut();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListThemesSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
+//                cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
+//                updateInLocalStorage(listTheme, cv);
+//                break;
+//
+//            default:
+//                Timber.e("toggle(): Unknown Field Name! \"%s\"", fieldName);
+//                break;
+//        }
+//        return result;
+//    }
 
     public void clearDefaultFlag() {
         try {
@@ -707,7 +707,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
         }
 
         if (listThemesUpdatedInLocalStorage.size() > 0) {
-            updateInCloud(listThemesUpdatedInLocalStorage);
+            updateInCloud(listThemesUpdatedInLocalStorage,false);
         }
 
         return listThemesUpdatedInLocalStorage.size();
@@ -728,9 +728,37 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
     }
 
     @Override
-    public void updateInCloud(List<ListTheme> listThemes) {
-        new SaveListThemesToCloud_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, listThemes).execute();
+    public void updateInCloud(List<ListTheme> listThemes, boolean isNew) {
+        List<ListTheme> listThemesThatDoNotHaveObjectIds = new ArrayList<>();
+        List<ListTheme> listThemesThatHaveObjectIds = new ArrayList<>();
+        if (!isNew) {
+            // If the listTheme is not new ... make sure that it has a Backendless objectId.
+            for (ListTheme listTheme : listThemes) {
+                if (listTheme.getObjectId() == null || listTheme.getObjectId().isEmpty()) {
+                    ListTheme existingListTheme = retrieveListThemeByUuid(listTheme.getUuid());
+                    if (existingListTheme.getObjectId() == null || existingListTheme.getObjectId().isEmpty()) {
+                        listThemesThatDoNotHaveObjectIds.add(listTheme);
+                    } else {
+                        listTheme.setObjectId(existingListTheme.getObjectId());
+                        listThemesThatHaveObjectIds.add(listTheme);
+                    }
+                } else {
+                    listThemesThatHaveObjectIds.add(listTheme);
+                }
+            }
+
+            new SaveListThemesToCloud_InBackground(ThreadExecutor.getInstance(),
+                    MainThreadImpl.getInstance(), this, listThemesThatHaveObjectIds).execute();
+
+            for (ListTheme listTheme : listThemesThatDoNotHaveObjectIds) {
+                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                        listTheme.getName());
+            }
+
+        } else {
+            new SaveListThemesToCloud_InBackground(ThreadExecutor.getInstance(),
+                    MainThreadImpl.getInstance(), this, listThemes).execute();
+        }
     }
 
     @Override
@@ -744,7 +772,22 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
     }
 
     @Override
-    public void updateInCloud(ListTheme listTheme) {
+    public void updateInCloud(ListTheme listTheme, boolean isNew) {
+        // If the listTheme is not new ... make sure that it has a Backendless objectId.
+        if (!isNew) {
+            if (listTheme.getObjectId() == null || listTheme.getObjectId().isEmpty()) {
+                ListTheme existingListTheme = retrieveListThemeByUuid(listTheme.getUuid());
+                listTheme.setObjectId(existingListTheme.getObjectId());
+            }
+            if (listTheme.getObjectId() == null || listTheme.getObjectId().isEmpty()) {
+                // The listTheme is not new AND there is no Backendless objectId available ... so,
+                // Unable to update the listTheme in Backendless
+                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                        listTheme.getName());
+                return;
+            }
+        }
+        
         new SaveListThemeToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listTheme).execute();
     }

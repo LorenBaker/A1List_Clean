@@ -154,7 +154,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 //        );
         //endregion
 
-
     }
 
     @Subscribe
@@ -162,11 +161,11 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         mSectionsPagerAdapter.replaceListTitle(event.getPosition(), event.getListTitle());
     }
 
-    @Subscribe
-    public void onEvent(MyEvents.updateListItem event) {
-        mListItemRepository.update(event.getListItem());
-        EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
-    }
+//    @Subscribe
+//    public void onEvent(MyEvents.updateListItem event) {
+//        mListItemRepository.update(event.getListItem());
+//        EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
+//    }
 
     @Subscribe
     public void onEvent(MyEvents.showEditListItemDialog event) {
@@ -179,9 +178,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 
     @OnClick(R.id.fab)
     public void fab() {
-//        String message = "Create new ListItem clicked.";
-//        CommonMethods.showSnackbar(mFab, message, Snackbar.LENGTH_LONG);
-
         if (mActiveListTitle != null) {
             // Check if the ListTitle has been saved in Backendless
             String listTitleObjectID = mActiveListTitle.getObjectId();
@@ -192,7 +188,10 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             }
 
             showNewListItemDialog(mActiveListTitle);
+        }else{
+            Timber.e("fab()onClick: Unable add ListItem because there is no ListTitle!");
         }
+
     }
 
     private void showNewListItemDialog(ListTitle listTitle) {
@@ -274,7 +273,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         String lastListTitleViewedUuid = appSettings.getLastListTitleViewedUuid();
         int position = mSectionsPagerAdapter.getPosition(lastListTitleViewedUuid);
         mViewPager.setCurrentItem(position);
-
+        mActiveListTitle = mSectionsPagerAdapter.getListTitle(position);
     }
 
     @Override
@@ -392,7 +391,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 
         } else if (id == R.id.action_settings) {
             showPreferencesActivity();
-            Toast.makeText(this, "action_settings clicked", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this, "action_settings clicked", Toast.LENGTH_SHORT).show();
             return true;
 
         } else if (id == R.id.action_addTestLists) {
@@ -561,7 +560,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     }
 
     private void showPreferencesActivity() {
-        Toast.makeText(this, "deleteStruckOutItems clicked", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "action_settings clicked", Toast.LENGTH_SHORT).show();
 
     }
 

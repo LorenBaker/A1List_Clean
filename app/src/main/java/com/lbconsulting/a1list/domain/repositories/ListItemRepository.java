@@ -51,9 +51,9 @@ public interface ListItemRepository {
 
     int updateInLocalStorage(ListItem listItem);
 
-    void updateInCloud(List<ListItem> listItems);
+    void updateInCloud(List<ListItem> listItems, boolean isNew);
 
-    void updateInCloud(ListItem listItem);
+    void updateInCloud(ListItem listItem, boolean isNew);
 
     int toggle(ListItem listItem, String fieldName);
     //endregion

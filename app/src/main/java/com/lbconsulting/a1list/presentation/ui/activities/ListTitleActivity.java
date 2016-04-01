@@ -20,9 +20,6 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
-import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
-import com.lbconsulting.a1list.domain.interactors.listTheme.impl.RetrieveAllListThemes_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.RetrieveAllListThemes;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
@@ -30,7 +27,6 @@ import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeSpinnerArrayAdapter;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
-import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.MyEvents;
 
@@ -44,9 +40,9 @@ import butterknife.ButterKnife;
 import timber.log.Timber;
 
 
-public class ListTitleActivity extends AppCompatActivity implements View.OnClickListener,
+public class ListTitleActivity extends AppCompatActivity implements View.OnClickListener{
 //        ListThemesPresenter.ListThemeView,
-        RetrieveAllListThemes.Callback {
+//        RetrieveAllListThemes.Callback {
 
     public static final String ARG_LIST_TITLE_JSON = "argListTitleJson";
     public static final String ARG_MODE = "argMode";
@@ -101,10 +97,6 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 
     private int mMode;
     private ListTitle mListTitle;
-    //    private AppSettingsRepository_Impl mAppSettingsRepository;
-//    private ListThemeRepository_Impl mListThemeRepository;
-//    private ListTitleRepository_Impl mListTitleRepository;
-    //    private ListThemesPresenter_Impl mListThemesPresenter;
     private ListThemeSpinnerArrayAdapter mListThemeSpinnerArrayAdapter;
 
 
@@ -144,20 +136,6 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         }
 
         setSupportActionBar(mToolbar);
-//        ActionBar actionBar = getSupportActionBar();
-//        if (actionBar != null) {
-//            actionBar.setDisplayHomeAsUpEnabled(true);
-//            switch (mMode) {
-//                case EDIT_EXISTING_LIST_TITLE:
-//                    actionBar.setTitle(String.format("Edit \"%s\"", mListTitle.getName()));
-//                    break;
-//
-//                case CREATE_NEW_LIST_TITLE:
-//                    actionBar.setTitle("Create New List");
-//                    break;
-//            }
-//        }
-
         switch (mMode) {
             case EDIT_EXISTING_LIST_TITLE:
                 btnSaveList.setText("Save Changes");
@@ -170,15 +148,8 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
                 break;
         }
 
-//        mAppSettingsRepository = new AppSettingsRepository_Impl(this);
-//        mListThemeRepository = new ListThemeRepository_Impl(this);
-//        mListTitleRepository = new ListTitleRepository_Impl(this,mAppSettingsRepository ,mListThemeRepository);
-//        mListThemesPresenter = new ListThemesPresenter_Impl(ThreadExecutor.getInstance(),
-//                MainThreadImpl.getInstance(), this, mListThemeRepository);
-
         mListThemeSpinnerArrayAdapter = new ListThemeSpinnerArrayAdapter(this, spnListTitles);
         spnListTitles.setAdapter(mListThemeSpinnerArrayAdapter);
-
 
         // set button OnClickListeners
         for (int i = 0; i < llContentListTitleSettings.getChildCount(); i++) {
@@ -222,8 +193,12 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         super.onResume();
         Timber.i("onResume()");
         if (mListTitle != null) {
-            new RetrieveAllListThemes_InBackground(ThreadExecutor.getInstance(),
-                    MainThreadImpl.getInstance(), this).execute();
+
+            final List<ListTheme> allListThemes = AndroidApplication.getListThemeRepository().retrieveAllListThemes(false);
+            onAllListThemesRetrieved(allListThemes);
+
+//            new RetrieveAllListThemes_InBackground(ThreadExecutor.getInstance(),
+//                    MainThreadImpl.getInstance(), this).execute();
 
             if (mMode == CREATE_NEW_LIST_TITLE) {
                 FragmentManager fm = getSupportFragmentManager();
@@ -238,7 +213,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
-    @Override
+//    @Override
     public void onAllListThemesRetrieved(List<ListTheme> listThemes) {
         mListThemeSpinnerArrayAdapter.setData(listThemes);
         mListThemeSpinnerArrayAdapter.notifyDataSetChanged();
@@ -248,10 +223,10 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         updateUI(mListTitle);
     }
 
-    @Override
-    public void onAllListThemesRetrievalFailed(String errorMessage) {
-        Timber.e("onAllListThemesRetrievalFailed(): %s.", errorMessage);
-    }
+//    @Override
+//    public void onAllListThemesRetrievalFailed(String errorMessage) {
+//        Timber.e("onAllListThemesRetrievalFailed(): %s.", errorMessage);
+//    }
 
     @Override
     protected void onPause() {

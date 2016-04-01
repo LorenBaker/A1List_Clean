@@ -19,7 +19,6 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.DeleteListThemesFromCloud_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTheme.impl.ToggleListThemeBooleanField_InBackground;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.impl.ListThemesPresenter_Impl;
@@ -43,7 +42,7 @@ import butterknife.OnClick;
 import timber.log.Timber;
 
 public class ManageListThemesActivity extends AppCompatActivity implements ListThemesPresenter.ListThemeView,
-        DeleteListThemesFromCloud_InBackground.Callback, ToggleListThemeBooleanField_InBackground.Callback {
+        DeleteListThemesFromCloud_InBackground.Callback {
     private static ListThemesPresenter_Impl mPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
@@ -193,6 +192,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     public void onEvent(MyEvents.incrementStrikeOutCount event) {
         mNumberOfStruckOutListThemes += event.getIncrement();
     }
+
     @OnClick(R.id.fab)
     public void fab() {
         String message = "Create New ListTheme action button clicked.";
@@ -327,10 +327,10 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
 //        hideProgress("");
 //    }
 
-    @Override
-    public void onListThemeBooleanFieldToggled(int toggleValue) {
-        mNumberOfStruckOutListThemes += toggleValue;
-    }
+//    @Override
+//    public void onListThemeBooleanFieldToggled(int toggleValue) {
+//        mNumberOfStruckOutListThemes += toggleValue;
+//    }
 
 
     private class MessagePayload {

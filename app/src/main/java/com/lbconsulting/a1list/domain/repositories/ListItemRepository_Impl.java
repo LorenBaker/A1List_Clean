@@ -65,7 +65,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         // insert new listItem into SQLite db
         boolean successfullySavedIntoLocalStorage = insertIntoLocalStorage(listItem);
         if (successfullySavedIntoLocalStorage) {
-            updateInCloud(listItem);
+            insertInCloud(listItem);
         }
         return successfullySavedIntoLocalStorage;
     }
@@ -140,12 +140,12 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     @Override
     public void insertInCloud(List<ListItem> listItems) {
-        updateInCloud(listItems);
+        updateInCloud(listItems, true);
     }
 
     @Override
     public void insertInCloud(ListItem listItem) {
-        updateInCloud(listItem);
+        updateInCloud(listItem, true);
     }
 
     //endregion
@@ -506,14 +506,14 @@ public class ListItemRepository_Impl implements ListItemRepository,
     public void update(List<ListItem> listItems) {
         List<ListItem> successfullyUpdatedListItemsInLocalStorage = updateInLocalStorage(listItems);
         if (successfullyUpdatedListItemsInLocalStorage.size() > 0) {
-            updateInCloud(successfullyUpdatedListItemsInLocalStorage);
+            updateInCloud(successfullyUpdatedListItemsInLocalStorage, false);
         }
     }
 
     @Override
     public void update(ListItem listItem) {
         if (updateInLocalStorage(listItem) == 1) {
-            updateInCloud(listItem);
+            updateInCloud(listItem, false);
         }
     }
 
@@ -543,7 +543,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         int numberOfRecordsUpdated = updateInLocalStorage(listItem, cv);
         if (numberOfRecordsUpdated == 1) {
             Timber.i("updateInLocalStorage(): Successfully updated \"%s\" in the SQLiteDb.", listItem.getName());
-        }else{
+        } else {
             Timber.e("updateInLocalStorage(): FAILED to update \"%s\" in the SQLiteDb.", listItem.getName());
         }
         return numberOfRecordsUpdated;
@@ -570,9 +570,40 @@ public class ListItemRepository_Impl implements ListItemRepository,
     //region Update ListItem in Cloud
 
     @Override
-    public void updateInCloud(List<ListItem> listItems) {
-        new SaveListItemsToCloud_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, listItems).execute();
+    public void updateInCloud(List<ListItem> listItems, boolean isNew) {
+        List<ListItem> listItemsThatDoNotHaveObjectIds = new ArrayList<>();
+        List<ListItem> listItemsThatHaveObjectIds = new ArrayList<>();
+
+        if (!isNew) {
+            // If the listItem is not new ... make sure that it has a Backendless objectId.
+            for (ListItem listItem : listItems) {
+                if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
+                    ListItem existingListItem = retrieveListItemByUuid(listItem.getUuid());
+                    if (existingListItem.getObjectId() == null || existingListItem.getObjectId().isEmpty()) {
+                        listItemsThatDoNotHaveObjectIds.add(listItem);
+                    } else {
+                        listItem.setObjectId(existingListItem.getObjectId());
+                        listItemsThatHaveObjectIds.add(listItem);
+                    }
+                } else {
+                    listItemsThatHaveObjectIds.add(listItem);
+                }
+            }
+
+            new SaveListItemsToCloud_InBackground(ThreadExecutor.getInstance(),
+                    MainThreadImpl.getInstance(), this, listItemsThatHaveObjectIds).execute();
+
+            for (ListItem listItem : listItemsThatDoNotHaveObjectIds) {
+                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                        listItem.getName());
+            }
+
+        } else {
+            new SaveListItemsToCloud_InBackground(ThreadExecutor.getInstance(),
+                    MainThreadImpl.getInstance(), this, listItems).execute();
+        }
+
+
     }
 
     @Override
@@ -586,7 +617,21 @@ public class ListItemRepository_Impl implements ListItemRepository,
     }
 
     @Override
-    public void updateInCloud(ListItem listItem) {
+    public void updateInCloud(ListItem listItem, boolean isNew) {
+        // If the listItem is not new ... make sure that it has a Backendless objectId.
+        if (!isNew) {
+            if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
+                ListItem existingListItem = retrieveListItemByUuid(listItem.getUuid());
+                listItem.setObjectId(existingListItem.getObjectId());
+            }
+            if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
+                // The listItem is not new AND there is no Backendless objectId available ... so,
+                // Unable to update the listItem in Backendless
+                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                        listItem.getName());
+                return;
+            }
+        }
         new SaveListItemToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listItem).execute();
     }
@@ -685,7 +730,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         }
 
         if (listItemsForCloudUpdate.size() > 0) {
-            updateInCloud(listItemsForCloudUpdate);
+            updateInCloud(listItemsForCloudUpdate, false);
         }
 
         if (listItemsForCloudDeletion.size() > 0) {
@@ -702,7 +747,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
             if (listItem.isFavorite()) {
                 listItem.setMarkedForDeletion(true);
                 listItem.setStruckOut(false);
-                updateInCloud(listItem);
+                updateInCloud(listItem, false);
             } else {
                 deleteFromCloud(listItem);
             }
@@ -716,6 +761,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
         List<ListItem> successfullyMarkedForDeletionListItems = new ArrayList<>();
         for (ListItem listItem : listItems) {
             if (deleteFromLocalStorage(listItem) == 1) {
+                listItem.setMarkedForDeletion(true);
+                listItem.setStruckOut(false);
                 successfullyMarkedForDeletionListItems.add(listItem);
             }
         }
