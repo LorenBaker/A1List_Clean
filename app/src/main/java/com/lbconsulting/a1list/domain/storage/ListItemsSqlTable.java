@@ -24,9 +24,9 @@ public class ListItemsSqlTable {
     public static final String COL_STRUCK_OUT = "struckOut";
     public static final String COL_UPDATED = "updated";
 
-    public static final String[] PROJECTION_ALL = {COL_ID,COL_UUID, COL_OBJECT_ID, COL_NAME,
-            COL_LIST_TITLE_UUID,  COL_MANUAL_SORT_KEY, COL_CHECKED, COL_FAVORITE,
-            COL_LIST_ITEM_DIRTY, COL_MARKED_FOR_DELETION, COL_STRUCK_OUT,  COL_UPDATED};
+    public static final String[] PROJECTION_ALL = {COL_ID, COL_UUID, COL_OBJECT_ID, COL_NAME,
+            COL_LIST_TITLE_UUID, COL_MANUAL_SORT_KEY, COL_CHECKED, COL_FAVORITE,
+            COL_LIST_ITEM_DIRTY, COL_MARKED_FOR_DELETION, COL_STRUCK_OUT, COL_UPDATED};
 
     public static final String CONTENT_PATH = "listItems";
     public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + "vnd.lbconsulting."

@@ -24,6 +24,7 @@ import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -39,11 +40,11 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         DeleteListTitleFromCloud.Callback,
         DeleteListTitlesFromCloud.Callback {
 
-    private final int FALSE = 0;
-    private final int TRUE = 1;
+    private static ListThemeRepository_Impl mListThemeRepository = null;
+    private static final int FALSE = 0;
+    private static final int TRUE = 1;
     private final Context mContext;
     private final AppSettingsRepository_Impl mAppSettingsRepository;
-    private final ListThemeRepository_Impl mListThemeRepository;
 
     public ListTitleRepository_Impl(Context context) {
         // private constructor
@@ -55,6 +56,40 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     // CRUD operations
 
     //region Insert ListTitle
+
+    public static ListTitle listTitleFromCursor(Cursor cursor) {
+
+        ListTitle listTitle = new ListTitle();
+        listTitle.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_ID)));
+        listTitle.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_OBJECT_ID)));
+        listTitle.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_UUID)));
+        listTitle.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_NAME)));
+
+        String listThemeUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_THEME_UUID));
+        ListTheme listTheme = mListThemeRepository.retrieveListThemeByUuid(listThemeUuid);
+        listTitle.setListTheme(listTheme);
+
+        listTitle.setListLockString(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_LOCKED_STRING)));
+        listTitle.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_MANUAL_SORT_KEY)));
+        listTitle.setListItemLastSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY)));
+
+        listTitle.setFirstVisiblePosition(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION)));
+        listTitle.setListViewTop(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_VIEW_TOP)));
+
+        listTitle.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_CHECKED)) > 0);
+        listTitle.setForceViewInflation(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION)) > 0);
+        listTitle.setListLocked(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_LOCKED)) > 0);
+        listTitle.setListPrivateToThisDevice(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE)) > 0);
+        listTitle.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_MARKED_FOR_DELETION)) > 0);
+        listTitle.setSortListItemsAlphabetically(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY)) > 0);
+        listTitle.setStruckOut(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_STRUCK_OUT)) > 0);
+
+        long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_UPDATED));
+        Date updated = new Date(dateMillis);
+        listTitle.setUpdated(updated);
+
+        return listTitle;
+    }
 
     @Override
     public List<ListTitle> insert(List<ListTitle> listTitles) {
@@ -101,6 +136,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         long newListTitleSqlId = -1;
 
         Uri uri = ListTitlesSqlTable.CONTENT_URI;
+        listTitle.setUpdated(Calendar.getInstance().getTime());
         ContentValues cv = makeListTitleContentValues(listTitle);
         ContentResolver cr = mContext.getContentResolver();
         Uri newListTitleUri = cr.insert(uri, cv);
@@ -120,32 +156,36 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         return result;
     }
 
-    private ContentValues makeListTitleContentValues(ListTitle listTitle) {
+    public static ContentValues makeListTitleContentValues(ListTitle listTitle) {
         ContentValues cv = new ContentValues();
 
-        cv.put(ListTitlesSqlTable.COL_NAME, listTitle.getName());
-        cv.put(ListTitlesSqlTable.COL_UUID, listTitle.getUuid());
-        cv.put(ListTitlesSqlTable.COL_OBJECT_ID, listTitle.getObjectId());
-        cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListTheme().getUuid());
+        try {
+            cv.put(ListTitlesSqlTable.COL_NAME, listTitle.getName());
+            cv.put(ListTitlesSqlTable.COL_UUID, listTitle.getUuid());
+            cv.put(ListTitlesSqlTable.COL_OBJECT_ID, listTitle.getObjectId());
+            cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListTheme().getUuid());
 
-        cv.put(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION, listTitle.getFirstVisiblePosition());
-        cv.put(ListTitlesSqlTable.COL_LIST_VIEW_TOP, listTitle.getListViewTop());
-        cv.put(ListTitlesSqlTable.COL_MANUAL_SORT_KEY, listTitle.getManualSortKey());
-        cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, listTitle.getListItemLastSortKey());
-        cv.put(ListTitlesSqlTable.COL_LIST_LOCKED_STRING, listTitle.getListLockString());
+            cv.put(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION, listTitle.getFirstVisiblePosition());
+            cv.put(ListTitlesSqlTable.COL_LIST_VIEW_TOP, listTitle.getListViewTop());
+            cv.put(ListTitlesSqlTable.COL_MANUAL_SORT_KEY, listTitle.getManualSortKey());
+            cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, listTitle.getListItemLastSortKey());
+            cv.put(ListTitlesSqlTable.COL_LIST_LOCKED_STRING, listTitle.getListLockString());
 
-        cv.put(ListTitlesSqlTable.COL_CHECKED, (listTitle.isChecked()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, (listTitle.isForceViewInflation()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, (listTitle.isListLocked()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, (listTitle.isListPrivateToThisDevice()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-        cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, (listTitle.isMarkedForDeletion()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, (listTitle.isSortListItemsAlphabetically()) ? TRUE : FALSE);
-        cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, (listTitle.isStruckOut()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_CHECKED, (listTitle.isChecked()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, (listTitle.isForceViewInflation()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, (listTitle.isListLocked()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, (listTitle.isListPrivateToThisDevice()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+            cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, (listTitle.isMarkedForDeletion()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, (listTitle.isSortListItemsAlphabetically()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, (listTitle.isStruckOut()) ? TRUE : FALSE);
 
-        Date updatedDateTime = listTitle.getUpdated();
-        if (updatedDateTime != null) {
-            cv.put(ListTitlesSqlTable.COL_UPDATED, updatedDateTime.getTime());
+            Date updatedDateTime = listTitle.getUpdated();
+            if (updatedDateTime != null) {
+                cv.put(ListTitlesSqlTable.COL_UPDATED, updatedDateTime.getTime());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return cv;
     }
@@ -155,13 +195,12 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         updateInCloud(listTitles, true);
     }
 
+    //endregion
+
     @Override
     public void insertInCloud(ListTitle listTitle) {
         updateInCloud(listTitle, true);
     }
-
-    //endregion
-
 
     //region Read ListTitle
     @Override
@@ -184,40 +223,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         }
 
         return foundListTitle;
-    }
-
-    private ListTitle listTitleFromCursor(Cursor cursor) {
-
-        ListTitle listTitle = new ListTitle();
-        listTitle.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_ID)));
-        listTitle.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_OBJECT_ID)));
-        listTitle.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_UUID)));
-        listTitle.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_NAME)));
-
-        String listThemeUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_THEME_UUID));
-        ListTheme listTheme = mListThemeRepository.retrieveListThemeByUuid(listThemeUuid);
-        listTitle.setListTheme(listTheme);
-
-        listTitle.setListLockString(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_LOCKED_STRING)));
-        listTitle.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_MANUAL_SORT_KEY)));
-        listTitle.setListItemLastSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY)));
-
-        listTitle.setFirstVisiblePosition(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION)));
-        listTitle.setListViewTop(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_VIEW_TOP)));
-
-        listTitle.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_CHECKED)) > 0);
-        listTitle.setForceViewInflation(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION)) > 0);
-        listTitle.setListLocked(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_LOCKED)) > 0);
-        listTitle.setListPrivateToThisDevice(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE)) > 0);
-        listTitle.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_MARKED_FOR_DELETION)) > 0);
-        listTitle.setSortListItemsAlphabetically(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY)) > 0);
-        listTitle.setStruckOut(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_STRUCK_OUT)) > 0);
-
-        long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_UPDATED));
-        Date updated = new Date(dateMillis);
-        listTitle.setUpdated(updated);
-
-        return listTitle;
     }
 
     private Cursor getListTitleCursorByUuid(String uuid) {
@@ -535,6 +540,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
 
     @Override
     public int updateInLocalStorage(ListTitle listTitle) {
+        listTitle.setUpdated(Calendar.getInstance().getTime());
         ContentValues cv = makeListTitleContentValues(listTitle);
         int numberOfRecordsUpdated = updateInLocalStorage(listTitle, cv);
         if (numberOfRecordsUpdated == 1) {
@@ -820,6 +826,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             String[] selectionArgs = new String[]{listTitle.getUuid()};
             ContentResolver cr = mContext.getContentResolver();
             ContentValues cv = new ContentValues();
+            Calendar rightNow = Calendar.getInstance();
+            cv.put(ListTitlesSqlTable.COL_UPDATED, rightNow.getTimeInMillis());
             cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
             cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
             numberOfDeletedListTitles = cr.update(uri, cv, selection, selectionArgs);

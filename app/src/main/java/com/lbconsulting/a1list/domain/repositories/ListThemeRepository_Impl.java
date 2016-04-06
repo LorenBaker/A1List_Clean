@@ -21,6 +21,7 @@ import com.lbconsulting.a1list.domain.storage.ListThemesSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -38,8 +39,8 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
         DeleteListThemeFromCloud.Callback,
         DeleteListThemesFromCloud.Callback {
 
-    private final int FALSE = 0;
-    private final int TRUE = 1;
+    private static final int FALSE = 0;
+    private static final int TRUE = 1;
     private final Context mContext;
 
     public ListThemeRepository_Impl(Context context) {
@@ -93,6 +94,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
         long newListThemeSqlId = -1;
 
         Uri uri = ListThemesSqlTable.CONTENT_URI;
+        listTheme.setUpdated(Calendar.getInstance().getTime());
         ContentValues cv = makeListThemeContentValues(listTheme);
         ContentResolver cr = mContext.getContentResolver();
         Uri newListThemeUri = cr.insert(uri, cv);
@@ -113,7 +115,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
         return result;
     }
 
-    private ContentValues makeListThemeContentValues(ListTheme listTheme) {
+    public static ContentValues makeListThemeContentValues(ListTheme listTheme) {
 
         ContentValues cv = new ContentValues();
         cv.put(ListThemesSqlTable.COL_NAME, listTheme.getName());
@@ -203,7 +205,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
         return foundListTheme;
     }
 
-    private ListTheme listThemeFromCursor(Cursor cursor) {
+    public static ListTheme listThemeFromCursor(Cursor cursor) {
         ListTheme listTheme = new ListTheme();
         listTheme.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_ID)));
         listTheme.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_OBJECT_ID)));
@@ -523,14 +525,14 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
     public void update(List<ListTheme> listThemes) {
         List<ListTheme> successfullyUpdatedListThemesInLocalStorage = updateInLocalStorage(listThemes);
         if (successfullyUpdatedListThemesInLocalStorage.size() > 0) {
-            updateInCloud(successfullyUpdatedListThemesInLocalStorage,false);
+            updateInCloud(successfullyUpdatedListThemesInLocalStorage, false);
         }
     }
 
     @Override
     public void update(ListTheme listTheme) {
         if (updateInLocalStorage(listTheme) == 1) {
-            updateInCloud(listTheme,false);
+            updateInCloud(listTheme, false);
         }
     }
 
@@ -554,6 +556,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 
     @Override
     public int updateInLocalStorage(ListTheme listTheme) {
+        listTheme.setUpdated(Calendar.getInstance().getTime());
         ContentValues cv = makeListThemeContentValues(listTheme);
         int numberOfRecordsUpdated = updateInLocalStorage(listTheme, cv);
         if (numberOfRecordsUpdated == 1) {
@@ -707,7 +710,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
         }
 
         if (listThemesUpdatedInLocalStorage.size() > 0) {
-            updateInCloud(listThemesUpdatedInLocalStorage,false);
+            updateInCloud(listThemesUpdatedInLocalStorage, false);
         }
 
         return listThemesUpdatedInLocalStorage.size();
@@ -787,7 +790,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
                 return;
             }
         }
-        
+
         new SaveListThemeToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listTheme).execute();
     }
@@ -860,6 +863,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
             String[] selectionArgs = new String[]{listTheme.getUuid()};
             ContentResolver cr = mContext.getContentResolver();
             ContentValues cv = new ContentValues();
+            cv.put(ListThemesSqlTable.COL_UPDATED, Calendar.getInstance().getTimeInMillis());
             cv.put(ListThemesSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
             cv.put(ListThemesSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
             numberOfDeletedListThemes = cr.update(uri, cv, selection, selectionArgs);

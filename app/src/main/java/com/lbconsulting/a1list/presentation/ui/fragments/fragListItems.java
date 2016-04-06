@@ -92,10 +92,10 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
 
     @Subscribe
     public void onEvent(MyEvents.updateFragListItemsUI event) {
+        // if event.getListTitleUuid() == null then all fragments update their UI
         if (event.getListTitleUuid() == null || mListTitle.getUuid().equals(event.getListTitleUuid())) {
             List<ListItem> listItems = mListItemRepository.retrieveAllListItems(mListTitle, false);
             displayListItems(listItems);
-//            mPresenter.resume();
         }
     }
 
@@ -232,7 +232,6 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
         mListTitle.setListViewTop(top);
         mListTitleRepository.update(mListTitle);
         EventBus.getDefault().post(new MyEvents.replaceListTitle(mPosition, mListTitle));
-//        mListTitle.setIsForceViewInflation(false);
     }
 
     @Override

@@ -12,6 +12,7 @@ import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.storage.AppSettingsSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import timber.log.Timber;
@@ -24,8 +25,8 @@ import timber.log.Timber;
 public class AppSettingsRepository_Impl implements AppSettingsRepository,
         SaveAppSettingsToCloud_InBackground.Callback {
 
-    private final int FALSE = 0;
-    private final int TRUE = 1;
+    private static final int FALSE = 0;
+    private static final int TRUE = 1;
     private final Context mContext;
 
     public AppSettingsRepository_Impl(Context context) {
@@ -50,6 +51,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         long newAppSettingsId = -1;
 
         Uri uri = AppSettingsSqlTable.CONTENT_URI;
+        appSettings.setUpdated(Calendar.getInstance().getTime());
         ContentValues cv = makeContentValues(appSettings);
         ContentResolver cr = mContext.getContentResolver();
         Uri newAppSettingsUri = cr.insert(uri, cv);
@@ -69,7 +71,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         return result;
     }
 
-    private ContentValues makeContentValues(AppSettings appSettings) {
+    public static ContentValues makeContentValues(AppSettings appSettings) {
 
         ContentValues cv = new ContentValues();
 
@@ -111,6 +113,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 
     @Override
     public int updateInLocalStorage(AppSettings appSettings) {
+        appSettings.setUpdated(Calendar.getInstance().getTime());
         ContentValues cv = makeContentValues(appSettings);
         int numberOfRecordsUpdated = updateInLocalStorage(appSettings, cv);
         if (numberOfRecordsUpdated == 1) {
@@ -138,7 +141,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         return numberOfRecordsUpdated;
     }
 
-    private AppSettings appSettingsFromCursor(Cursor cursor) {
+    public static AppSettings appSettingsFromCursor(Cursor cursor) {
 
         AppSettings appSettings = new AppSettings();
         appSettings.setId(cursor.getLong(

@@ -22,6 +22,7 @@ import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -37,10 +38,10 @@ public class ListItemRepository_Impl implements ListItemRepository,
         DeleteListItemFromCloud.Callback,
         DeleteListItemsFromCloud.Callback {
 
-    private final int FALSE = 0;
-    private final int TRUE = 1;
+    private static ListTitleRepository_Impl mListTitleRepository = null;
+    private static final int FALSE = 0;
+    private static final int TRUE = 1;
     private final Context mContext;
-    private final ListTitleRepository_Impl mListTitleRepository;
 
     public ListItemRepository_Impl(Context context) {
         // private constructor
@@ -49,6 +50,32 @@ public class ListItemRepository_Impl implements ListItemRepository,
     }
 
     // CRUD operations
+
+    public static ListItem listItemFromCursor(Cursor cursor) {
+        ListItem listItem = new ListItem();
+
+        listItem.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_ID)));
+        listItem.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_OBJECT_ID)));
+        listItem.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UUID)));
+        listItem.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_NAME)));
+
+        String listTitleUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID));
+        ListTitle listTitle = mListTitleRepository.retrieveListTitleByUuid(listTitleUuid);
+        listItem.setListTitle(listTitle);
+
+        listItem.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MANUAL_SORT_KEY)));
+
+        listItem.setStruckOut(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_STRUCK_OUT)) > 0);
+        listItem.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_CHECKED)) > 0);
+        listItem.setFavorite(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_FAVORITE)) > 0);
+        listItem.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MARKED_FOR_DELETION)) > 0);
+
+        long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UPDATED));
+        Date updated = new Date(dateMillis);
+        listItem.setUpdated(updated);
+
+        return listItem;
+    }
 
     //region Insert ListItem
     @Override
@@ -94,6 +121,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         long newListItemSqlId = -1;
 
         Uri uri = ListItemsSqlTable.CONTENT_URI;
+        listItem.setUpdated(Calendar.getInstance().getTime());
         ContentValues cv = makeListItemContentValues(listItem);
         ContentResolver cr = mContext.getContentResolver();
         Uri newListItemUri = cr.insert(uri, cv);
@@ -114,7 +142,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return result;
     }
 
-    private ContentValues makeListItemContentValues(ListItem listItem) {
+    public static ContentValues makeListItemContentValues(ListItem listItem) {
         ContentValues cv = new ContentValues();
 
         cv.put(ListItemsSqlTable.COL_NAME, listItem.getName());
@@ -143,13 +171,12 @@ public class ListItemRepository_Impl implements ListItemRepository,
         updateInCloud(listItems, true);
     }
 
+    //endregion
+
     @Override
     public void insertInCloud(ListItem listItem) {
         updateInCloud(listItem, true);
     }
-
-    //endregion
-
 
     //region Read ListItem
     @Override
@@ -172,32 +199,6 @@ public class ListItemRepository_Impl implements ListItemRepository,
         }
 
         return foundListItem;
-    }
-
-    private ListItem listItemFromCursor(Cursor cursor) {
-        ListItem listItem = new ListItem();
-
-        listItem.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_ID)));
-        listItem.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_OBJECT_ID)));
-        listItem.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UUID)));
-        listItem.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_NAME)));
-
-        String listTitleUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID));
-        ListTitle listTitle = mListTitleRepository.retrieveListTitleByUuid(listTitleUuid);
-        listItem.setListTitle(listTitle);
-
-        listItem.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MANUAL_SORT_KEY)));
-
-        listItem.setStruckOut(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_STRUCK_OUT)) > 0);
-        listItem.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_CHECKED)) > 0);
-        listItem.setFavorite(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_FAVORITE)) > 0);
-        listItem.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MARKED_FOR_DELETION)) > 0);
-
-        long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UPDATED));
-        Date updated = new Date(dateMillis);
-        listItem.setUpdated(updated);
-
-        return listItem;
     }
 
     private Cursor getListItemCursorByUuid(String uuid) {
@@ -539,6 +540,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     @Override
     public int updateInLocalStorage(ListItem listItem) {
+        listItem.setUpdated(Calendar.getInstance().getTime());
         ContentValues cv = makeListItemContentValues(listItem);
         int numberOfRecordsUpdated = updateInLocalStorage(listItem, cv);
         if (numberOfRecordsUpdated == 1) {
@@ -787,6 +789,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
             String[] selectionArgs = new String[]{listItem.getUuid()};
             ContentResolver cr = mContext.getContentResolver();
             ContentValues cv = new ContentValues();
+            cv.put(ListItemsSqlTable.COL_UPDATED, Calendar.getInstance().getTimeInMillis());
             cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
             cv.put(ListItemsSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
             numberOfDeletedListItems = cr.update(uri, cv, selection, selectionArgs);

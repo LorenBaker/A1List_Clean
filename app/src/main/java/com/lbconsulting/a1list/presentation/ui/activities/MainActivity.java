@@ -24,6 +24,8 @@ import com.google.gson.Gson;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
+import com.lbconsulting.a1list.domain.interactors.appSettings.SyncObjectsFromCloud;
+import com.lbconsulting.a1list.domain.interactors.appSettings.SyncObjectsFromCloud_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.impl.CreateInitialListThemes_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.CreateInitialListThemes;
 import com.lbconsulting.a1list.domain.model.AppSettings;
@@ -47,6 +49,7 @@ import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.CsvParser;
 import com.lbconsulting.a1list.utils.MyEvents;
 import com.lbconsulting.a1list.utils.MySettings;
+import com.lbconsulting.a1list.utils.SyncStats;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -60,7 +63,8 @@ import butterknife.OnClick;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView,
-        CreateInitialListThemes.Callback {
+        CreateInitialListThemes.Callback,
+        SyncObjectsFromCloud.Callback {
     private static ListTitlesPresenter_Impl mMainActivityPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
@@ -188,7 +192,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             }
 
             showNewListItemDialog(mActiveListTitle);
-        }else{
+        } else {
             Timber.e("fab()onClick: Unable add ListItem because there is no ListTitle!");
         }
 
@@ -212,6 +216,13 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             initializeApp();
         } else {
             mMainActivityPresenter.resume();
+
+            // TODO: Implement MySettings.requiresSyncing()
+            if (CommonMethods.isNetworkAvailable()) {
+                new SyncObjectsFromCloud_InBackground(ThreadExecutor.getInstance(),
+                        MainThreadImpl.getInstance(), this).execute();
+            }
+            // TODO: Implement a timer to sync objects
         }
 
     }
@@ -432,7 +443,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     }
 
 
-
     private void addItemsToListTitles(List<ListTitle> listTitles) {
         // TODO: Remove addItemsToListTitles
         Timber.i("addItemsToListTitles(): Starting to add test ListItems.");
@@ -568,6 +578,16 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         Intent intent = new Intent(this, BackendlessLoginActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    @Override
+    public void onSyncObjectsFromCloudSuccess(String successMessage, SyncStats syncStats) {
+        CommonMethods.showOkDialog(this, "Sync Stats", successMessage);
+    }
+
+    @Override
+    public void onSyncObjectsFromCloudFailed(String errorMessage, SyncStats syncStats) {
+
     }
 
 

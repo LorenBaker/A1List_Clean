@@ -37,4 +37,5 @@ dependencies {
     compile 'org.greenrobot:eventbus:3.0.0'
     compile 'com.backendless:backendless:3.0.8.2'
     compile 'com.google.code.gson:gson:2.6.2'
+    compile 'com.google.guava:guava:19.0'
 }
