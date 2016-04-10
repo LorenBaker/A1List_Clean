@@ -120,27 +120,27 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
         if (mSelectedListTitle != null) {
             holder.tvListTitleName.setText(mSelectedListTitle.getName());
             holder.tvListTitleName.setTextSize(TypedValue.COMPLEX_UNIT_SP,
-                    mSelectedListTitle.getListTheme().getTextSize());
-            holder.tvListTitleName.setTextColor(mSelectedListTitle.getListTheme().getTextColor());
+                    mSelectedListTitle.retrieveListTheme().getTextSize());
+            holder.tvListTitleName.setTextColor(mSelectedListTitle.retrieveListTheme().getTextColor());
 
             int horizontalPadding = CommonMethods.convertDpToPixel(
-                    mSelectedListTitle.getListTheme().getHorizontalPaddingInDp());
+                    mSelectedListTitle.retrieveListTheme().getHorizontalPaddingInDp());
             int verticalPadding = CommonMethods.convertDpToPixel(
-                    mSelectedListTitle.getListTheme().getVerticalPaddingInDp());
+                    mSelectedListTitle.retrieveListTheme().getVerticalPaddingInDp());
             holder.tvListTitleName.setPadding(horizontalPadding, verticalPadding,
                     horizontalPadding, verticalPadding);
             holder.llRowListTitleName.setBackground(getBackgroundDrawable(
-                    mSelectedListTitle.getListTheme().getStartColor(),
-                    mSelectedListTitle.getListTheme().getEndColor()));
+                    mSelectedListTitle.retrieveListTheme().getStartColor(),
+                    mSelectedListTitle.retrieveListTheme().getEndColor()));
             mListView.setDivider(new ColorDrawable(ContextCompat.getColor(mContext,
                     R.color.greyLight3_50Transparent)));
             mListView.setDividerHeight(1);
 
             if (mSelectedListTitle.isStruckOut()) {
-                setStrikeOut(holder.tvListTitleName, mSelectedListTitle.getListTheme().isBold());
+                setStrikeOut(holder.tvListTitleName, mSelectedListTitle.retrieveListTheme().isBold());
             } else {
-                setNoStrikeOut(holder.tvListTitleName, mSelectedListTitle.getListTheme().isBold(),
-                        mSelectedListTitle.getListTheme().getTextColor());
+                setNoStrikeOut(holder.tvListTitleName, mSelectedListTitle.retrieveListTheme().isBold(),
+                        mSelectedListTitle.retrieveListTheme().getTextColor());
             }
         }
 
@@ -152,11 +152,11 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
                 int strikeOutIncrement;
                 if (mSelectedListTitle.isStruckOut()) {
                     strikeOutIncrement = 1;
-                    setStrikeOut((TextView) v, mSelectedListTitle.getListTheme().isBold());
+                    setStrikeOut((TextView) v, mSelectedListTitle.retrieveListTheme().isBold());
                 } else {
                     strikeOutIncrement = -1;
-                    setNoStrikeOut((TextView) v, mSelectedListTitle.getListTheme().isBold(),
-                            mSelectedListTitle.getListTheme().getTextColor());
+                    setNoStrikeOut((TextView) v, mSelectedListTitle.retrieveListTheme().isBold(),
+                            mSelectedListTitle.retrieveListTheme().getTextColor());
                 }
                 EventBus.getDefault().post(new MyEvents.incrementStrikeOutCount(strikeOutIncrement));
                 mListTitleRepository.update(mSelectedListTitle);

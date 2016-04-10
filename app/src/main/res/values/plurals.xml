@@ -44,4 +44,20 @@
         <item quantity="other">Do you want to permanently delete %d Lists?</item>
     </plurals>
 
+    <!--Sync Complete Messages-->
+    <plurals name="syncInserts">
+        <item quantity="one">%d insert;\u0020</item>
+        <item quantity="other">%d inserts;\u0020</item>
+    </plurals>
+
+    <plurals name="syncUpdates">
+        <item quantity="one">%d update;\u0020</item>
+        <item quantity="other">%d updates;\u0020</item>
+    </plurals>
+
+    <plurals name="syncDeletes">
+        <item quantity="one">%d delete.</item>
+        <item quantity="other">%d deletes.</item>
+    </plurals>
+
 </resources>

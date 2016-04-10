@@ -3,8 +3,10 @@ package com.lbconsulting.a1list.domain.interactors.appSettings;
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.RemoteException;
 
 import com.backendless.Backendless;
 import com.backendless.BackendlessCollection;
@@ -22,11 +24,13 @@ import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
+import com.lbconsulting.a1list.domain.storage.A1List_ContentProvider;
 import com.lbconsulting.a1list.domain.storage.AppSettingsSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListThemesSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
+import com.lbconsulting.a1list.utils.MySettings;
 import com.lbconsulting.a1list.utils.SyncStats;
 
 import java.util.ArrayList;
@@ -69,7 +73,9 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             return;
         }
 
-        saveDirtyObjectsToCloud();
+        CommonMethods.saveDirtyObjectsToCloud();
+
+        Timber.i("run(): Starting download of Backendless objects.");
 
         // set all downloadOk booleans to false
         boolean[] downloadsOk = new boolean[4];
@@ -212,10 +218,21 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
 
         // Merge solution ready. Applying batch update
         Timber.i("run(): Merge solution ready. Applying batch update");
+
+        try {
+            ContentResolver contentResolver = AndroidApplication.getContext().getContentResolver();
+            contentResolver.applyBatch(A1List_ContentProvider.AUTHORITY, batch);
+        } catch (RemoteException e) {
+            Timber.e("run(): RemoteException: %s.", e.getMessage());
+        } catch (OperationApplicationException e) {
+            Timber.e("run(): OperationApplicationException: %s.", e.getMessage());
+        }
+
+        MySettings.setLastTimeSynced(System.currentTimeMillis());
         String stats = syncStats.getAllStats();
         postOnSyncObjectsFromCloudSuccess(stats, syncStats);
-
     }
+
 
     //region Merge Solutions
     private void computeAppSettingsMergeSolution(List<AppSettings> appSettingsLocalList,
@@ -498,20 +515,23 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         if (cloudAppSettingsDate == null) {
             cloudAppSettingsDate = cloudAppSettings.getCreated();
         }
-
-        if (cloudAppSettingsDate.equals(localAppSettings.getUpdated())) {
-            return false;
-        } else if (!cloudAppSettings.getLastListTitleViewedUuid().equals(localAppSettings.getLastListTitleViewedUuid())) {
-            return true;
-        } else if (cloudAppSettings.getTimeBetweenSynchronizations() != localAppSettings.getTimeBetweenSynchronizations()) {
-            return true;
-        } else if (!cloudAppSettings.isListTitlesSortedAlphabetically() == localAppSettings.isListTitlesSortedAlphabetically()) {
-            return true;
-        } else if (!cloudAppSettings.getName().equals(localAppSettings.getName())) {
-            return true;
-        } else if (cloudAppSettings.getListTitleLastSortKey() != localAppSettings.getListTitleLastSortKey()) {
+        if (cloudAppSettingsDate.after(localAppSettings.getUpdated())) {
             return true;
         }
+
+//        if (cloudAppSettingsDate.equals(localAppSettings.getUpdated())) {
+//            return false;
+//        } else if (!cloudAppSettings.getLastListTitleViewedUuid().equals(localAppSettings.getLastListTitleViewedUuid())) {
+//            return true;
+//        } else if (cloudAppSettings.getTimeBetweenSynchronizations() != localAppSettings.getTimeBetweenSynchronizations()) {
+//            return true;
+//        } else if (!cloudAppSettings.isListTitlesSortedAlphabetically() == localAppSettings.isListTitlesSortedAlphabetically()) {
+//            return true;
+//        } else if (!cloudAppSettings.getName().equals(localAppSettings.getName())) {
+//            return true;
+//        } else if (cloudAppSettings.getListTitleLastSortKey() != localAppSettings.getListTitleLastSortKey()) {
+//            return true;
+//        }
 
         return false;
     }
@@ -523,36 +543,36 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             cloudListThemeDate = cloudListTheme.getCreated();
         }
 
-        if (cloudListThemeDate.equals(localListTheme.getUpdated())) {
-            return false;
-        } else if (!cloudListTheme.isStruckOut() == localListTheme.isStruckOut()) {
-            return true;
-        } else if (!cloudListTheme.getName().equals(localListTheme.getName())) {
-            return true;
-        } else if (!cloudListTheme.isMarkedForDeletion() == localListTheme.isMarkedForDeletion()) {
-            return true;
-        } else if (!cloudListTheme.isBold() == localListTheme.isBold()) {
-            return true;
-        } else if (!cloudListTheme.isDefaultTheme() == localListTheme.isDefaultTheme()) {
-            return true;
-        } else if (!cloudListTheme.isTransparent() == localListTheme.isTransparent()) {
-            return true;
-        } else if (!cloudListTheme.isChecked() == localListTheme.isChecked()) {
-            return true;
-        } else if (cloudListTheme.getStartColor() != localListTheme.getStartColor()) {
-            return true;
-        } else if (cloudListTheme.getEndColor() != localListTheme.getEndColor()) {
-            return true;
-        } else if (cloudListTheme.getTextColor() != localListTheme.getTextColor()) {
-            return true;
-        } else if (cloudListTheme.getTextSize() != localListTheme.getTextSize()) {
-            return true;
-        } else if (cloudListTheme.getHorizontalPaddingInDp() != localListTheme.getHorizontalPaddingInDp()) {
-            return true;
-        } else if (cloudListTheme.getVerticalPaddingInDp() != localListTheme.getVerticalPaddingInDp()) {
+        if (cloudListThemeDate.after(localListTheme.getUpdated())) {
             return true;
         }
-
+//            if (!cloudListTheme.isStruckOut() == localListTheme.isStruckOut()) {
+//                return true;
+//            } else if (!cloudListTheme.getName().equals(localListTheme.getName())) {
+//                return true;
+//            } else if (!cloudListTheme.isMarkedForDeletion() == localListTheme.isMarkedForDeletion()) {
+//                return true;
+//            } else if (!cloudListTheme.isBold() == localListTheme.isBold()) {
+//                return true;
+//            } else if (!cloudListTheme.isDefaultTheme() == localListTheme.isDefaultTheme()) {
+//                return true;
+//            } else if (!cloudListTheme.isTransparent() == localListTheme.isTransparent()) {
+//                return true;
+//            } else if (!cloudListTheme.isChecked() == localListTheme.isChecked()) {
+//                return true;
+//            } else if (cloudListTheme.getStartColor() != localListTheme.getStartColor()) {
+//                return true;
+//            } else if (cloudListTheme.getEndColor() != localListTheme.getEndColor()) {
+//                return true;
+//            } else if (cloudListTheme.getTextColor() != localListTheme.getTextColor()) {
+//                return true;
+//            } else if (cloudListTheme.getTextSize() != localListTheme.getTextSize()) {
+//                return true;
+//            } else if (cloudListTheme.getHorizontalPaddingInDp() != localListTheme.getHorizontalPaddingInDp()) {
+//                return true;
+//            } else if (cloudListTheme.getVerticalPaddingInDp() != localListTheme.getVerticalPaddingInDp()) {
+//                return true;
+//            }
         return false;
     }
 
@@ -563,35 +583,39 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             cloudListTitleDate = cloudListTitle.getCreated();
         }
 
-        if (cloudListTitleDate.equals(localListTitle.getUpdated())) {
-            return false;
-        } else if (cloudListTitle.getFirstVisiblePosition() != localListTitle.getFirstVisiblePosition()) {
-            return true;
-        } else if (cloudListTitle.getListViewTop() != localListTitle.getListViewTop()) {
-            return true;
-        } else if (!cloudListTitle.isStruckOut() == localListTitle.isStruckOut()) {
-            return true;
-        } else if (!cloudListTitle.getName().equals(localListTitle.getName())) {
-            return true;
-        } else if (!cloudListTitle.getListTheme().getUuid().equals(localListTitle.getListTheme().getUuid())) {
-            return true;
-        } else if (!cloudListTitle.isMarkedForDeletion() == localListTitle.isMarkedForDeletion()) {
-            return true;
-        } else if (!cloudListTitle.isSortListItemsAlphabetically() == localListTitle.isSortListItemsAlphabetically()) {
-            return true;
-        } else if (!cloudListTitle.isChecked() == localListTitle.isChecked()) {
-            return true;
-        } else if (cloudListTitle.getManualSortKey() != localListTitle.getManualSortKey()) {
-            return true;
-        } else if (!cloudListTitle.getListLockString().equals(localListTitle.getListLockString())) {
-            return true;
-        } else if (!cloudListTitle.isListLocked() == localListTitle.isListLocked()) {
-            return true;
-        } else if (!cloudListTitle.isListPrivateToThisDevice() == localListTitle.isListPrivateToThisDevice()) {
-            return true;
-        } else if (cloudListTitle.getListItemLastSortKey() != localListTitle.getListItemLastSortKey()) {
+        if (cloudListTitleDate.after(localListTitle.getUpdated())) {
             return true;
         }
+
+//        if (cloudListTitleDate.equals(localListTitle.getUpdated())) {
+//            return false;
+//        } else if (cloudListTitle.getFirstVisiblePosition() != localListTitle.getFirstVisiblePosition()) {
+//            return true;
+//        } else if (cloudListTitle.getListViewTop() != localListTitle.getListViewTop()) {
+//            return true;
+//        } else if (!cloudListTitle.isStruckOut() == localListTitle.isStruckOut()) {
+//            return true;
+//        } else if (!cloudListTitle.getName().equals(localListTitle.getName())) {
+//            return true;
+//        } else if (!cloudListTitle.retrieveListTheme().getUuid().equals(localListTitle.retrieveListTheme().getUuid())) {
+//            return true;
+//        } else if (!cloudListTitle.isMarkedForDeletion() == localListTitle.isMarkedForDeletion()) {
+//            return true;
+//        } else if (!cloudListTitle.isSortListItemsAlphabetically() == localListTitle.isSortListItemsAlphabetically()) {
+//            return true;
+//        } else if (!cloudListTitle.isChecked() == localListTitle.isChecked()) {
+//            return true;
+//        } else if (cloudListTitle.getManualSortKey() != localListTitle.getManualSortKey()) {
+//            return true;
+//        } else if (!cloudListTitle.getListLockString().equals(localListTitle.getListLockString())) {
+//            return true;
+//        } else if (!cloudListTitle.isListLocked() == localListTitle.isListLocked()) {
+//            return true;
+//        } else if (!cloudListTitle.isListPrivateToThisDevice() == localListTitle.isListPrivateToThisDevice()) {
+//            return true;
+//        } else if (cloudListTitle.getListItemLastSortKey() != localListTitle.getListItemLastSortKey()) {
+//            return true;
+//        }
 
         return false;
     }
@@ -604,23 +628,27 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             cloudListItemDate = cloudListItem.getCreated();
         }
 
-        if (cloudListItemDate.equals(localListItem.getUpdated())) {
-            return false;
-        } else if (!cloudListItem.isStruckOut() == localListItem.isStruckOut()) {
-            return true;
-        } else if (!cloudListItem.getName().equals(localListItem.getName())) {
-            return true;
-        } else if (!cloudListItem.getListTitle().getUuid().equals(localListItem.getListTitle().getUuid())) {
-            return true;
-        } else if (!cloudListItem.isMarkedForDeletion() == localListItem.isMarkedForDeletion()) {
-            return true;
-        } else if (!cloudListItem.isFavorite() == localListItem.isFavorite()) {
-            return true;
-        } else if (!cloudListItem.isChecked() == localListItem.isChecked()) {
-            return true;
-        } else if (cloudListItem.getManualSortKey() != localListItem.getManualSortKey()) {
+        if (cloudListItemDate.after(localListItem.getUpdated())) {
             return true;
         }
+
+//        if (cloudListItemDate.equals(localListItem.getUpdated())) {
+//            return false;
+//        } else if (!cloudListItem.isStruckOut() == localListItem.isStruckOut()) {
+//            return true;
+//        } else if (!cloudListItem.getName().equals(localListItem.getName())) {
+//            return true;
+//        } else if (!cloudListItem.retrieveListTitle().getUuid().equals(localListItem.retrieveListTitle().getUuid())) {
+//            return true;
+//        } else if (!cloudListItem.isMarkedForDeletion() == localListItem.isMarkedForDeletion()) {
+//            return true;
+//        } else if (!cloudListItem.isFavorite() == localListItem.isFavorite()) {
+//            return true;
+//        } else if (!cloudListItem.isChecked() == localListItem.isChecked()) {
+//            return true;
+//        } else if (cloudListItem.getManualSortKey() != localListItem.getManualSortKey()) {
+//            return true;
+//        }
 
         return false;
     }

@@ -59,9 +59,9 @@ public class ListItemRepository_Impl implements ListItemRepository,
         listItem.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UUID)));
         listItem.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_NAME)));
 
-        String listTitleUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID));
-        ListTitle listTitle = mListTitleRepository.retrieveListTitleByUuid(listTitleUuid);
-        listItem.setListTitle(listTitle);
+//        String listTitleUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID));
+//        ListTitle listTitle = mListTitleRepository.retrieveListTitleByUuid(listTitleUuid);
+        listItem.setListTitleUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID)));
 
         listItem.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MANUAL_SORT_KEY)));
 
@@ -148,7 +148,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         cv.put(ListItemsSqlTable.COL_NAME, listItem.getName());
         cv.put(ListItemsSqlTable.COL_UUID, listItem.getUuid());
         cv.put(ListItemsSqlTable.COL_OBJECT_ID, listItem.getObjectId());
-        cv.put(ListItemsSqlTable.COL_LIST_TITLE_UUID, listItem.getListTitle().getUuid());
+        cv.put(ListItemsSqlTable.COL_LIST_TITLE_UUID, listItem.retrieveListTitle().getUuid());
         cv.put(ListItemsSqlTable.COL_MANUAL_SORT_KEY, listItem.getManualSortKey());
 
         cv.put(ListItemsSqlTable.COL_CHECKED, (listItem.isChecked()) ? TRUE : FALSE);
@@ -472,7 +472,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     public boolean isValidListItemName(ListItem originalListItem, String proposedListItemName) {
         boolean isValidName = false;
-        ListItem listItemFromName = getListItem(originalListItem.getListTitle(), proposedListItemName);
+        ListItem listItemFromName = getListItem(originalListItem.retrieveListTitle(), proposedListItemName);
         if (listItemFromName == null) {
             // The proposed ListItem name is not in the SQLite db.
             isValidName = true;

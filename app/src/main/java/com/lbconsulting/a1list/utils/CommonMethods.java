@@ -18,7 +18,17 @@ import android.view.View;
 import android.widget.Button;
 
 import com.lbconsulting.a1list.AndroidApplication;
+import com.lbconsulting.a1list.domain.model.AppSettings;
+import com.lbconsulting.a1list.domain.model.ListItem;
+import com.lbconsulting.a1list.domain.model.ListTheme;
+import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
+import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
+import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +41,86 @@ import timber.log.Timber;
 public class CommonMethods {
 
     public final static String NOT_AVAILABLE = "NOT_AVAILABLE";
+
+    public static void saveDirtyObjectsToCloud(){
+        Timber.i("saveDirtyObjectsToCloud(): Starting to save dirty objects to Backendless.");
+
+        if (!CommonMethods.isNetworkAvailable()) {
+            Timber.e("saveDirtyObjectsToCloud(): Unable to save objects. Network not available.");
+            return;
+        }
+
+        AppSettingsRepository_Impl appSettingsRepository = AndroidApplication.getAppSettingsRepository();
+        ListThemeRepository_Impl listThemeRepository = AndroidApplication.getListThemeRepository();
+        ListTitleRepository_Impl listTitleRepository = AndroidApplication.getListTitleRepository();
+        ListItemRepository_Impl listItemRepository = AndroidApplication.getListItemRepository();
+
+        AppSettings dirtyAppSettings = appSettingsRepository.retrieveDirtyAppSettings();
+        List<ListTheme> dirtyListListThemes = listThemeRepository.retrieveDirtyListThemes();
+        List<ListTitle> dirtyListTitles = listTitleRepository.retrieveDirtyListTitles();
+        List<ListItem> dirtyListItems = listItemRepository.retrieveDirtyListItems();
+
+        if (dirtyAppSettings != null) {
+            if (dirtyAppSettings.getObjectId() == null || dirtyAppSettings.getObjectId().isEmpty()) {
+                appSettingsRepository.insertInCloud(dirtyAppSettings);
+            } else {
+                appSettingsRepository.updateInCloud(dirtyAppSettings, false);
+            }
+        } else {
+            Timber.i("saveDirtyObjectsToCloud(): No AppSettings to save.");
+        }
+
+        if (dirtyListListThemes.size() > 0) {
+            List<ListTheme> listThemesNoObjectId = new ArrayList<>();
+            List<ListTheme> listThemesWithObjectId = new ArrayList<>();
+            for (ListTheme listTheme : dirtyListListThemes) {
+                if (listTheme.getObjectId() == null || listTheme.getObjectId().isEmpty()) {
+                    listThemesNoObjectId.add(listTheme);
+                } else {
+                    listThemesWithObjectId.add(listTheme);
+                }
+            }
+            listThemeRepository.insertInCloud(listThemesNoObjectId);
+            listThemeRepository.updateInCloud(listThemesWithObjectId, false);
+
+        } else {
+            Timber.i("saveDirtyObjectsToCloud(): No ListThemes to save.");
+        }
+
+        if (dirtyListTitles.size() > 0) {
+            List<ListTitle> listTitlesNoObjectId = new ArrayList<>();
+            List<ListTitle> listTitlesWithObjectId = new ArrayList<>();
+            for (ListTitle listTitle : dirtyListTitles) {
+                if (listTitle.getObjectId() == null || listTitle.getObjectId().isEmpty()) {
+                    listTitlesNoObjectId.add(listTitle);
+                } else {
+                    listTitlesWithObjectId.add(listTitle);
+                }
+            }
+            listTitleRepository.insertInCloud(listTitlesNoObjectId);
+            listTitleRepository.updateInCloud(listTitlesWithObjectId, false);
+
+        } else {
+            Timber.i("saveDirtyObjectsToCloud(): No ListTitles to save.");
+        }
+
+        if (dirtyListItems.size() > 0) {
+            List<ListItem> listItemsNoObjectId = new ArrayList<>();
+            List<ListItem> listItemsWithObjectId = new ArrayList<>();
+            for (ListItem listItem : dirtyListItems) {
+                if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
+                    listItemsNoObjectId.add(listItem);
+                } else {
+                    listItemsWithObjectId.add(listItem);
+                }
+            }
+            listItemRepository.insertInCloud(listItemsNoObjectId);
+            listItemRepository.updateInCloud(listItemsWithObjectId, false);
+
+        } else {
+            Timber.i("saveDirtyObjectsToCloud(): No ListItems to save.");
+        }
+    }
 
 
     public static GradientDrawable getBackgroundDrawable(int startColor, int endColor) {

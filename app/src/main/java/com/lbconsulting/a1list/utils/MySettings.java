@@ -11,9 +11,12 @@ public class MySettings {
 
     public static final String NOT_AVAILABLE = "N/A";
     public static final String SETTING_IS_STARTED_FROM_REGISTRATION_ACTIVITY = "isStartedFromRegistrationActivity";
+    public static final String SETTING_DEVICE_UUID = "deviceUuid";
+    private static final String SETTING_LAST_TIME_SYNCED = "lastTimeSynced";
 
-    private static final String SETTING_ACTIVE_LIST_TITLE_UUID = "activeListTitleUuid";
-    private static final String SETTING_IS_FIRST_TIME_APP_RUN = "isFirstTimeAppRun";
+
+//    private static final String SETTING_ACTIVE_LIST_TITLE_UUID = "activeListTitleUuid";
+//    private static final String SETTING_IS_FIRST_TIME_APP_RUN = "isFirstTimeAppRun";
 
     private static final String SETTING_ACTIVE_USER_ID = "activeUserID";
     private static final String SETTING_ACTIVE_USER_FIRST_NAME = "activeUserFirstName";
@@ -27,42 +30,67 @@ public class MySettings {
     }
 
     //region SETTING_IS_STARTED_FROM_REGISTRATION_ACTIVITY
-    public static boolean isStartedFromRegistrationActivity(){
+    public static boolean isStartedFromRegistrationActivity() {
         return mPreferences.getBoolean(SETTING_IS_STARTED_FROM_REGISTRATION_ACTIVITY, true);
     }
 
-    public static void setStartedFromRegistrationActivity(boolean isStartedFromRegistrationActivity){
+    public static void setStartedFromRegistrationActivity(boolean isStartedFromRegistrationActivity) {
         SharedPreferences.Editor editor = mPreferences.edit();
         editor.putBoolean(SETTING_IS_STARTED_FROM_REGISTRATION_ACTIVITY, isStartedFromRegistrationActivity);
         editor.apply();
     }
 
-//endregion
-    //region SETTING_ACTIVE_LIST_TITLE_UUID
-
-    public static String getActiveListTitleUuid() {
-        return mPreferences.getString(SETTING_ACTIVE_LIST_TITLE_UUID, NOT_AVAILABLE);
-    }
-
-    public static void setActiveListTitleUuid(String activeListTitleUuid) {
-        SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString(SETTING_ACTIVE_LIST_TITLE_UUID, activeListTitleUuid);
-        editor.apply();
-    }
-
     //endregion
 
-    //region SETTING_IS_FIRST_TIME_APP_RUN
-    public static boolean isFirstTimeAppRun() {
-        return mPreferences.getBoolean(SETTING_IS_FIRST_TIME_APP_RUN, true);
+    //region SETTING_DEVICE_UUID
+    public static String getDeviceUuid() {
+        return mPreferences.getString(SETTING_DEVICE_UUID, NOT_AVAILABLE);
     }
 
-    public static void setFirstTimeAppRun(boolean isFirstTimeRun) {
+    public static void setDeviceUuid(String deviceUuid) {
         SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putBoolean(SETTING_IS_FIRST_TIME_APP_RUN, isFirstTimeRun);
+        editor.putString(SETTING_DEVICE_UUID, deviceUuid);
         editor.apply();
     }
     //endregion
+
+    //region SETTING_LAST_TIME_SYNCED
+    public static long getLastTimeSynced() {
+        return mPreferences.getLong(SETTING_LAST_TIME_SYNCED, 0);
+    }
+
+    public static void setLastTimeSynced(long lastTimeSynced) {
+        SharedPreferences.Editor editor = mPreferences.edit();
+        editor.putLong(SETTING_LAST_TIME_SYNCED, lastTimeSynced);
+        editor.apply();
+    }
+    //endregion
+
+//    //region SETTING_ACTIVE_LIST_TITLE_UUID
+//
+//    public static String getActiveListTitleUuid() {
+//        return mPreferences.getString(SETTING_ACTIVE_LIST_TITLE_UUID, NOT_AVAILABLE);
+//    }
+//
+//    public static void setActiveListTitleUuid(String activeListTitleUuid) {
+//        SharedPreferences.Editor editor = mPreferences.edit();
+//        editor.putString(SETTING_ACTIVE_LIST_TITLE_UUID, activeListTitleUuid);
+//        editor.apply();
+//    }
+//
+//    //endregion
+
+//    //region SETTING_IS_FIRST_TIME_APP_RUN
+//    public static boolean isFirstTimeAppRun() {
+//        return mPreferences.getBoolean(SETTING_IS_FIRST_TIME_APP_RUN, true);
+//    }
+//
+//    public static void setFirstTimeAppRun(boolean isFirstTimeRun) {
+//        SharedPreferences.Editor editor = mPreferences.edit();
+//        editor.putBoolean(SETTING_IS_FIRST_TIME_APP_RUN, isFirstTimeRun);
+//        editor.apply();
+//    }
+//    //endregion
 
     //region SETTING_ACTIVE_USER
     public static String getActiveUserID() {
@@ -122,6 +150,7 @@ public class MySettings {
         editor.putString(SETTING_ACTIVE_USER_EMAIL, NOT_AVAILABLE);
         editor.apply();
     }
+
     public static String getActiveUserName() {
         String result = "";
         String firstName = mPreferences.getString(SETTING_ACTIVE_USER_FIRST_NAME, NOT_AVAILABLE);
@@ -136,6 +165,7 @@ public class MySettings {
         }
         return result;
     }
+
     public static String getActiveUserNameAndEmail() {
         String result = getActiveUserName();
         String email = mPreferences.getString(SETTING_ACTIVE_USER_EMAIL, NOT_AVAILABLE);

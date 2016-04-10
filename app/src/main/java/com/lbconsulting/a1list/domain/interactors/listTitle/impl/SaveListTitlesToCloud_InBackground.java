@@ -26,12 +26,12 @@ import timber.log.Timber;
  */
 public class SaveListTitlesToCloud_InBackground extends AbstractInteractor implements SaveListTitlesToCloud {
     private final Callback mCallback;
-    private final List<ListTitle> mListTitleList;
+    private final List<ListTitle> mListTitles;
 
     public SaveListTitlesToCloud_InBackground(Executor threadExecutor, MainThread mainThread,
-                                              Callback callback, List<ListTitle> listTitleList) {
+                                              Callback callback, List<ListTitle> listTitles) {
         super(threadExecutor, mainThread);
-        mListTitleList = listTitleList;
+        mListTitles = listTitles;
         mCallback = callback;
     }
 
@@ -46,18 +46,18 @@ public class SaveListTitlesToCloud_InBackground extends AbstractInteractor imple
         if (!CommonMethods.isNetworkAvailable()) {
             return;
         }
-        if (mListTitleList == null) {
+        if (mListTitles == null) {
             Timber.e("run(): Unable to save listTitles to the Cloud. ListTitles is null!");
             return;
         }
-        if (mListTitleList.size() == 0) {
+        if (mListTitles.size() == 0) {
             Timber.e("run(): No ListTitles to save!");
             return;
         }
 
         List<ListTitle> successfullySavedListTitles = new ArrayList<>();
 
-        for (ListTitle listTitle : mListTitleList) {
+        for (ListTitle listTitle : mListTitles) {
             // saveListTitleToBackendless
             if (listTitle == null) {
                 Timber.e("run(): Unable to save ListTitle. ListTitle is null!");
@@ -115,12 +115,12 @@ public class SaveListTitlesToCloud_InBackground extends AbstractInteractor imple
         }
 
 
-        if (mListTitleList.size() == successfullySavedListTitles.size()) {
+        if (mListTitles.size() == successfullySavedListTitles.size()) {
             String successMessage = String.format("Successfully saved %d ListTitles to Backendless.", successfullySavedListTitles.size());
             postListTitlesListSavedToBackendless(successMessage, successfullySavedListTitles);
         } else {
             String errorMessage = String.format("Only saved %d out of %d ListTitles to Backendless",
-                    successfullySavedListTitles.size(), mListTitleList.size());
+                    successfullySavedListTitles.size(), mListTitles.size());
             postListTitlesListSaveToBackendlessFailed(errorMessage, successfullySavedListTitles);
         }
 

@@ -41,8 +41,7 @@ import timber.log.Timber;
 
 
 public class ListTitleActivity extends AppCompatActivity implements View.OnClickListener{
-//        ListThemesPresenter.ListThemeView,
-//        RetrieveAllListThemes.Callback {
+
 
     public static final String ARG_LIST_TITLE_JSON = "argListTitleJson";
     public static final String ARG_MODE = "argMode";
@@ -181,7 +180,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 
     @Subscribe
     public void onEvent(MyEvents.updateListTitleActivityUI event) {
-        mListTitle.setListTheme(event.getSelectedListTheme());
+        mListTitle.setListThemeUuid(event.getSelectedListTheme().getUuid());
         updateUI(mListTitle);
     }
 
@@ -218,7 +217,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         mListThemeSpinnerArrayAdapter.setData(listThemes);
         mListThemeSpinnerArrayAdapter.notifyDataSetChanged();
 
-        int position = mListThemeSpinnerArrayAdapter.getPosition(mListTitle.getListTheme());
+        int position = mListThemeSpinnerArrayAdapter.getPosition(mListTitle.retrieveListTheme());
         spnListTitles.setSelection(position);
         updateUI(mListTitle);
     }
@@ -304,13 +303,13 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 
         // get backgroundDrawable and padding values
         Drawable backgroundDrawable = CommonMethods.getBackgroundDrawable(
-                listTitle.getListTheme().getStartColor(), listTitle.getListTheme().getEndColor());
-        int horizontalPadding = CommonMethods.convertDpToPixel(listTitle.getListTheme().getHorizontalPaddingInDp());
-        int verticalPadding = CommonMethods.convertDpToPixel(listTitle.getListTheme().getVerticalPaddingInDp());
+                listTitle.retrieveListTheme().getStartColor(), listTitle.retrieveListTheme().getEndColor());
+        int horizontalPadding = CommonMethods.convertDpToPixel(listTitle.retrieveListTheme().getHorizontalPaddingInDp());
+        int verticalPadding = CommonMethods.convertDpToPixel(listTitle.retrieveListTheme().getVerticalPaddingInDp());
 
         // set backgrounds
         CommonMethods.setBackgroundDrawable(listTitlesActivityContent,
-                listTitle.getListTheme().getStartColor(), listTitle.getListTheme().getEndColor());
+                listTitle.retrieveListTheme().getStartColor(), listTitle.retrieveListTheme().getEndColor());
         llCancelNewSave.setBackground(backgroundDrawable);
 
         // set views' attributes
@@ -319,20 +318,20 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
             // Note: Switches and CheckBoxes are "Buttons"
             if (v instanceof Button) {
                 Button b = (Button) v;
-                b.setTextColor(listTitle.getListTheme().getTextColor());
-                b.setTextSize(listTitle.getListTheme().getTextSize());
+                b.setTextColor(listTitle.retrieveListTheme().getTextColor());
+                b.setTextSize(listTitle.retrieveListTheme().getTextSize());
                 b.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
                 b.setBackground(backgroundDrawable);
 
-                if (listTitle.getListTheme().isBold()) {
+                if (listTitle.retrieveListTheme().isBold()) {
                     b.setTypeface(null, Typeface.BOLD);
                 } else {
                     b.setTypeface(null, Typeface.NORMAL);
                 }
             } else if (v instanceof TextView) {
                 TextView tv = (TextView) v;
-                tv.setTextColor(listTitle.getListTheme().getTextColor());
-                tv.setTextSize(listTitle.getListTheme().getTextSize());
+                tv.setTextColor(listTitle.retrieveListTheme().getTextColor());
+                tv.setTextSize(listTitle.retrieveListTheme().getTextSize());
                 tv.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
             }
         }
@@ -341,32 +340,32 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
             View v = llCancelNewSave.getChildAt(i);
             if (v instanceof Button) {
                 Button b = (Button) v;
-                b.setTextColor(listTitle.getListTheme().getTextColor());
+                b.setTextColor(listTitle.retrieveListTheme().getTextColor());
             }
         }
 
         backgroundDrawable = CommonMethods.getBackgroundDrawable(
-                listTitle.getListTheme().getStartColor(), listTitle.getListTheme().getEndColor());
+                listTitle.retrieveListTheme().getStartColor(), listTitle.retrieveListTheme().getEndColor());
         groupListPrivate.setBackground(backgroundDrawable);
         for (int i = 0; i < groupListPrivate.getChildCount(); i++) {
             View v = groupListPrivate.getChildAt(i);
             if (v instanceof TextView) {
                 TextView tv = (TextView) v;
-                tv.setTextColor(listTitle.getListTheme().getTextColor());
-                tv.setTextSize(listTitle.getListTheme().getTextSize());
+                tv.setTextColor(listTitle.retrieveListTheme().getTextColor());
+                tv.setTextSize(listTitle.retrieveListTheme().getTextSize());
                 tv.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
             }
         }
 
         backgroundDrawable = CommonMethods.getBackgroundDrawable(
-                listTitle.getListTheme().getStartColor(), listTitle.getListTheme().getEndColor());
+                listTitle.retrieveListTheme().getStartColor(), listTitle.retrieveListTheme().getEndColor());
         groupListSorting.setBackground(backgroundDrawable);
         for (int i = 0; i < groupListSorting.getChildCount(); i++) {
             View v = groupListSorting.getChildAt(i);
             if (v instanceof TextView) {
                 TextView tv = (TextView) v;
-                tv.setTextColor(listTitle.getListTheme().getTextColor());
-                tv.setTextSize(listTitle.getListTheme().getTextSize());
+                tv.setTextColor(listTitle.retrieveListTheme().getTextColor());
+                tv.setTextSize(listTitle.retrieveListTheme().getTextSize());
                 tv.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
             }
         }
@@ -415,7 +414,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 //        mListThemeSpinnerArrayAdapter.setData(allListThemes);
 //        mListThemeSpinnerArrayAdapter.notifyDataSetChanged();
 //
-//        int position = mListThemeSpinnerArrayAdapter.getmPosition(mListTitle.getListTheme());
+//        int position = mListThemeSpinnerArrayAdapter.getmPosition(mListTitle.retrieveListTheme());
 //        spnListTitles.setSelection(position);
 //        updateUI(mListTitle);
 //    }

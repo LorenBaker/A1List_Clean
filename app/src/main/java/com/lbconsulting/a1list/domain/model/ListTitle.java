@@ -18,7 +18,8 @@ public class ListTitle {
     private String uuid;
 
     private String name;
-    private ListTheme listTheme;
+    //    private ListTheme listTheme;
+    private String listThemeUuid;
     private boolean checked;
     private boolean forceViewInflation;
     private boolean markedForDeletion;
@@ -40,7 +41,7 @@ public class ListTitle {
         // A default constructor.
     }
 
-    public static ListTitle newInstance(String name, ListTheme defaultListTheme){
+    public static ListTitle newInstance(String name, ListTheme defaultListTheme) {
         ListTitle newListTitle = new ListTitle();
         AppSettingsRepository appSettings = AndroidApplication.getAppSettingsRepository();
         String newUuid = UUID.randomUUID().toString();
@@ -49,7 +50,7 @@ public class ListTitle {
         newListTitle.setUuid(newUuid);
 
         newListTitle.setName(name);
-        newListTitle.setListTheme(defaultListTheme);
+        newListTitle.setListThemeUuid(defaultListTheme.getUuid());
         newListTitle.setChecked(false);
         newListTitle.setForceViewInflation(false);
         newListTitle.setMarkedForDeletion(false);
@@ -89,13 +90,21 @@ public class ListTitle {
         this.name = name;
     }
 
-    public ListTheme getListTheme() {
-        return listTheme;
+    public String getListThemeUuid() {
+        return listThemeUuid;
     }
 
-    public void setListTheme(ListTheme listTheme) {
-        this.listTheme = listTheme;
+    public void setListThemeUuid(String listThemeUuid) {
+        this.listThemeUuid = listThemeUuid;
     }
+
+    public ListTheme retrieveListTheme() {
+        return AndroidApplication.getListThemeRepository().retrieveListThemeByUuid(listThemeUuid);
+    }
+
+//    public void setListTheme(ListTheme listTheme) {
+//        this.listTheme = listTheme;
+//    }
 
     public boolean isChecked() {
         return checked;

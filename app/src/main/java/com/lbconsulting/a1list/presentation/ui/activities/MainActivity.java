@@ -1,5 +1,8 @@
 package com.lbconsulting.a1list.presentation.ui.activities;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
@@ -7,6 +10,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -56,6 +60,7 @@ import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -65,6 +70,7 @@ import timber.log.Timber;
 public class MainActivity extends AppCompatActivity implements ListTitlesPresenter.ListTitleView,
         CreateInitialListThemes.Callback,
         SyncObjectsFromCloud.Callback {
+    private static final int NOTIFICATION_DOWNLOAD_ID = 33;
     private static ListTitlesPresenter_Impl mMainActivityPresenter;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
@@ -81,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private String MESSAGE_CHANNEL = "";
     private Subscription mSubscription;
-
     private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     private ListTitleRepository_Impl mListTitleRepository;
@@ -216,20 +221,75 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             initializeApp();
         } else {
             mMainActivityPresenter.resume();
-
-            // TODO: Implement MySettings.requiresSyncing()
-            if (CommonMethods.isNetworkAvailable()) {
-                new SyncObjectsFromCloud_InBackground(ThreadExecutor.getInstance(),
-                        MainThreadImpl.getInstance(), this).execute();
+            if (requiresSyncing()) {
+                if (CommonMethods.isNetworkAvailable()) {
+                    Timber.i("onResume(): Starting syncing objects from the Cloud.");
+                    showDownLoadNotification();
+                    new SyncObjectsFromCloud_InBackground(ThreadExecutor.getInstance(),
+                            MainThreadImpl.getInstance(), this).execute();
+                } else {
+                    Timber.i("onResume(): Syncing objects from the Cloud required, but the network not available.");
+                    // TODO: Implement a service to sync when the network becomes available.
+                }
+            }else{
+                Timber.i("onResume(): Syncing from Cloud not required.");
             }
-            // TODO: Implement a timer to sync objects
         }
 
+    }
+
+    private void showDownLoadNotification() {
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this);
+        notificationBuilder.setAutoCancel(false);
+        notificationBuilder.setOngoing(true);
+        notificationBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this,
+                MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT));
+        notificationBuilder.setContentTitle("A1List");
+        notificationBuilder.setContentText("Downloading data from the cloud.");
+        notificationBuilder.setSmallIcon(android.R.drawable.stat_sys_download);
+        notificationBuilder.setTicker("Syncing A1List");
+        notificationManager
+                .notify(NOTIFICATION_DOWNLOAD_ID, notificationBuilder.build());
+    }
+
+    private void cancelDownLoadNotification() {
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this);
+        notificationBuilder.setAutoCancel(false);
+        notificationBuilder.setOngoing(true);
+        notificationBuilder.setContentIntent(PendingIntent.getActivity(this, 0, new Intent(this,
+                MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT));
+        notificationBuilder.setContentTitle("A1List");
+        notificationBuilder.setContentText("Downloading data from the cloud.");
+        notificationBuilder.setSmallIcon(android.R.drawable.stat_sys_download);
+        notificationBuilder.setTicker("Syncing A1List");
+        notificationManager.cancelAll();
+    }
+
+    private boolean requiresSyncing() {
+        boolean result = false;
+        long duration = System.currentTimeMillis() - MySettings.getLastTimeSynced();
+        long requiredDuration = mAppSettingsRepository.retrieveTimeBetweenSynchronizations();
+        if (requiredDuration > -1 && duration > requiredDuration) {
+            result = true;
+        }
+        return result;
     }
 
     private void initializeApp() {
         Timber.i("initializeApp()");
 //        showProgress("Loading initial Themes.");
+
+        String newUuid = UUID.randomUUID().toString();
+        // replace uuid "-" with "_" to distinguish it from Backendless objectId
+        newUuid = newUuid.replace("-", "_");
+        MySettings.setDeviceUuid(newUuid);
+
         new CreateInitialListThemes_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this).execute();
     }
@@ -526,7 +586,10 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     }
 
     private void refresh() {
-        Toast.makeText(this, "refresh clicked", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "refresh clicked", Toast.LENGTH_SHORT).show();
+        showDownLoadNotification();
+        new SyncObjectsFromCloud_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this).execute();
     }
 
     private void showActiveUser() {
@@ -582,12 +645,16 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 
     @Override
     public void onSyncObjectsFromCloudSuccess(String successMessage, SyncStats syncStats) {
-        CommonMethods.showOkDialog(this, "Sync Stats", successMessage);
+//        CommonMethods.showOkDialog(this, "Sync Stats", successMessage);
+        EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(null));
+        CommonMethods.showSnackbar(mFab, syncStats.getSnackBarMessage(), Snackbar.LENGTH_LONG);
+        cancelDownLoadNotification();
     }
 
     @Override
     public void onSyncObjectsFromCloudFailed(String errorMessage, SyncStats syncStats) {
-
+        CommonMethods.showOkDialog(this, "Sync Stats", errorMessage);
+        cancelDownLoadNotification();
     }
 
 

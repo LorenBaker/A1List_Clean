@@ -20,6 +20,7 @@ public class AppSettings {
     private long listTitleLastSortKey;
     private boolean listTitlesSortedAlphabetically;
     private String lastListTitleViewedUuid;
+    private boolean appInitializationComplete;
 
     private Date updated;
     private Date created;
@@ -40,6 +41,7 @@ public class AppSettings {
         newAppSettings.setListTitleLastSortKey(0);
         newAppSettings.setListTitlesSortedAlphabetically(true);
         newAppSettings.setLastListTitleViewedUuid(CommonMethods.NOT_AVAILABLE);
+        newAppSettings.setAppInitializationComplete(false);
 
         return newAppSettings;
     }
@@ -107,6 +109,14 @@ public class AppSettings {
 
     public void setListTitlesSortedAlphabetically(boolean listTitlesSortedAlphabetically) {
         this.listTitlesSortedAlphabetically = listTitlesSortedAlphabetically;
+    }
+
+    public boolean isAppInitializationComplete() {
+        return appInitializationComplete;
+    }
+
+    public void setAppInitializationComplete(boolean appInitializationComplete) {
+        this.appInitializationComplete = appInitializationComplete;
     }
 
     public Date getUpdated() {

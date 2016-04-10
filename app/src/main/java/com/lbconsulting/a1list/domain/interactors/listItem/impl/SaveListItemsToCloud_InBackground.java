@@ -61,7 +61,7 @@ public class SaveListItemsToCloud_InBackground extends AbstractInteractor implem
         for (ListItem listItem : mListItemList) {
 
             // Check if the ListTitle associated with the ListItem has been saved in Backendless
-            ListTitle listTitle = listItem.getListTitle();
+            ListTitle listTitle = listItem.retrieveListTitle();
             String listTitleObjectID = listTitle.getObjectId();
             if (listTitleObjectID == null || listTitleObjectID.isEmpty()) {
                 // The ListTitle has not been saved to Backendless ... so
@@ -77,7 +77,7 @@ public class SaveListItemsToCloud_InBackground extends AbstractInteractor implem
                 } else {
                     // The ListTitle from the Local Storage has been saved to Backendless ... so
                     // associated it with the ListItem
-                    listItem.setListTitle(listTitle);
+                    listItem.setListTitleUuid(listTitle.getUuid());
                 }
             }
 

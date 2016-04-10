@@ -34,7 +34,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
     //    private final ListTitleRepository mListTitleRepository;
     private final Context mContext;
 
-    private List<ListTheme> mListThemesInsertedIntoLocalStoarage;
+    private List<ListTheme> mListThemesInsertedIntoLocalStorage;
 
     public CreateInitialListThemes_InBackground(Executor threadExecutor, MainThread mainThread,
                                                 Callback callback) {
@@ -177,21 +177,23 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
             //endregion
 
 
-            mListThemesInsertedIntoLocalStoarage = mListThemeRepository.insert(newListThemes);
+            mListThemesInsertedIntoLocalStorage = mListThemeRepository.insert(newListThemes);
             String createdListThemeMessage;
             // check if we have failed to retrieve any ListThemes
-            if (mListThemesInsertedIntoLocalStoarage == null) {
+            if (mListThemesInsertedIntoLocalStorage == null) {
                 // notify the failure on the main thread
                 posListThemesCreationFailed("No Themes created!");
 
             } else {
                 // we have created ListThemes. Notify the UI on the main thread.
-                if (mListThemesInsertedIntoLocalStoarage.size() == newListThemes.size()) {
+                if (mListThemesInsertedIntoLocalStorage.size() == newListThemes.size()) {
                     createdListThemeMessage = String.format("All %d Themes created in the local storage.",
                             newListThemes.size());
+                    appSettings.setAppInitializationComplete(true);
+                    mAppSettingsRepository.insertIntoLocalStorage(appSettings);
                 } else {
                     createdListThemeMessage = String.format("Only %d out of %d requested Themes created in the local storage.",
-                            mListThemesInsertedIntoLocalStoarage.size(), newListThemes.size());
+                            mListThemesInsertedIntoLocalStorage.size(), newListThemes.size());
                 }
 
                 postInitialListThemesCreated(createdListThemeMessage);
@@ -212,13 +214,13 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
     @Override
     public void onAppSettingsSavedToCloud(final String successMessage) {
         Timber.i("onAppSettingsSavedToCloud(): %s", successMessage);
-        new SaveListThemesToCloud_InBackground(mThreadExecutor, mMainThread, this, mListThemesInsertedIntoLocalStoarage).execute();
+        new SaveListThemesToCloud_InBackground(mThreadExecutor, mMainThread, this, mListThemesInsertedIntoLocalStorage).execute();
     }
 
     @Override
     public void onAppSettingsSaveToCloudFailed(final String errorMessage) {
         Timber.e("onAppSettingsSaveToCloudFailed(): %s", errorMessage);
-        new SaveListThemesToCloud_InBackground(mThreadExecutor, mMainThread, this, mListThemesInsertedIntoLocalStoarage).execute();
+        new SaveListThemesToCloud_InBackground(mThreadExecutor, mMainThread, this, mListThemesInsertedIntoLocalStorage).execute();
     }
 
     @Override

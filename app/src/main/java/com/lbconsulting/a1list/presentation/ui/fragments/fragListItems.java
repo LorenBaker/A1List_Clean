@@ -112,7 +112,7 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
 //
 //    private void refreshListTitle(String listTitleUuid, String source) {
 //        if (listTitleUuid != null && !listTitleUuid.equals(MySettings.NOT_AVAILABLE)) {
-//            mListTitle = ListTitle.getListTitle(listTitleUuid);
+//            mListTitle = ListTitle.retrieveListTitle(listTitleUuid);
 //            if (mListTitle != null) {
 //                mListTheme = mListTitle.getAttributes();
 //                MyLog.i("fragListItems", source + " refreshListTitle " + mListTitle.getListItem());
@@ -133,7 +133,7 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
 
         llListItems = (LinearLayout) rootView.findViewById(R.id.llListItems);
         Drawable backgroundDrawable = CommonMethods.getBackgroundDrawable(
-                mListTitle.getListTheme().getStartColor(), mListTitle.getListTheme().getEndColor());
+                mListTitle.retrieveListTheme().getStartColor(), mListTitle.retrieveListTheme().getEndColor());
         llListItems.setBackground(backgroundDrawable);
 
 //        lvListItems = (com.nhaarman.listviewanimations.itemmanipulation.DynamicListView) rootView.findViewById(R.id.lvListItems);
@@ -248,11 +248,11 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
         Timber.i("displayListItems(): Retrieved %d ListItems for ListTitle \"%s\".",
                 listItems.size(), mListTitle.getName());
 
-        mListItemsArrayAdapter.setData(listItems, mListTitle.getListTheme());
-        mListItemsArrayAdapter.setListTheme(mListTitle.getListTheme());
+        mListItemsArrayAdapter.setData(listItems, mListTitle.retrieveListTheme());
+        mListItemsArrayAdapter.setListTheme(mListTitle.retrieveListTheme());
         mListItemsArrayAdapter.notifyDataSetChanged();
         Drawable backgroundDrawable = CommonMethods.getBackgroundDrawable(
-                mListTitle.getListTheme().getStartColor(), mListTitle.getListTheme().getEndColor());
+                mListTitle.retrieveListTheme().getStartColor(), mListTitle.retrieveListTheme().getEndColor());
 
         int index = mListTitle.getFirstVisiblePosition();
         int top = mListTitle.getListViewTop();

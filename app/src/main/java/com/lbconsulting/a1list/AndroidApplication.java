@@ -21,8 +21,8 @@ public class AndroidApplication extends Application {
     private static ListTitleRepository_Impl mListTitleRepository;
     private static ListItemRepository_Impl mListItemRepository;
 
-    private final String APP_ID = "D86918B7-C363-1B67-FF92-697761C42400";
-    private final String ANDROID_SECRET_KEY = "D6553747-6D5B-F593-FF11-50D86C14DD00";
+    private final String APP_ID = "2F2F5B2D-C1E0-89FE-FF1E-06FBD43BDA00";
+    private final String ANDROID_SECRET_KEY = "78A769FC-48FA-1017-FFCE-299842637300";
     private final String APP_VERSION = "v1";
 
     public static Context getContext() {

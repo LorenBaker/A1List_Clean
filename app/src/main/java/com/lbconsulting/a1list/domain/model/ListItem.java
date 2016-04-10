@@ -16,7 +16,8 @@ public class ListItem {
     private String objectId;
 
     private String name;
-    private ListTitle listTitle;
+//    private ListTitle listTitle;
+    private String listTitleUuid;
     private long manualSortKey;
     private boolean checked;
     private boolean favorite;
@@ -41,7 +42,7 @@ public class ListItem {
         newListItem.setUuid(newUuid);
 
         newListItem.setName(name);
-        newListItem.setListTitle(listTitle);
+        newListItem.setListTitleUuid(listTitle.getUuid());
         newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKey(listTitle, saveNextSortKeyToBackendless));
         newListItem.setChecked(false);
         newListItem.setFavorite(false);
@@ -84,12 +85,16 @@ public class ListItem {
         this.name = name;
     }
 
-    public ListTitle getListTitle() {
-        return listTitle;
+    public ListTitle retrieveListTitle() {
+        return AndroidApplication.getListTitleRepository().retrieveListTitleByUuid(listTitleUuid);
     }
 
-    public void setListTitle(ListTitle listTitle) {
-        this.listTitle = listTitle;
+    public String getListTitleUuid() {
+        return listTitleUuid;
+    }
+
+    public void setListTitleUuid(String listTitleUuid) {
+        this.listTitleUuid = listTitleUuid;
     }
 
     public long getManualSortKey() {

@@ -502,7 +502,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
                 cursor.close();
             }
         } catch (Exception e) {
-            Timber.e("getListTheme(): Exception: %s.", e.getMessage());
+            Timber.e("retrieveListTheme(): Exception: %s.", e.getMessage());
         }
 
         return result;

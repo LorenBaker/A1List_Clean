@@ -1,5 +1,10 @@
 package com.lbconsulting.a1list.utils;
 
+import android.content.res.Resources;
+
+import com.lbconsulting.a1list.AndroidApplication;
+import com.lbconsulting.a1list.R;
+
 /**
  * Used to record various statistics about the result of a sync operation.
  */
@@ -21,7 +26,6 @@ public class SyncStats {
     public int numListThemeConflictsDetected;
     public int numListTitleConflictsDetected;
     public int numListItemConflictsDetected;
-
 
 
     public int numAppSettingsUpdates;
@@ -61,6 +65,29 @@ public class SyncStats {
         String results = networkNotAvailableExceptions();
         results = results + appSettingsStats() + "\n" + listThemeStats() + "\n" + listTitleStats() + "\n" + listItemStats();
         return results;
+    }
+
+    public String getSnackBarMessage() {
+        int numberOfUpdates = numAppSettingsUpdates + numListItemUpdates + numListTitleUpdates + numListThemeUpdates;
+        int numberOfInserts = numAppSettingsInserts + numListItemInserts + numListTitleInserts + numListThemeInserts;
+        int numberOfDeletes = numAppSettingsDeletes + numListItemDeletes + numListTitleDeletes + numListThemeDeletes;
+
+        int numberAffectedObjects = numberOfDeletes + numberOfInserts + numberOfUpdates;
+
+        Resources res = AndroidApplication.getContext().getResources();
+
+        String updates = res.getQuantityString(R.plurals.syncUpdates, numberOfUpdates, numberOfUpdates);
+        String inserts = res.getQuantityString(R.plurals.syncInserts, numberOfInserts, numberOfInserts);
+        String deletes = res.getQuantityString(R.plurals.syncDeletes, numberOfDeletes, numberOfDeletes);
+
+        String msg;
+        if (numberAffectedObjects != 0) {
+            msg = "Sync with Cloud complete.\n" + updates + inserts + deletes;
+        } else {
+            msg = "Sync with Cloud complete.\nNo changes required.";
+        }
+
+        return msg;
     }
 
     public String networkNotAvailableExceptions() {

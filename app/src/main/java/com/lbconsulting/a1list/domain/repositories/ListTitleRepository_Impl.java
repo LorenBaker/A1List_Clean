@@ -65,9 +65,9 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         listTitle.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_UUID)));
         listTitle.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_NAME)));
 
-        String listThemeUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_THEME_UUID));
-        ListTheme listTheme = mListThemeRepository.retrieveListThemeByUuid(listThemeUuid);
-        listTitle.setListTheme(listTheme);
+//        String listThemeUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_THEME_UUID));
+//        ListTheme listTheme = mListThemeRepository.retrieveListThemeByUuid(listThemeUuid);
+        listTitle.setListThemeUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_THEME_UUID)));
 
         listTitle.setListLockString(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_LOCKED_STRING)));
         listTitle.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_MANUAL_SORT_KEY)));
@@ -163,7 +163,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             cv.put(ListTitlesSqlTable.COL_NAME, listTitle.getName());
             cv.put(ListTitlesSqlTable.COL_UUID, listTitle.getUuid());
             cv.put(ListTitlesSqlTable.COL_OBJECT_ID, listTitle.getObjectId());
-            cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListTheme().getUuid());
+            cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListThemeUuid());
 
             cv.put(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION, listTitle.getFirstVisiblePosition());
             cv.put(ListTitlesSqlTable.COL_LIST_VIEW_TOP, listTitle.getListViewTop());
@@ -469,7 +469,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                 cursor.close();
             }
         } catch (Exception e) {
-            Timber.e("getListTitle(): Exception: %s.", e.getMessage());
+            Timber.e("retrieveListTitle(): Exception: %s.", e.getMessage());
         }
 
         return result;
@@ -755,7 +755,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         List<ListTitle> listTitles = retrieveAllListTitles(deletedListTheme);
         if (listTitles.size() > 0) {
             for (ListTitle listTitle : listTitles) {
-                listTitle.setListTheme(defaultListTheme);
+                listTitle.setListThemeUuid(defaultListTheme.getUuid());
             }
             update(listTitles);
         }
