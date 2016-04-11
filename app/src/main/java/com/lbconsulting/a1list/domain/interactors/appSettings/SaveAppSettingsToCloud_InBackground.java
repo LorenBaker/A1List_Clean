@@ -103,10 +103,10 @@ public class SaveAppSettingsToCloud_InBackground extends AbstractInteractor impl
             numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
 
         } catch (Exception e) {
-            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
+            Timber.e("updateSQLiteDb(): Exception: %s.", e.getMessage());
         }
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateInLocalStorage(): Error updating AppSettings with uuid = %s", appSettings.getUuid());
+            Timber.e("updateSQLiteDb(): Error updating AppSettings \"%s\".", appSettings.getName());
         }
     }
 

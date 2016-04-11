@@ -22,6 +22,7 @@ import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
+import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -62,11 +63,10 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         ListTitle listTitle = new ListTitle();
         listTitle.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_ID)));
         listTitle.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_OBJECT_ID)));
+        listTitle.setDeviceUuid(MySettings.getDeviceUuid());
         listTitle.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_UUID)));
         listTitle.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_NAME)));
 
-//        String listThemeUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_THEME_UUID));
-//        ListTheme listTheme = mListThemeRepository.retrieveListThemeByUuid(listThemeUuid);
         listTitle.setListThemeUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_THEME_UUID)));
 
         listTitle.setListLockString(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_LOCKED_STRING)));
@@ -93,11 +93,11 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
 
     @Override
     public List<ListTitle> insert(List<ListTitle> listTitles) {
-        List<ListTitle> successfullyInsertedListItems = insertIntoLocalStorage(listTitles);
-        if (successfullyInsertedListItems.size() > 0) {
-            insertInCloud(successfullyInsertedListItems);
+        List<ListTitle> successfullyInsertedListItemsIntoLocalStorage = insertIntoLocalStorage(listTitles);
+        if (successfullyInsertedListItemsIntoLocalStorage.size() > 0) {
+            insertInCloud(successfullyInsertedListItemsIntoLocalStorage);
         }
-        return successfullyInsertedListItems;
+        return successfullyInsertedListItemsIntoLocalStorage;
     }
 
     @Override

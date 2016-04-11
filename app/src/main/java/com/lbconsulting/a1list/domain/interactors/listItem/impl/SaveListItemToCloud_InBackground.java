@@ -60,7 +60,7 @@ public class SaveListItemToCloud_InBackground extends AbstractInteractor impleme
             if (listTitleObjectID == null || listTitleObjectID.isEmpty()) {
                 // The ListTitle from the Local Storage has NOT been saved to Backendless ... so
                 // The ListItem cannot be saved to Backendless.
-                Timber.i("run(): Cannot save ListItem \"%s\" to Backendless because ListTitle \"%s\" has not previously been saved to Backendless.",
+                Timber.e("run(): Cannot save ListItem \"%s\" to Backendless because ListTitle \"%s\" has not previously been saved to Backendless.",
                         mListItem.getName(), listTitle.getName());
                 // Do not continue.
                 return;

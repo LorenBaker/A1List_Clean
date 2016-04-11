@@ -189,8 +189,9 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                 if (mListThemesInsertedIntoLocalStorage.size() == newListThemes.size()) {
                     createdListThemeMessage = String.format("All %d Themes created in the local storage.",
                             newListThemes.size());
-                    appSettings.setAppInitializationComplete(true);
-                    mAppSettingsRepository.insertIntoLocalStorage(appSettings);
+//                    appSettings.setAppInitializationComplete(true);
+//                    mAppSettingsRepository.insertIntoLocalStorage(appSettings);
+//                    mAppSettingsRepository.updateInLocalStorage(appSettings);
                 } else {
                     createdListThemeMessage = String.format("Only %d out of %d requested Themes created in the local storage.",
                             mListThemesInsertedIntoLocalStorage.size(), newListThemes.size());
@@ -199,10 +200,10 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
                 postInitialListThemesCreated(createdListThemeMessage);
             }
 
-            AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
-            if (dirtyAppSettings != null) {
-                mAppSettingsRepository.updateInCloud(dirtyAppSettings, false);
-            }
+//            AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
+//            if (dirtyAppSettings != null) {
+//                mAppSettingsRepository.updateInCloud(dirtyAppSettings, false);
+//            }
 
 //                new SaveDirtyObjectsToBackendless_InBackground(mThreadExecutor, mMainThread).execute();
 

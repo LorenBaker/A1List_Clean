@@ -11,6 +11,7 @@ import com.lbconsulting.a1list.domain.interactors.appSettings.SaveAppSettingsToC
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.storage.AppSettingsSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
+import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -37,11 +38,11 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
     //region Insert AppSettings
     @Override
     public boolean insert(AppSettings appSettings) {
-        boolean successfullyInsertedAppSettingsIntoCloud = insertIntoLocalStorage(appSettings);
-        if (successfullyInsertedAppSettingsIntoCloud) {
+        boolean successfullyInsertedAppSettingsIntoLocalStorage = insertIntoLocalStorage(appSettings);
+        if (successfullyInsertedAppSettingsIntoLocalStorage) {
             insertInCloud(appSettings);
         }
-        return successfullyInsertedAppSettingsIntoCloud;
+        return successfullyInsertedAppSettingsIntoLocalStorage;
     }
 
     @Override
@@ -136,7 +137,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
             Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
         }
         if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateInLocalStorage(): Error updating user %s's AppSettings into local storage", appSettings.getName());
+            Timber.e("updateInLocalStorage(): Error updating user %s's AppSettings into local storage.", appSettings.getName());
         }
         return numberOfRecordsUpdated;
     }
@@ -150,6 +151,8 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_OBJECT_ID)));
         appSettings.setUuid(cursor.getString(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_UUID)));
+
+        appSettings.setDeviceUuid(MySettings.getDeviceUuid());
 
         appSettings.setName(cursor.getString(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_NAME)));

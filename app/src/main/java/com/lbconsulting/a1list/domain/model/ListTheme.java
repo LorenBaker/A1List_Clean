@@ -1,5 +1,7 @@
 package com.lbconsulting.a1list.domain.model;
 
+import com.lbconsulting.a1list.utils.MySettings;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -13,6 +15,7 @@ public class ListTheme {
     private String objectId;
     private long Id;
     private String name;
+    private String deviceUuid;
     private int startColor; // int
     private int endColor;
     private int textColor; // int
@@ -66,6 +69,7 @@ public class ListTheme {
     public static ListTheme newInstance(ListTheme defaultListTheme) {
         ListTheme newTheme = new ListTheme();
         newTheme.setName("");
+        newTheme.setDeviceUuid(MySettings.getDeviceUuid());
         newTheme.setStartColor(defaultListTheme.getStartColor());
         newTheme.setEndColor(defaultListTheme.getEndColor());
         newTheme.setTextColor(defaultListTheme.getTextColor());
@@ -110,6 +114,13 @@ public class ListTheme {
         this.verticalPaddingInDp = verticalPaddingInDp;
     }
 
+    public String getDeviceUuid() {
+        return deviceUuid;
+    }
+
+    public void setDeviceUuid(String deviceUuid) {
+        this.deviceUuid = deviceUuid;
+    }
 
     public boolean isBold() {
         return bold;

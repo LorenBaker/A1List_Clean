@@ -116,6 +116,13 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         mListTitleRepository = AndroidApplication.getListTitleRepository();
         mListItemRepository = AndroidApplication.getListItemRepository();
 
+        if (MySettings.getDeviceUuid().equals(MySettings.NOT_AVAILABLE)) {
+            String newUuid = UUID.randomUUID().toString();
+            // replace uuid "-" with "_" to distinguish it from Backendless objectId
+            newUuid = newUuid.replace("-", "_");
+            MySettings.setDeviceUuid(newUuid);
+        }
+
         boolean isListTitlesSortedAlphabetically = true;
         AppSettings appSettings = mAppSettingsRepository.retrieveAppSettings();
         if (appSettings != null) {
@@ -231,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
                     Timber.i("onResume(): Syncing objects from the Cloud required, but the network not available.");
                     // TODO: Implement a service to sync when the network becomes available.
                 }
-            }else{
+            } else {
                 Timber.i("onResume(): Syncing from Cloud not required.");
             }
         }
@@ -284,12 +291,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     private void initializeApp() {
         Timber.i("initializeApp()");
 //        showProgress("Loading initial Themes.");
-
-        String newUuid = UUID.randomUUID().toString();
-        // replace uuid "-" with "_" to distinguish it from Backendless objectId
-        newUuid = newUuid.replace("-", "_");
-        MySettings.setDeviceUuid(newUuid);
-
         new CreateInitialListThemes_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this).execute();
     }
@@ -466,10 +467,12 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             return true;
 
         } else if (id == R.id.action_addTestLists) {
+            // TODO: Remove action_addTestLists
             addTestLists();
             return true;
 
         } else if (id == R.id.action_addTestItems) {
+            // TODO: Remove action_addTestItems
             List<ListTitle> listTitles = mListTitleRepository.retrieveAllListTitles(false, true);
             addItemsToListTitles(listTitles);
             return true;
@@ -480,7 +483,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     //region Add Test Lists with Test Items
     // TODO: Remove addTestLists
     private void addTestLists() {
-        int numberOfLists = 10;
+        int numberOfLists = 5;
         List<ListTitle> listTitles = new ArrayList<>();
 
         ListTheme defaultListTheme;
@@ -499,7 +502,10 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             listTitles.add(newListTitle);
         }
         mListTitleRepository.insert(listTitles);
-
+        AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
+        if (dirtyAppSettings != null) {
+            mAppSettingsRepository.updateInCloud(dirtyAppSettings, false);
+        }
     }
 
 

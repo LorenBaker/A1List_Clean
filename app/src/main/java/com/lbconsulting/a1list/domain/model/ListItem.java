@@ -2,6 +2,7 @@ package com.lbconsulting.a1list.domain.model;
 
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
+import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.Date;
 import java.util.UUID;
@@ -16,8 +17,8 @@ public class ListItem {
     private String objectId;
 
     private String name;
-//    private ListTitle listTitle;
     private String listTitleUuid;
+    private String deviceUuid;
     private long manualSortKey;
     private boolean checked;
     private boolean favorite;
@@ -43,6 +44,7 @@ public class ListItem {
 
         newListItem.setName(name);
         newListItem.setListTitleUuid(listTitle.getUuid());
+        newListItem.setDeviceUuid(MySettings.getDeviceUuid());
         newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKey(listTitle, saveNextSortKeyToBackendless));
         newListItem.setChecked(false);
         newListItem.setFavorite(false);
@@ -95,6 +97,14 @@ public class ListItem {
 
     public void setListTitleUuid(String listTitleUuid) {
         this.listTitleUuid = listTitleUuid;
+    }
+
+    public String getDeviceUuid() {
+        return deviceUuid;
+    }
+
+    public void setDeviceUuid(String deviceUuid) {
+        this.deviceUuid = deviceUuid;
     }
 
     public long getManualSortKey() {

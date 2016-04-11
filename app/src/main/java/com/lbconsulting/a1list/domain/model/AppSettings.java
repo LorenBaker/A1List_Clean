@@ -14,13 +14,14 @@ public class AppSettings {
     private long Id;
     private String uuid;
     private String objectId;
+    private String deviceUuid;
 
     private String name;
     private long timeBetweenSynchronizations;
     private long listTitleLastSortKey;
     private boolean listTitlesSortedAlphabetically;
     private String lastListTitleViewedUuid;
-    private boolean appInitializationComplete;
+
 
     private Date updated;
     private Date created;
@@ -36,12 +37,12 @@ public class AppSettings {
         // replace uuid "-" with "_" to distinguish it from Backendless objectId
         newUuid = newUuid.replace("-", "_");
         newAppSettings.setUuid(newUuid);
+        newAppSettings.setDeviceUuid(MySettings.getDeviceUuid());
         newAppSettings.setName(MySettings.getActiveUserName());
         newAppSettings.setTimeBetweenSynchronizations(0);
         newAppSettings.setListTitleLastSortKey(0);
         newAppSettings.setListTitlesSortedAlphabetically(true);
         newAppSettings.setLastListTitleViewedUuid(CommonMethods.NOT_AVAILABLE);
-        newAppSettings.setAppInitializationComplete(false);
 
         return newAppSettings;
     }
@@ -69,6 +70,14 @@ public class AppSettings {
 
     public void setObjectId(String objectId) {
         this.objectId = objectId;
+    }
+
+    public String getDeviceUuid() {
+        return deviceUuid;
+    }
+
+    public void setDeviceUuid(String deviceUuid) {
+        this.deviceUuid = deviceUuid;
     }
 
     public String getName() {
@@ -111,13 +120,6 @@ public class AppSettings {
         this.listTitlesSortedAlphabetically = listTitlesSortedAlphabetically;
     }
 
-    public boolean isAppInitializationComplete() {
-        return appInitializationComplete;
-    }
-
-    public void setAppInitializationComplete(boolean appInitializationComplete) {
-        this.appInitializationComplete = appInitializationComplete;
-    }
 
     public Date getUpdated() {
         return updated;

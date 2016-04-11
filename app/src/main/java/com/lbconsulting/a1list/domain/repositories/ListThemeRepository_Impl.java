@@ -19,6 +19,7 @@ import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.SaveList
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.storage.ListThemesSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
+import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -209,7 +210,9 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
         ListTheme listTheme = new ListTheme();
         listTheme.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_ID)));
         listTheme.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_OBJECT_ID)));
+        listTheme.setDeviceUuid(MySettings.getDeviceUuid());
         listTheme.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_NAME)));
+        listTheme.setDeviceUuid(MySettings.getDeviceUuid());
         listTheme.setStartColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_START_COLOR)));
         listTheme.setEndColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_END_COLOR)));
         listTheme.setTextColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_TEXT_COLOR)));

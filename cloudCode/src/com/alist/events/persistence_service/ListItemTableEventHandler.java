@@ -52,6 +52,7 @@ public class ListItemTableEventHandler extends com.backendless.servercode.extens
 
         BackendlessCollection<ListItem> listItems = Backendless.Data.of(ListItem.class).find(dataQuery);
         Iterator<ListItem> iterator = listItems.getCurrentPage().iterator();
+        int count = listItems.getTotalObjects();
         if (iterator.hasNext()) {
             listItem = iterator.next();
         }
@@ -60,6 +61,7 @@ public class ListItemTableEventHandler extends com.backendless.servercode.extens
     }
 
     private void validateClientListItem(ListItem clientListItem) {
+
         ListItem cloudListItem = getListItemByUuid(clientListItem.getUuid());
         if (cloudListItem != null) {
             Date clientListItemDate = clientListItem.getUpdated();

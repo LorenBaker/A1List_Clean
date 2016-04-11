@@ -10,13 +10,11 @@ import android.preference.PreferenceManager;
 public class MySettings {
 
     public static final String NOT_AVAILABLE = "N/A";
+
+
     public static final String SETTING_IS_STARTED_FROM_REGISTRATION_ACTIVITY = "isStartedFromRegistrationActivity";
     public static final String SETTING_DEVICE_UUID = "deviceUuid";
     private static final String SETTING_LAST_TIME_SYNCED = "lastTimeSynced";
-
-
-//    private static final String SETTING_ACTIVE_LIST_TITLE_UUID = "activeListTitleUuid";
-//    private static final String SETTING_IS_FIRST_TIME_APP_RUN = "isFirstTimeAppRun";
 
     private static final String SETTING_ACTIVE_USER_ID = "activeUserID";
     private static final String SETTING_ACTIVE_USER_FIRST_NAME = "activeUserFirstName";

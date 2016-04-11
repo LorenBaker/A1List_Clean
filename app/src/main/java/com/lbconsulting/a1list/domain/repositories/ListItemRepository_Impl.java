@@ -20,6 +20,7 @@ import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
+import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -38,9 +39,9 @@ public class ListItemRepository_Impl implements ListItemRepository,
         DeleteListItemFromCloud.Callback,
         DeleteListItemsFromCloud.Callback {
 
-    private static ListTitleRepository_Impl mListTitleRepository = null;
     private static final int FALSE = 0;
     private static final int TRUE = 1;
+    private static ListTitleRepository_Impl mListTitleRepository = null;
     private final Context mContext;
 
     public ListItemRepository_Impl(Context context) {
@@ -59,9 +60,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
         listItem.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UUID)));
         listItem.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_NAME)));
 
-//        String listTitleUuid = cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID));
-//        ListTitle listTitle = mListTitleRepository.retrieveListTitleByUuid(listTitleUuid);
         listItem.setListTitleUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID)));
+        listItem.setDeviceUuid(MySettings.getDeviceUuid());
 
         listItem.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MANUAL_SORT_KEY)));
 
@@ -75,6 +75,30 @@ public class ListItemRepository_Impl implements ListItemRepository,
         listItem.setUpdated(updated);
 
         return listItem;
+    }
+
+    public static ContentValues makeListItemContentValues(ListItem listItem) {
+        ContentValues cv = new ContentValues();
+
+        cv.put(ListItemsSqlTable.COL_NAME, listItem.getName());
+        cv.put(ListItemsSqlTable.COL_UUID, listItem.getUuid());
+        cv.put(ListItemsSqlTable.COL_OBJECT_ID, listItem.getObjectId());
+        cv.put(ListItemsSqlTable.COL_LIST_TITLE_UUID, listItem.retrieveListTitle().getUuid());
+        cv.put(ListItemsSqlTable.COL_MANUAL_SORT_KEY, listItem.getManualSortKey());
+
+        cv.put(ListItemsSqlTable.COL_CHECKED, (listItem.isChecked()) ? TRUE : FALSE);
+        cv.put(ListItemsSqlTable.COL_FAVORITE, (listItem.isFavorite()) ? TRUE : FALSE);
+        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+        cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, (listItem.isMarkedForDeletion()) ? TRUE : FALSE);
+        cv.put(ListItemsSqlTable.COL_STRUCK_OUT, (listItem.isStruckOut()) ? TRUE : FALSE);
+
+        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
+
+        Date updatedDateTime = listItem.getUpdated();
+        if (updatedDateTime != null) {
+            cv.put(ListItemsSqlTable.COL_UPDATED, updatedDateTime.getTime());
+        }
+        return cv;
     }
 
     //region Insert ListItem
@@ -140,30 +164,6 @@ public class ListItemRepository_Impl implements ListItemRepository,
         }
 
         return result;
-    }
-
-    public static ContentValues makeListItemContentValues(ListItem listItem) {
-        ContentValues cv = new ContentValues();
-
-        cv.put(ListItemsSqlTable.COL_NAME, listItem.getName());
-        cv.put(ListItemsSqlTable.COL_UUID, listItem.getUuid());
-        cv.put(ListItemsSqlTable.COL_OBJECT_ID, listItem.getObjectId());
-        cv.put(ListItemsSqlTable.COL_LIST_TITLE_UUID, listItem.retrieveListTitle().getUuid());
-        cv.put(ListItemsSqlTable.COL_MANUAL_SORT_KEY, listItem.getManualSortKey());
-
-        cv.put(ListItemsSqlTable.COL_CHECKED, (listItem.isChecked()) ? TRUE : FALSE);
-        cv.put(ListItemsSqlTable.COL_FAVORITE, (listItem.isFavorite()) ? TRUE : FALSE);
-        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-        cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, (listItem.isMarkedForDeletion()) ? TRUE : FALSE);
-        cv.put(ListItemsSqlTable.COL_STRUCK_OUT, (listItem.isStruckOut()) ? TRUE : FALSE);
-
-        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-
-        Date updatedDateTime = listItem.getUpdated();
-        if (updatedDateTime != null) {
-            cv.put(ListItemsSqlTable.COL_UPDATED, updatedDateTime.getTime());
-        }
-        return cv;
     }
 
     @Override
@@ -620,22 +620,26 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     @Override
     public void updateInCloud(ListItem listItem, boolean isNew) {
-        // If the listItem is not new ... make sure that it has a Backendless objectId.
-        if (!isNew) {
-            if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
-                ListItem existingListItem = retrieveListItemByUuid(listItem.getUuid());
-                listItem.setObjectId(existingListItem.getObjectId());
+        if (listItem != null) {
+            // If the listItem is not new ... make sure that it has a Backendless objectId.
+            if (!isNew) {
+                if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
+                    ListItem existingListItem = retrieveListItemByUuid(listItem.getUuid());
+                    listItem.setObjectId(existingListItem.getObjectId());
+                }
+                if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
+                    // The listItem is not new AND there is no Backendless objectId available ... so,
+                    // Unable to update the listItem in Backendless
+                    Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                            listItem.getName());
+                    return;
+                }
             }
-            if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
-                // The listItem is not new AND there is no Backendless objectId available ... so,
-                // Unable to update the listItem in Backendless
-                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
-                        listItem.getName());
-                return;
-            }
+            new SaveListItemToCloud_InBackground(ThreadExecutor.getInstance(),
+                    MainThreadImpl.getInstance(), this, listItem).execute();
+        } else {
+            Timber.e("updateInCloud(): Unable to update ListItem in Cloud. The Provided ListItem is null!");
         }
-        new SaveListItemToCloud_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, listItem).execute();
     }
 
     @Override

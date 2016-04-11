@@ -2,6 +2,7 @@ package com.lbconsulting.a1list.domain.model;
 
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
+import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.Date;
 import java.util.UUID;
@@ -16,6 +17,7 @@ public class ListTitle {
     private String objectId;
     private long Id;
     private String uuid;
+    private String deviceUuid;
 
     private String name;
     //    private ListTheme listTheme;
@@ -48,6 +50,7 @@ public class ListTitle {
         // replace uuid "-" with "_" to distinguish it from Backendless objectId
         newUuid = newUuid.replace("-", "_");
         newListTitle.setUuid(newUuid);
+        newListTitle.setDeviceUuid(MySettings.getDeviceUuid());
 
         newListTitle.setName(name);
         newListTitle.setListThemeUuid(defaultListTheme.getUuid());
@@ -80,6 +83,14 @@ public class ListTitle {
 
     public void setId(long id) {
         Id = id;
+    }
+
+    public String getDeviceUuid() {
+        return deviceUuid;
+    }
+
+    public void setDeviceUuid(String deviceUuid) {
+        this.deviceUuid = deviceUuid;
     }
 
     public String getName() {

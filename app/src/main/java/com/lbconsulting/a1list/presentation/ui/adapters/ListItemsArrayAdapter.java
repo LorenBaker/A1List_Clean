@@ -178,6 +178,8 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> {
             public void onClick(View v) {
                 ListItem clickedItem = (ListItem) v.getTag();
                 if (clickedItem != null) {
+                    // get the most recent ListItem from the repository to make sure that there is an Backendless objectId.
+                    clickedItem = mListItemRepository.retrieveListItemByUuid(clickedItem.getUuid());
                     clickedItem.setStruckOut(!clickedItem.isStruckOut());
                     if (clickedItem.isStruckOut()) {
                         setStrikeOut((TextView) v);

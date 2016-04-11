@@ -49,8 +49,8 @@ public class AppSettingsTableEventHandler extends com.backendless.servercode.ext
         String whereClause = String.format("uuid = '%s'", uuid);
         dataQuery.setWhereClause(whereClause);
 
-        BackendlessCollection<AppSettings> appSettingss = Backendless.Data.of(AppSettings.class).find(dataQuery);
-        Iterator<AppSettings> iterator = appSettingss.getCurrentPage().iterator();
+        BackendlessCollection<AppSettings> cloudAppSettingsCollection = Backendless.Data.of(AppSettings.class).find(dataQuery);
+        Iterator<AppSettings> iterator = cloudAppSettingsCollection.getCurrentPage().iterator();
         if (iterator.hasNext()) {
             appSettings = iterator.next();
         }
