@@ -21,9 +21,7 @@ public class AndroidApplication extends Application {
     private static ListTitleRepository_Impl mListTitleRepository;
     private static ListItemRepository_Impl mListItemRepository;
 
-    private final String APP_ID = "2F2F5B2D-C1E0-89FE-FF1E-06FBD43BDA00";
-    private final String ANDROID_SECRET_KEY = "78A769FC-48FA-1017-FFCE-299842637300";
-    private final String APP_VERSION = "v1";
+    private ActivityLifecycleCallbacks mActivityLifecycleCallbacks;
 
     public static Context getContext() {
         return mContext;
@@ -51,6 +49,10 @@ public class AndroidApplication extends Application {
 
         mContext = this;
 
+        String APP_ID = "2F2F5B2D-C1E0-89FE-FF1E-06FBD43BDA00";
+        String ANDROID_SECRET_KEY = "78A769FC-48FA-1017-FFCE-299842637300";
+        String APP_VERSION = "v1";
+
         Backendless.initApp(this, APP_ID, ANDROID_SECRET_KEY, APP_VERSION);
         Timber.i("onCreate(): Backendless initialized");
 
@@ -73,4 +75,5 @@ public class AndroidApplication extends Application {
         mListTitleRepository = new ListTitleRepository_Impl(mContext);
         mListItemRepository = new ListItemRepository_Impl(mContext);
     }
+
 }

@@ -48,6 +48,7 @@ import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListItemName;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogEditListTitleName;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogNewListItem;
 import com.lbconsulting.a1list.presentation.ui.dialogs.dialogSelectFavorites;
+import com.lbconsulting.a1list.services.BackendlessMessagingService;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.CsvParser;
@@ -85,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     @Bind(R.id.tvActivityProgressBarMessage)
     TextView tvProgressBarMessage;
     private SectionsPagerAdapter mSectionsPagerAdapter;
-    private String MESSAGE_CHANNEL = "";
+//    private String MESSAGE_CHANNEL = "";
     private Subscription mSubscription;
     private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
@@ -132,43 +133,10 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         mMainActivityPresenter = new ListTitlesPresenter_Impl(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, isListTitlesSortedAlphabetically);
 
-        showActiveUser();
+        Intent startBackendlessMessagingService = new Intent(this, BackendlessMessagingService.class);
+        startService(startBackendlessMessagingService);
 
-        //region Messaging
-//        MESSAGE_CHANNEL = MySettings.getActiveUserID();
-//        Backendless.Messaging.subscribe(MESSAGE_CHANNEL,
-//                new AsyncCallback<List<Message>>() {
-//                    @Override
-//                    public void handleResponse(List<Message> response) {
-//                        for (Message message : response) {
-//                            // TODO: ignore messages initiated from this device
-//                            // TODO: design message payload. Make changes to SQLite db.
-//                            String csvDataString = message.getData().toString();
-//                            MessagePayload payload = new MessagePayload(csvDataString);
-////                            tvMessagesReceived.setText(tvMessagesReceived.getText() + "\n\n" + payload.toString());
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void handleFault(BackendlessFault fault) {
-//                        Timber.e("Backendless.Messaging.subscribe()MessageCallback: BackendlessFault: %s", fault.getMessage());
-//                    }
-//                }, new AsyncCallback<Subscription>() {
-//
-//                    @Override
-//                    public void handleResponse(Subscription response) {
-//                        Timber.i("Backendless. Successful messaging.subscribe()SubscriptionCallback");
-//                        mSubscription = response;
-//                    }
-//
-//                    @Override
-//                    public void handleFault(BackendlessFault fault) {
-//                        Timber.e("Backendless.FAIL messaging.subscribe()SubscriptionCallback: BackendlessFault: %s", fault.getMessage());
-//
-//                    }
-//                }
-//        );
-        //endregion
+        showActiveUser();
 
     }
 
@@ -618,11 +586,11 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             Backendless.UserService.logout(new AsyncCallback<Void>() {
                 public void handleResponse(Void response) {
                     // user has been logged out.
-                    String msg = "User logged out.";
+                    String msg = String.format( "User \"%s\" logged out.", MySettings.getActiveUserName());
                     Timber.i("logoutUser(): %s", msg);
                     CommonMethods.showSnackbar(mFab, msg, Snackbar.LENGTH_LONG);
                     MySettings.resetActiveUserAndEmail();
-                    MESSAGE_CHANNEL = MySettings.NOT_AVAILABLE;
+//                    MESSAGE_CHANNEL = MySettings.NOT_AVAILABLE;
                     startLoginActivity();
                 }
 

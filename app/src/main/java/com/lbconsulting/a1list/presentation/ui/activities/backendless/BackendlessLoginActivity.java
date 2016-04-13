@@ -353,6 +353,7 @@ public class BackendlessLoginActivity extends AppCompatActivity implements Loade
                 } else {
                     MySettings.resetActiveUserAndEmail();
                 }
+
             } catch (BackendlessException e) {
                 mFailMessage = "Login failed. " + e.getMessage();
                 Timber.e("UserLoginTask: doInBackground(). %s", mFailMessage);

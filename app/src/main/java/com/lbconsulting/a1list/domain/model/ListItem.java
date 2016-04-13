@@ -19,6 +19,7 @@ public class ListItem {
     private String name;
     private String listTitleUuid;
     private String deviceUuid;
+    private String messageChannel;
     private long manualSortKey;
     private boolean checked;
     private boolean favorite;
@@ -45,6 +46,7 @@ public class ListItem {
         newListItem.setName(name);
         newListItem.setListTitleUuid(listTitle.getUuid());
         newListItem.setDeviceUuid(MySettings.getDeviceUuid());
+        newListItem.setMessageChannel(MySettings.getActiveUserID());
         newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKey(listTitle, saveNextSortKeyToBackendless));
         newListItem.setChecked(false);
         newListItem.setFavorite(false);
@@ -107,6 +109,14 @@ public class ListItem {
         this.deviceUuid = deviceUuid;
     }
 
+    public String getMessageChannel() {
+        return messageChannel;
+    }
+
+    public void setMessageChannel(String messageChannel) {
+        this.messageChannel = messageChannel;
+    }
+
     public long getManualSortKey() {
         return manualSortKey;
     }
@@ -137,6 +147,7 @@ public class ListItem {
 
     public void setMarkedForDeletion(boolean markedForDeletion) {
         this.markedForDeletion = markedForDeletion;
+
     }
 
     public boolean isStruckOut() {

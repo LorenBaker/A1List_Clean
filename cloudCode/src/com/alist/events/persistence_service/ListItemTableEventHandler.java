@@ -1,8 +1,12 @@
 package com.alist.events.persistence_service;
 
+import com.alist.backendlessMessaging.ListItemMessage;
+import com.alist.backendlessMessaging.Messaging;
 import com.alist.models.ListItem;
 import com.backendless.Backendless;
 import com.backendless.BackendlessCollection;
+import com.backendless.commons.exception.ExceptionWrapper;
+import com.backendless.messaging.MessageStatus;
 import com.backendless.persistence.BackendlessDataQuery;
 import com.backendless.servercode.ExecutionResult;
 import com.backendless.servercode.RunnerContext;
@@ -39,7 +43,28 @@ public class ListItemTableEventHandler extends com.backendless.servercode.extens
 
     @Override
     public void afterUpdate(RunnerContext context, ListItem listitem, ExecutionResult<ListItem> result) throws Exception {
-        // add your code here
+        try {
+            int temp=0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//        ExceptionWrapper exception = result.getException();
+//        if (exception != null) {
+//            ListItem updatedListItem = result.getResult();
+//            if(updatedListItem!=null) {
+//                sendListItemUpdateMessage(updatedListItem);
+//                String temp = "Code = 0; exceptionClass = class com.backendless.exceptions.persistence.InvalidEntityException; exceptionMessage = Duplicate property:id";
+//            }
+//        }
+    }
+
+    private void sendListItemUpdateMessage(ListItem updatedListItem) {
+        String messageChannel = updatedListItem.getMessageChannel();
+        int action = Messaging.ACTION_UPDATE;
+        int target = Messaging.TARGET_ALL_DEVICES;
+        String listItemMessageJson = ListItemMessage.toJson(updatedListItem, action, target);
+        MessageStatus messageStatus = Backendless.Messaging.publish(messageChannel, listItemMessageJson);
+        int temp = 0;
     }
 
     private ListItem getListItemByUuid(String uuid) {

@@ -62,6 +62,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
         listItem.setListTitleUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID)));
         listItem.setDeviceUuid(MySettings.getDeviceUuid());
+        listItem.setMessageChannel(MySettings.getActiveUserID());
 
         listItem.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MANUAL_SORT_KEY)));
 

@@ -181,7 +181,6 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
         }
 
         // Reset errors.
-
         txtFirstName.setError(null);
         txtLastName.setError(null);
         txtEmail.setError(null);
@@ -255,7 +254,9 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
         if (cancel) {
             // There was an error; don't attempt registration and focus the first
             // form field with an error.
-            focusView.requestFocus();
+            if (focusView != null) {
+                focusView.requestFocus();
+            }
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user registration attempt.
@@ -345,6 +346,14 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
         txtEmail.setAdapter(adapter);
     }
 
+    private void startMainActivity() {
+        MySettings.setStartedFromRegistrationActivity(true);
+        Intent intent = new Intent(this, MainActivity.class);
+        // reset the backStack
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
+    }
 
     private interface ProfileQuery {
         String[] PROJECTION = {
@@ -353,7 +362,7 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
         };
 
         int ADDRESS = 0;
-        int IS_PRIMARY = 1;
+//        int IS_PRIMARY = 1;
     }
 
     /**
@@ -384,7 +393,7 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
         @Override
         protected Boolean doInBackground(Void... params) {
 
-            boolean isRegistrationSuccess = false;
+            boolean isValidUser = false;
             try {
                 BackendlessUser user = new BackendlessUser();
                 user.setEmail(mEmail);
@@ -393,15 +402,18 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
                 user.setProperty("lastName", mLastName);
                 user = Backendless.UserService.register(user);
 
+                // login the new user
                 try {
                     Backendless.UserService.login(mEmail, mPassword, true);
-                    isRegistrationSuccess = Backendless.UserService.isValidLogin();
-                    if (isRegistrationSuccess) {
+                    isValidUser = Backendless.UserService.isValidLogin();
+                    if (isValidUser) {
                         MySettings.setActiveUserAndEmail(
                                 user.getUserId(),
                                 user.getProperty("firstName").toString(),
                                 user.getProperty("lastName").toString(),
                                 user.getEmail());
+                    } else {
+                        MySettings.resetActiveUserAndEmail();
                     }
 
                 } catch (BackendlessException e) {
@@ -410,16 +422,13 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
 
                 }
 
-                // login the new user
-
             } catch (BackendlessException e) {
                 mRegistrationFailMessage = e.getMessage();
                 String failMessage = "Registration failed. " + e.getMessage();
                 Timber.e("UserRegistrationTask: doInBackground(): BackendlessException: %s", failMessage);
             }
 
-            // TODO: register the new account here.
-            return isRegistrationSuccess;
+            return isValidUser;
         }
 
         @Override
@@ -432,9 +441,8 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
                 startMainActivity();
             } else {
                 Timber.i("UserRegistrationTask: onPostExecute(): Registration Failed. %s", mRegistrationFailMessage);
-                CommonMethods.showOkDialog(BackendlessRegistrationActivity.this, "Registration Failed" ,mRegistrationFailMessage);
-                CommonMethods.showSnackbar(mRegistrationFormView, mRegistrationFailMessage, Snackbar.LENGTH_LONG);
-//                Toast.makeText(BackendlessRegistrationActivity.this, mRegistrationFailMessage, Toast.LENGTH_LONG).show();
+                CommonMethods.showOkDialog(BackendlessRegistrationActivity.this, "Registration Failed", mRegistrationFailMessage);
+//                CommonMethods.showSnackbar(mRegistrationFormView, mRegistrationFailMessage, Snackbar.LENGTH_LONG);
             }
         }
 
@@ -443,15 +451,6 @@ public class BackendlessRegistrationActivity extends AppCompatActivity implement
             mAuthTask = null;
             showProgress(false);
         }
-    }
-
-    private void startMainActivity() {
-        MySettings.setStartedFromRegistrationActivity(true);
-        Intent intent = new Intent(this, MainActivity.class);
-        // reset the backStack
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();
     }
 
 }
