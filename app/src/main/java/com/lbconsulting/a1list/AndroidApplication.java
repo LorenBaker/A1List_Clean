@@ -49,8 +49,8 @@ public class AndroidApplication extends Application {
 
         mContext = this;
 
-        String APP_ID = "2F2F5B2D-C1E0-89FE-FF1E-06FBD43BDA00";
-        String ANDROID_SECRET_KEY = "78A769FC-48FA-1017-FFCE-299842637300";
+        String APP_ID = "EDBE037F-A564-A18A-FFA9-9A8B27BF1100";
+        String ANDROID_SECRET_KEY = "A3A77632-57C2-6078-FF18-3DC10B40D900";
         String APP_VERSION = "v1";
 
         Backendless.initApp(this, APP_ID, ANDROID_SECRET_KEY, APP_VERSION);

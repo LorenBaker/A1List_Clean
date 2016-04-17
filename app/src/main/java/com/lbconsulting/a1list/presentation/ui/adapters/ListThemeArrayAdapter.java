@@ -71,7 +71,7 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
     @Override
     public long getItemId(int position) {
         ListTheme ListTheme = getItem(position);
-        return ListTheme.getId();
+        return ListTheme.getSQLiteId();
     }
 
     @Override

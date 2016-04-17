@@ -86,7 +86,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     @Bind(R.id.tvActivityProgressBarMessage)
     TextView tvProgressBarMessage;
     private SectionsPagerAdapter mSectionsPagerAdapter;
-//    private String MESSAGE_CHANNEL = "";
     private Subscription mSubscription;
     private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
@@ -133,8 +132,8 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         mMainActivityPresenter = new ListTitlesPresenter_Impl(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, isListTitlesSortedAlphabetically);
 
-        Intent startBackendlessMessagingService = new Intent(this, BackendlessMessagingService.class);
-        startService(startBackendlessMessagingService);
+        Intent backendlessMessagingService = new Intent(this, BackendlessMessagingService.class);
+        startService(backendlessMessagingService);
 
         showActiveUser();
 
@@ -145,11 +144,6 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         mSectionsPagerAdapter.replaceListTitle(event.getPosition(), event.getListTitle());
     }
 
-//    @Subscribe
-//    public void onEvent(MyEvents.updateListItem event) {
-//        mListItemRepository.update(event.getListItem());
-//        EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
-//    }
 
     @Subscribe
     public void onEvent(MyEvents.showEditListItemDialog event) {
@@ -159,7 +153,11 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         dialog.show(getSupportFragmentManager(), "dialogEditListItemName");
     }
 
-
+    @Subscribe
+    public void onEvent(MyEvents.mainActivityPresenterResume event){
+        Timber.d("onEvent(): mainActivityPresenterResume");
+        mainActivityPresenterResume();
+    }
     @OnClick(R.id.fab)
     public void fab() {
         if (mActiveListTitle != null) {
@@ -195,7 +193,8 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         if (MySettings.isStartedFromRegistrationActivity()) {
             initializeApp();
         } else {
-            mMainActivityPresenter.resume();
+            mainActivityPresenterResume();
+
             if (requiresSyncing()) {
                 if (CommonMethods.isNetworkAvailable()) {
                     Timber.i("onResume(): Starting syncing objects from the Cloud.");
@@ -211,6 +210,10 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             }
         }
 
+    }
+
+    private void mainActivityPresenterResume() {
+        mMainActivityPresenter.resume();
     }
 
     private void showDownLoadNotification() {
@@ -308,10 +311,12 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             }
         });
         mTabLayout.setupWithViewPager(mViewPager);
-
+        int position =0;
         AppSettings appSettings = mAppSettingsRepository.retrieveAppSettings();
-        String lastListTitleViewedUuid = appSettings.getLastListTitleViewedUuid();
-        int position = mSectionsPagerAdapter.getPosition(lastListTitleViewedUuid);
+        if(appSettings!=null) {
+            String lastListTitleViewedUuid = appSettings.getLastListTitleViewedUuid();
+            position = mSectionsPagerAdapter.getPosition(lastListTitleViewedUuid);
+        }
         mViewPager.setCurrentItem(position);
         mActiveListTitle = mSectionsPagerAdapter.getListTitle(position);
     }

@@ -55,7 +55,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
     public static ListItem listItemFromCursor(Cursor cursor) {
         ListItem listItem = new ListItem();
 
-        listItem.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_ID)));
+        listItem.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_ID)));
         listItem.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_OBJECT_ID)));
         listItem.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UUID)));
         listItem.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_NAME)));

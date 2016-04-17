@@ -61,9 +61,10 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     public static ListTitle listTitleFromCursor(Cursor cursor) {
 
         ListTitle listTitle = new ListTitle();
-        listTitle.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_ID)));
+        listTitle.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_ID)));
         listTitle.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_OBJECT_ID)));
         listTitle.setDeviceUuid(MySettings.getDeviceUuid());
+        listTitle.setMessageChannel(MySettings.getActiveUserID());
         listTitle.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_UUID)));
         listTitle.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_NAME)));
 

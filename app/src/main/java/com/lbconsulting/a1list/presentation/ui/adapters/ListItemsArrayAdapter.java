@@ -83,7 +83,7 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> {
     @Override
     public long getItemId(int position) {
         ListItem listItem = getItem(position);
-        return listItem.getId();
+        return listItem.getSQLiteId();
     }
 
     @Override

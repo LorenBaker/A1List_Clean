@@ -6,7 +6,10 @@ import android.net.Uri;
 
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
+import com.backendless.messaging.MessageStatus;
 import com.lbconsulting.a1list.AndroidApplication;
+import com.lbconsulting.a1list.backendlessMessaging.ListTitleMessage;
+import com.lbconsulting.a1list.backendlessMessaging.Messaging;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -52,11 +55,7 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
         String objectId = mListTitle.getObjectId();
         boolean isNew = objectId == null || objectId.isEmpty();
         try {
-            Timber.d("run(): Starting to save ListTitle \"%s\" with uuid = %s and objectId = %s.",
-                    mListTitle.getName(),mListTitle.getUuid(), mListTitle.getObjectId());
             response = Backendless.Data.of(ListTitle.class).save(mListTitle);
-            Timber.d("run() Saved ListTitle \"%s\" with uuid = %s and objectId = %s.",
-                    mListTitle.getName(),mListTitle.getUuid(), mListTitle.getObjectId());
             try {
                 // Update the SQLite db: set dirty to false, and updated date and time
                 ContentValues cv = new ContentValues();
@@ -78,6 +77,9 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
                 // update the SQLite db
                 updateSQLiteDb(response, cv);
 
+                // send message to other devices
+                sendListTitleMessage(mListTitle, isNew);
+
                 String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
                 postListTitleSavedToCloud(successMessage);
 
@@ -96,6 +98,29 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
             String errorMessage = String.format("FAILED to save \"%s\" to Backendless. BackendlessException: Code: %s; Message: %s.",
                     mListTitle.getName(), e.getCode(), e.getMessage());
             postListTitleSaveToCloudFailed(errorMessage);
+        }
+    }
+
+    private void sendListTitleMessage(ListTitle listTitle, boolean isNew) {
+        String messageChannel = listTitle.getMessageChannel();
+        int action = Messaging.ACTION_UPDATE;
+        if (isNew) {
+            action = Messaging.ACTION_CREATE;
+        }
+        int target = Messaging.TARGET_ALL_DEVICES;
+        String listTitleMessageJson = ListTitleMessage.toJson(listTitle, action, target);
+        MessageStatus messageStatus = Backendless.Messaging.publish(messageChannel, listTitleMessageJson);
+        if (messageStatus.getErrorMessage() == null) {
+            // successfully sent message to Backendless.
+            if (isNew) {
+                Timber.i("sendListTitleMessage(): CREATE \"%s\" message successfully sent.", listTitle.getName());
+            } else {
+                Timber.i("sendListTitleMessage(): UPDATE \"%s\" message successfully sent.", listTitle.getName());
+            }
+        } else {
+            // error sending message to Backendless.
+            Timber.e("sendListTitleMessage(): FAILED to send message for \"%s\". %s.",
+                    listTitle.getName(), messageStatus.getErrorMessage());
         }
     }
 

@@ -1,17 +1,8 @@
-package com.lbconsulting.a1list.domain.model;
-
-import com.lbconsulting.a1list.AndroidApplication;
-import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository;
-import com.lbconsulting.a1list.utils.MySettings;
+package com.alist.models;
 
 import java.util.Date;
-import java.util.UUID;
 
-/**
- * Java object for an A1List ListTitle.
- */
 public class ListTitle {
-
     private static final String LIST_NOT_LOCK = "listNotLocked";
 
     private String objectId;
@@ -41,32 +32,6 @@ public class ListTitle {
 
     public ListTitle() {
         // A default constructor.
-    }
-
-    public static ListTitle newInstance(String name, ListTheme defaultListTheme) {
-        ListTitle newListTitle = new ListTitle();
-        AppSettingsRepository appSettings = AndroidApplication.getAppSettingsRepository();
-        String newUuid = UUID.randomUUID().toString();
-        // replace uuid "-" with "_" to distinguish it from Backendless objectId
-        newUuid = newUuid.replace("-", "_");
-        newListTitle.setUuid(newUuid);
-        newListTitle.setDeviceUuid(MySettings.getDeviceUuid());
-        newListTitle.setMessageChannel(MySettings.getActiveUserID());
-
-        newListTitle.setName(name);
-        newListTitle.setListThemeUuid(defaultListTheme.getUuid());
-        newListTitle.setChecked(false);
-        newListTitle.setForceViewInflation(false);
-        newListTitle.setMarkedForDeletion(false);
-        newListTitle.setManualSortKey(appSettings.retrieveNextListTitleSortKey());
-        newListTitle.setSortListItemsAlphabetically(true);
-        newListTitle.setListLockString(LIST_NOT_LOCK);
-        newListTitle.setListPrivateToThisDevice(false);
-        newListTitle.setListItemLastSortKey(0);
-        newListTitle.setFirstVisiblePosition(-1);
-        newListTitle.setListViewTop(0);
-
-        return newListTitle;
     }
 
     //region Getters and Setters
@@ -116,10 +81,6 @@ public class ListTitle {
 
     public void setListThemeUuid(String listThemeUuid) {
         this.listThemeUuid = listThemeUuid;
-    }
-
-    public ListTheme retrieveListTheme() {
-        return AndroidApplication.getListThemeRepository().retrieveListThemeByUuid(listThemeUuid);
     }
 
     public boolean isChecked() {
@@ -242,9 +203,4 @@ public class ListTitle {
         this.created = created;
     }
     //endregion
-
-    @Override
-    public String toString() {
-        return getName();
-    }
 }

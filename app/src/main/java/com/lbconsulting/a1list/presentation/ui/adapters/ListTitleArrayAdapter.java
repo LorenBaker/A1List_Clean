@@ -68,7 +68,7 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
     @Override
     public long getItemId(int position) {
         ListTitle ListTitle = getItem(position);
-        return ListTitle.getId();
+        return ListTitle.getSQLiteId();
     }
 
     @Override
@@ -159,7 +159,9 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
                             mSelectedListTitle.retrieveListTheme().getTextColor());
                 }
                 EventBus.getDefault().post(new MyEvents.incrementStrikeOutCount(strikeOutIncrement));
-                mListTitleRepository.update(mSelectedListTitle);
+//                mListTitleRepository.update(mSelectedListTitle);
+                // Only update in local storage. ListTitle will be saved to Cloud when and if ListTitle is deleted.
+                mListTitleRepository.updateInLocalStorage(mSelectedListTitle);
 
             }
         });

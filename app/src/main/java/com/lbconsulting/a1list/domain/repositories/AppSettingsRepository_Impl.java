@@ -145,7 +145,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
     public static AppSettings appSettingsFromCursor(Cursor cursor) {
 
         AppSettings appSettings = new AppSettings();
-        appSettings.setId(cursor.getLong(
+        appSettings.setSQLiteId(cursor.getLong(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_ID)));
         appSettings.setObjectId(cursor.getString(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_OBJECT_ID)));
@@ -153,6 +153,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_UUID)));
 
         appSettings.setDeviceUuid(MySettings.getDeviceUuid());
+        appSettings.setMessageChannel(MySettings.getActiveUserID());
 
         appSettings.setName(cursor.getString(
                 cursor.getColumnIndexOrThrow(AppSettingsSqlTable.COL_NAME)));

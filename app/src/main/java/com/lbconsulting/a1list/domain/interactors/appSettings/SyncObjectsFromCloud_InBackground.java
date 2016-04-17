@@ -64,6 +64,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         final int LIST_THEMES = 1;
         final int LIST_TITLES = 2;
         final int LIST_ITEMS = 3;
+
         SyncStats syncStats = new SyncStats();
 
         if (!CommonMethods.isNetworkAvailable()) {
@@ -97,7 +98,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             Iterator<AppSettings> appSettingIterator;
             while (appSettingsCollection.getCurrentPage().size() > 0) {
                 appSettingIterator = appSettingsCollection.getCurrentPage().iterator();
-                int size = appSettingsCollection.getCurrentPage().size();
+//                int size = appSettingsCollection.getCurrentPage().size();
                 while (appSettingIterator.hasNext()) {
                     AppSettings appSettings = appSettingIterator.next();
                     appSettingsCloudMap.put(appSettings.getUuid(), appSettings);
@@ -121,7 +122,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             Iterator<ListTheme> listThemeIterator;
             while (listThemesCollection.getCurrentPage().size() > 0) {
                 listThemeIterator = listThemesCollection.getCurrentPage().iterator();
-                int size = listThemesCollection.getCurrentPage().size();
+//                int size = listThemesCollection.getCurrentPage().size();
                 while (listThemeIterator.hasNext()) {
                     ListTheme listTheme = listThemeIterator.next();
                     listThemesCloudMap.put(listTheme.getUuid(), listTheme);
@@ -145,7 +146,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             Iterator<ListTitle> listTitleIterator;
             while (listTitlesCollection.getCurrentPage().size() > 0) {
                 listTitleIterator = listTitlesCollection.getCurrentPage().iterator();
-                int size = listTitlesCollection.getCurrentPage().size();
+//                int size = listTitlesCollection.getCurrentPage().size();
                 while (listTitleIterator.hasNext()) {
                     ListTitle listTitle = listTitleIterator.next();
                     listTitlesCloudMap.put(listTitle.getUuid(), listTitle);
@@ -169,7 +170,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             Iterator<ListItem> listItemIterator;
             while (listItemsCollection.getCurrentPage().size() > 0) {
                 listItemIterator = listItemsCollection.getCurrentPage().iterator();
-                int size = listItemsCollection.getCurrentPage().size();
+//                int size = listItemsCollection.getCurrentPage().size();
                 while (listItemIterator.hasNext()) {
                     ListItem listItem = listItemIterator.next();
                     listItemsCloudMap.put(listItem.getUuid(), listItem);
@@ -191,6 +192,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             String errorMessage = "ABORTING SYNC OBJECTS FROM CLOUD. " +
                     "Failed to properly download all A1List objects from Backendless.";
             postOnSyncObjectsFromCloudFailed(errorMessage, syncStats);
+            Timber.e("run(): Exception: %s.", errorMessage);
             return;
         }
 
@@ -213,12 +215,22 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         computeAppSettingsMergeSolution(appSettingsLocalList, appSettingsCloudMap, batch, syncStats);
         computeListThemeMergeSolution(listThemesLocalList, listThemesCloudMap, batch, syncStats);
         computeListTitleMergeSolution(listTitlesLocalList, listTitlesCloudMap, batch, syncStats);
-        computeListItemMergeSolution(listItemsLocalList, listItemsCloudMap, batch, syncStats);
 
 
         // Merge solution ready. Applying batch update
         Timber.i("run(): Merge solution ready. Applying batch update");
 
+        try {
+            ContentResolver contentResolver = AndroidApplication.getContext().getContentResolver();
+            contentResolver.applyBatch(A1List_ContentProvider.AUTHORITY, batch);
+        } catch (RemoteException e) {
+            Timber.e("run(): RemoteException: %s.", e.getMessage());
+        } catch (OperationApplicationException e) {
+            Timber.e("run(): OperationApplicationException: %s.", e.getMessage());
+        }
+
+        batch = new ArrayList<ContentProviderOperation>();
+        computeListItemMergeSolution(listItemsLocalList, listItemsCloudMap, batch, syncStats);
         try {
             ContentResolver contentResolver = AndroidApplication.getContext().getContentResolver();
             contentResolver.applyBatch(A1List_ContentProvider.AUTHORITY, batch);
@@ -257,7 +269,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                     Timber.i("computeAppSettingsMergeSolution(): Scheduling update for: \"%s\".",
                             localAppSettings.getName());
                     Uri existingAppSettingsUri = AppSettingsSqlTable.CONTENT_URI.buildUpon()
-                            .appendPath(String.valueOf(localAppSettings.getId())).build();
+                            .appendPath(String.valueOf(localAppSettings.getSQLiteId())).build();
                     ContentValues cvCloudAppSettings = AppSettingsRepository_Impl.makeContentValues(cloudAppSettings);
                     if (cvCloudAppSettings.containsKey(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY)) {
                         cvCloudAppSettings.remove(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY);
@@ -272,6 +284,22 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                     Timber.i("computeAppSettingsMergeSolution(): No update required for \"%s\" AppSettings.",
                             localAppSettings.getName());
                     syncStats.numAppSettingsNoUpdateRequired++;
+                    // If dates are not the same then set local date equal to cloud date
+                    Date cloudAppSettingsDate = cloudAppSettings.getUpdated();
+                    if (cloudAppSettingsDate == null) {
+                        cloudAppSettingsDate = cloudAppSettings.getCreated();
+                    }
+                    if (!cloudAppSettingsDate.equals(localAppSettings.getUpdated())) {
+                        Timber.d("computeAppSettingsMergeSolution(): Cloud and local AppSettings dates not the same. Updating \"%s\""
+                                , localAppSettings.getName());
+                        Uri existingAppSettingsUri = AppSettingsSqlTable.CONTENT_URI.buildUpon()
+                                .appendPath(String.valueOf(localAppSettings.getSQLiteId())).build();
+                        ContentValues cv = new ContentValues();
+                        cv.put(AppSettingsSqlTable.COL_UPDATED, cloudAppSettingsDate.getTime());
+                        cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, FALSE);
+                        batch.add(ContentProviderOperation.newUpdate(existingAppSettingsUri)
+                                .withValues(cv).build());
+                    }
                 }
             } else {
                 // Match NOT found. The AppSettings exist only locally and NOT in the cloud.
@@ -279,7 +307,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                 Timber.i("computeAppSettingsMergeSolution(): Scheduling deletion for: \"%s\".",
                         localAppSettings.getName());
                 Uri deleteAppSettingsUri = AppSettingsSqlTable.CONTENT_URI.buildUpon()
-                        .appendPath(String.valueOf(localAppSettings.getId())).build();
+                        .appendPath(String.valueOf(localAppSettings.getSQLiteId())).build();
 
                 batch.add(ContentProviderOperation.newDelete(deleteAppSettingsUri).build());
                 syncStats.numAppSettingsDeletes++;
@@ -322,7 +350,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                     Timber.i("computeListThemeMergeSolution(): Scheduling update for: \"%s\".",
                             localListTheme.getName());
                     Uri existingListThemeUri = ListThemesSqlTable.CONTENT_URI.buildUpon()
-                            .appendPath(String.valueOf(localListTheme.getId())).build();
+                            .appendPath(String.valueOf(localListTheme.getSQLiteId())).build();
                     ContentValues cvCloudListTheme = ListThemeRepository_Impl.makeListThemeContentValues(cloudListTheme);
                     if (cvCloudListTheme.containsKey(ListThemesSqlTable.COL_THEME_DIRTY)) {
                         cvCloudListTheme.remove(ListThemesSqlTable.COL_THEME_DIRTY);
@@ -337,6 +365,22 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                     Timber.i("computeListThemeMergeSolution(): No update required for \"%s\".",
                             localListTheme.getName());
                     syncStats.numListThemeNoUpdateRequired++;
+                    // If dates are not the same then set local date equal to cloud date
+                    Date cloudListThemeDate = cloudListTheme.getUpdated();
+                    if (cloudListThemeDate == null) {
+                        cloudListThemeDate = cloudListTheme.getCreated();
+                    }
+                    if (!cloudListThemeDate.equals(localListTheme.getUpdated())) {
+                        Timber.d("computeListThemeMergeSolution(): Cloud and local ListTheme dates not the same. Updating \"%s\""
+                                , localListTheme.getName());
+                        Uri existingListThemeUri = ListThemesSqlTable.CONTENT_URI.buildUpon()
+                                .appendPath(String.valueOf(localListTheme.getSQLiteId())).build();
+                        ContentValues cv = new ContentValues();
+                        cv.put(ListThemesSqlTable.COL_UPDATED, cloudListThemeDate.getTime());
+                        cv.put(ListThemesSqlTable.COL_THEME_DIRTY, FALSE);
+                        batch.add(ContentProviderOperation.newUpdate(existingListThemeUri)
+                                .withValues(cv).build());
+                    }
                 }
             } else {
                 // Match NOT found. The ListTheme exist only locally and NOT in the cloud.
@@ -344,7 +388,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                 Timber.i("computeListThemeMergeSolution(): Scheduling deletion for: \"%s\".",
                         localListTheme.getName());
                 Uri deleteListThemeUri = ListThemesSqlTable.CONTENT_URI.buildUpon()
-                        .appendPath(String.valueOf(localListTheme.getId())).build();
+                        .appendPath(String.valueOf(localListTheme.getSQLiteId())).build();
 
                 batch.add(ContentProviderOperation.newDelete(deleteListThemeUri).build());
                 syncStats.numListThemeDeletes++;
@@ -388,7 +432,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                         Timber.i("computeListTitleMergeSolution(): Scheduling update for: \"%s\".",
                                 localListTitle.getName());
                         Uri existingListTitleUri = ListTitlesSqlTable.CONTENT_URI.buildUpon()
-                                .appendPath(String.valueOf(localListTitle.getId())).build();
+                                .appendPath(String.valueOf(localListTitle.getSQLiteId())).build();
                         ContentValues cvCloudListTitle = ListTitleRepository_Impl.makeListTitleContentValues(cloudListTitle);
                         if (cvCloudListTitle.containsKey(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY)) {
                             cvCloudListTitle.remove(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY);
@@ -403,6 +447,23 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                         Timber.i("computeListTitleMergeSolution(): No update required for \"%s\".",
                                 localListTitle.getName());
                         syncStats.numListTitleNoUpdateRequired++;
+
+                        // If dates are not the same then set local date equal to cloud date
+                        Date cloudListTitleDate = cloudListTitle.getUpdated();
+                        if (cloudListTitleDate == null) {
+                            cloudListTitleDate = cloudListTitle.getCreated();
+                        }
+                        if (!cloudListTitleDate.equals(localListTitle.getUpdated())) {
+                            Timber.d("computeListTitleMergeSolution(): Cloud and local ListTitle dates not the same. Updating \"%s\""
+                                    , localListTitle.getName());
+                            Uri existingListTitleUri = ListTitlesSqlTable.CONTENT_URI.buildUpon()
+                                    .appendPath(String.valueOf(localListTitle.getSQLiteId())).build();
+                            ContentValues cv = new ContentValues();
+                            cv.put(ListTitlesSqlTable.COL_UPDATED, cloudListTitleDate.getTime());
+                            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, FALSE);
+                            batch.add(ContentProviderOperation.newUpdate(existingListTitleUri)
+                                    .withValues(cv).build());
+                        }
                     }
                 } else {
                     // Match NOT found. The ListTitle exist only locally and NOT in the cloud.
@@ -410,7 +471,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                     Timber.i("computeListTitleMergeSolution(): Scheduling deletion for: \"%s\".",
                             localListTitle.getName());
                     Uri deleteListTitleUri = ListTitlesSqlTable.CONTENT_URI.buildUpon()
-                            .appendPath(String.valueOf(localListTitle.getId())).build();
+                            .appendPath(String.valueOf(localListTitle.getSQLiteId())).build();
 
                     batch.add(ContentProviderOperation.newDelete(deleteListTitleUri).build());
                     syncStats.numListTitleDeletes++;
@@ -456,30 +517,41 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                 listItemCloudMap.remove(localListItem.getUuid());
 
                 // Check to see if the local ListItem needs to be updated
-                Date cloudListItemDate = cloudListItem.getUpdated();
-                if (cloudListItemDate == null) {
-                    cloudListItemDate = cloudListItem.getCreated();
-                }
-                if (cloudListItemDate.after(localListItem.getUpdated())) {
+                if (listItemRequiresUpdating(localListItem, cloudListItem)) {
                     // Update existing record
                     Timber.i("computeListItemMergeSolution(): Scheduling update for: \"%s\".",
                             localListItem.getName());
                     Uri existingListItemUri = ListItemsSqlTable.CONTENT_URI.buildUpon()
-                            .appendPath(String.valueOf(localListItem.getId())).build();
+                            .appendPath(String.valueOf(localListItem.getSQLiteId())).build();
                     ContentValues cvCloudListItem = ListItemRepository_Impl.makeListItemContentValues(cloudListItem);
                     if (cvCloudListItem.containsKey(ListItemsSqlTable.COL_LIST_ITEM_DIRTY)) {
                         cvCloudListItem.remove(ListItemsSqlTable.COL_LIST_ITEM_DIRTY);
                         cvCloudListItem.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, FALSE);
                     }
                     batch.add(ContentProviderOperation.newUpdate(existingListItemUri)
-                            .withValues(cvCloudListItem)
-                            .build());
+                            .withValues(cvCloudListItem).build());
                     syncStats.numListItemUpdates++;
                 } else {
-                    // Local ListItem do not need updating
+                    // Local ListItem does not need updating
                     Timber.i("computeListItemMergeSolution(): No update required for \"%s\".",
                             localListItem.getName());
                     syncStats.numListItemNoUpdateRequired++;
+                    // If dates are not the same then set local date equal to cloud date
+                    Date cloudListItemDate = cloudListItem.getUpdated();
+                    if (cloudListItemDate == null) {
+                        cloudListItemDate = cloudListItem.getCreated();
+                    }
+                    if (!cloudListItemDate.equals(localListItem.getUpdated())) {
+                        Timber.d("computeListItemMergeSolution(): Cloud and local ListItem dates not the same. Updating \"%s\""
+                                , localListItem.getName());
+                        Uri existingListItemUri = ListItemsSqlTable.CONTENT_URI.buildUpon()
+                                .appendPath(String.valueOf(localListItem.getSQLiteId())).build();
+                        ContentValues cv = new ContentValues();
+                        cv.put(ListItemsSqlTable.COL_UPDATED, cloudListItemDate.getTime());
+                        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, FALSE);
+                        batch.add(ContentProviderOperation.newUpdate(existingListItemUri)
+                                .withValues(cv).build());
+                    }
                 }
             } else {
                 // Match NOT found. The ListItem exist only locally and NOT in the cloud.
@@ -487,7 +559,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                 Timber.i("computeListItemMergeSolution(): Scheduling deletion for: \"%s\".",
                         localListItem.getName());
                 Uri deleteListItemUri = ListItemsSqlTable.CONTENT_URI.buildUpon()
-                        .appendPath(String.valueOf(localListItem.getId())).build();
+                        .appendPath(String.valueOf(localListItem.getSQLiteId())).build();
 
                 batch.add(ContentProviderOperation.newDelete(deleteListItemUri).build());
                 syncStats.numListItemDeletes++;
@@ -516,22 +588,19 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             cloudAppSettingsDate = cloudAppSettings.getCreated();
         }
         if (cloudAppSettingsDate.after(localAppSettings.getUpdated())) {
-            return true;
+            if (!cloudAppSettings.getLastListTitleViewedUuid().equals(localAppSettings.getLastListTitleViewedUuid())) {
+                // TODO: verify that all AppSettings fields have been checked.
+                return true;
+            } else if (cloudAppSettings.getTimeBetweenSynchronizations() != localAppSettings.getTimeBetweenSynchronizations()) {
+                return true;
+            } else if (!cloudAppSettings.isListTitlesSortedAlphabetically() == localAppSettings.isListTitlesSortedAlphabetically()) {
+                return true;
+            } else if (!cloudAppSettings.getName().equals(localAppSettings.getName())) {
+                return true;
+            } else if (cloudAppSettings.getListTitleLastSortKey() != localAppSettings.getListTitleLastSortKey()) {
+                return true;
+            }
         }
-
-//        if (cloudAppSettingsDate.equals(localAppSettings.getUpdated())) {
-//            return false;
-//        } else if (!cloudAppSettings.getLastListTitleViewedUuid().equals(localAppSettings.getLastListTitleViewedUuid())) {
-//            return true;
-//        } else if (cloudAppSettings.getTimeBetweenSynchronizations() != localAppSettings.getTimeBetweenSynchronizations()) {
-//            return true;
-//        } else if (!cloudAppSettings.isListTitlesSortedAlphabetically() == localAppSettings.isListTitlesSortedAlphabetically()) {
-//            return true;
-//        } else if (!cloudAppSettings.getName().equals(localAppSettings.getName())) {
-//            return true;
-//        } else if (cloudAppSettings.getListTitleLastSortKey() != localAppSettings.getListTitleLastSortKey()) {
-//            return true;
-//        }
 
         return false;
     }
@@ -544,35 +613,37 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         }
 
         if (cloudListThemeDate.after(localListTheme.getUpdated())) {
-            return true;
+            // TODO: verify that all ListTheme fields have been checked.
+
+            if (!cloudListTheme.isStruckOut() == localListTheme.isStruckOut()) {
+                return true;
+            } else if (!cloudListTheme.getName().equals(localListTheme.getName())) {
+                return true;
+            } else if (!cloudListTheme.isMarkedForDeletion() == localListTheme.isMarkedForDeletion()) {
+                return true;
+            } else if (!cloudListTheme.isBold() == localListTheme.isBold()) {
+                return true;
+            } else if (!cloudListTheme.isDefaultTheme() == localListTheme.isDefaultTheme()) {
+                return true;
+            } else if (!cloudListTheme.isTransparent() == localListTheme.isTransparent()) {
+                return true;
+            } else if (!cloudListTheme.isChecked() == localListTheme.isChecked()) {
+                return true;
+            } else if (cloudListTheme.getStartColor() != localListTheme.getStartColor()) {
+                return true;
+            } else if (cloudListTheme.getEndColor() != localListTheme.getEndColor()) {
+                return true;
+            } else if (cloudListTheme.getTextColor() != localListTheme.getTextColor()) {
+                return true;
+            } else if (cloudListTheme.getTextSize() != localListTheme.getTextSize()) {
+                return true;
+            } else if (cloudListTheme.getHorizontalPaddingInDp() != localListTheme.getHorizontalPaddingInDp()) {
+                return true;
+            } else if (cloudListTheme.getVerticalPaddingInDp() != localListTheme.getVerticalPaddingInDp()) {
+                return true;
+            }
         }
-//            if (!cloudListTheme.isStruckOut() == localListTheme.isStruckOut()) {
-//                return true;
-//            } else if (!cloudListTheme.getName().equals(localListTheme.getName())) {
-//                return true;
-//            } else if (!cloudListTheme.isMarkedForDeletion() == localListTheme.isMarkedForDeletion()) {
-//                return true;
-//            } else if (!cloudListTheme.isBold() == localListTheme.isBold()) {
-//                return true;
-//            } else if (!cloudListTheme.isDefaultTheme() == localListTheme.isDefaultTheme()) {
-//                return true;
-//            } else if (!cloudListTheme.isTransparent() == localListTheme.isTransparent()) {
-//                return true;
-//            } else if (!cloudListTheme.isChecked() == localListTheme.isChecked()) {
-//                return true;
-//            } else if (cloudListTheme.getStartColor() != localListTheme.getStartColor()) {
-//                return true;
-//            } else if (cloudListTheme.getEndColor() != localListTheme.getEndColor()) {
-//                return true;
-//            } else if (cloudListTheme.getTextColor() != localListTheme.getTextColor()) {
-//                return true;
-//            } else if (cloudListTheme.getTextSize() != localListTheme.getTextSize()) {
-//                return true;
-//            } else if (cloudListTheme.getHorizontalPaddingInDp() != localListTheme.getHorizontalPaddingInDp()) {
-//                return true;
-//            } else if (cloudListTheme.getVerticalPaddingInDp() != localListTheme.getVerticalPaddingInDp()) {
-//                return true;
-//            }
+
         return false;
     }
 
@@ -584,38 +655,35 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         }
 
         if (cloudListTitleDate.after(localListTitle.getUpdated())) {
-            return true;
+            // TODO: verify that all ListTitle fields have been checked.
+            if (cloudListTitle.getFirstVisiblePosition() != localListTitle.getFirstVisiblePosition()) {
+                return true;
+            } else if (cloudListTitle.getListViewTop() != localListTitle.getListViewTop()) {
+                return true;
+            } else if (!cloudListTitle.isStruckOut() == localListTitle.isStruckOut()) {
+                return true;
+            } else if (!cloudListTitle.getName().equals(localListTitle.getName())) {
+                return true;
+            } else if (!cloudListTitle.retrieveListTheme().getUuid().equals(localListTitle.retrieveListTheme().getUuid())) {
+                return true;
+            } else if (!cloudListTitle.isMarkedForDeletion() == localListTitle.isMarkedForDeletion()) {
+                return true;
+            } else if (!cloudListTitle.isSortListItemsAlphabetically() == localListTitle.isSortListItemsAlphabetically()) {
+                return true;
+            } else if (!cloudListTitle.isChecked() == localListTitle.isChecked()) {
+                return true;
+            } else if (cloudListTitle.getManualSortKey() != localListTitle.getManualSortKey()) {
+                return true;
+            } else if (!cloudListTitle.getListLockString().equals(localListTitle.getListLockString())) {
+                return true;
+            } else if (!cloudListTitle.isListLocked() == localListTitle.isListLocked()) {
+                return true;
+            } else if (!cloudListTitle.isListPrivateToThisDevice() == localListTitle.isListPrivateToThisDevice()) {
+                return true;
+            } else if (cloudListTitle.getListItemLastSortKey() != localListTitle.getListItemLastSortKey()) {
+                return true;
+            }
         }
-
-//        if (cloudListTitleDate.equals(localListTitle.getUpdated())) {
-//            return false;
-//        } else if (cloudListTitle.getFirstVisiblePosition() != localListTitle.getFirstVisiblePosition()) {
-//            return true;
-//        } else if (cloudListTitle.getListViewTop() != localListTitle.getListViewTop()) {
-//            return true;
-//        } else if (!cloudListTitle.isStruckOut() == localListTitle.isStruckOut()) {
-//            return true;
-//        } else if (!cloudListTitle.getName().equals(localListTitle.getName())) {
-//            return true;
-//        } else if (!cloudListTitle.retrieveListTheme().getUuid().equals(localListTitle.retrieveListTheme().getUuid())) {
-//            return true;
-//        } else if (!cloudListTitle.isMarkedForDeletion() == localListTitle.isMarkedForDeletion()) {
-//            return true;
-//        } else if (!cloudListTitle.isSortListItemsAlphabetically() == localListTitle.isSortListItemsAlphabetically()) {
-//            return true;
-//        } else if (!cloudListTitle.isChecked() == localListTitle.isChecked()) {
-//            return true;
-//        } else if (cloudListTitle.getManualSortKey() != localListTitle.getManualSortKey()) {
-//            return true;
-//        } else if (!cloudListTitle.getListLockString().equals(localListTitle.getListLockString())) {
-//            return true;
-//        } else if (!cloudListTitle.isListLocked() == localListTitle.isListLocked()) {
-//            return true;
-//        } else if (!cloudListTitle.isListPrivateToThisDevice() == localListTitle.isListPrivateToThisDevice()) {
-//            return true;
-//        } else if (cloudListTitle.getListItemLastSortKey() != localListTitle.getListItemLastSortKey()) {
-//            return true;
-//        }
 
         return false;
     }
@@ -629,7 +697,22 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         }
 
         if (cloudListItemDate.after(localListItem.getUpdated())) {
-            return true;
+            // TODO: verify that all ListItem fields have been checked.
+            if (!cloudListItem.isStruckOut() == localListItem.isStruckOut()) {
+                return true;
+            } else if (!cloudListItem.getName().equals(localListItem.getName())) {
+                return true;
+            } else if (!cloudListItem.retrieveListTitle().getUuid().equals(localListItem.retrieveListTitle().getUuid())) {
+                return true;
+            } else if (!cloudListItem.isMarkedForDeletion() == localListItem.isMarkedForDeletion()) {
+                return true;
+            } else if (!cloudListItem.isFavorite() == localListItem.isFavorite()) {
+                return true;
+            } else if (!cloudListItem.isChecked() == localListItem.isChecked()) {
+                return true;
+            } else if (cloudListItem.getManualSortKey() != localListItem.getManualSortKey()) {
+                return true;
+            }
         }
 
 //        if (cloudListItemDate.equals(localListItem.getUpdated())) {

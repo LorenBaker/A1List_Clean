@@ -4,6 +4,8 @@ package com.alist.backendlessMessaging;
 import com.alist.models.ListItem;
 import com.google.gson.Gson;
 
+import java.io.IOException;
+
 /**
  * This class holds the message payload for actions associated with ListItems
  */
@@ -25,15 +27,23 @@ public class ListItemMessage {
     }
 
     public static String toJson(ListItem listItem, int action, int target) {
-        ListItemMessage message = new ListItemMessage(listItem, action, target);
-        Gson gson = new Gson();
-        return gson.toJson(message);
+        String listItemJsonString = "";
+
+        try {
+            ListItemMessage message = new ListItemMessage(listItem, action, target);
+            Gson gson = new Gson();
+            listItemJsonString = gson.toJson(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return listItemJsonString;
     }
 
-    public static ListItemMessage fromJason(String jsonString) {
-        Gson gson = new Gson();
-        return gson.fromJson(jsonString, ListItemMessage.class);
-    }
+//    public static ListItemMessage fromJason(String jsonString) {
+//        Gson gson = new Gson();
+//        return gson.fromJson(jsonString, ListItemMessage.class);
+//    }
 
     public ListItem getListItem() {
         return listItem;

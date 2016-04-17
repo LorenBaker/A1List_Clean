@@ -1,17 +1,10 @@
-package com.lbconsulting.a1list.domain.model;
+package com.alist.models;
 
-import com.lbconsulting.a1list.AndroidApplication;
-import com.lbconsulting.a1list.domain.repositories.ListTitleRepository;
-import com.lbconsulting.a1list.utils.MySettings;
+import com.backendless.Backendless;
 
 import java.util.Date;
-import java.util.UUID;
 
-/**
- * Java object for an A1List ListItem.
- */
 public class ListItem {
-
     private long SQLiteId;
     private String uuid;
     private String objectId;
@@ -34,26 +27,16 @@ public class ListItem {
 // A default constructor.
     }
 
-    public static ListItem newInstance(String name, ListTitle listTitle, boolean saveNextSortKeyToBackendless) {
-        ListTitleRepository listTitleRepository = AndroidApplication.getListTitleRepository();
-        ListItem newListItem = new ListItem();
+    public static ListItem findById(String id) {
+        return Backendless.Data.of(ListItem.class).findById(id);
+    }
 
-        String newUuid = UUID.randomUUID().toString();
-        // replace uuid "-" with "_" to distinguish it from Backendless objectId
-        newUuid = newUuid.replace("-", "_");
-        newListItem.setUuid(newUuid);
+    public static ListItem findFirst() {
+        return Backendless.Data.of(ListItem.class).findFirst();
+    }
 
-        newListItem.setName(name);
-        newListItem.setListTitleUuid(listTitle.getUuid());
-        newListItem.setDeviceUuid(MySettings.getDeviceUuid());
-        newListItem.setMessageChannel(MySettings.getActiveUserID());
-        newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKey(listTitle, saveNextSortKeyToBackendless));
-        newListItem.setChecked(false);
-        newListItem.setFavorite(false);
-        newListItem.setMarkedForDeletion(false);
-        newListItem.setStruckOut(false);
-
-        return newListItem;
+    public static ListItem findLast() {
+        return Backendless.Data.of(ListItem.class).findLast();
     }
 
     //region Getters and Setters
@@ -61,8 +44,8 @@ public class ListItem {
         return SQLiteId;
     }
 
-    public void setSQLiteId(long id) {
-        SQLiteId = id;
+    public void setSQLiteId(long SQLiteId) {
+        this.SQLiteId = SQLiteId;
     }
 
     public String getUuid() {
@@ -87,10 +70,6 @@ public class ListItem {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public ListTitle retrieveListTitle() {
-        return AndroidApplication.getListTitleRepository().retrieveListTitleByUuid(listTitleUuid);
     }
 
     public String getListTitleUuid() {
@@ -147,7 +126,6 @@ public class ListItem {
 
     public void setMarkedForDeletion(boolean markedForDeletion) {
         this.markedForDeletion = markedForDeletion;
-
     }
 
     public boolean isStruckOut() {
@@ -161,10 +139,16 @@ public class ListItem {
     public Date getUpdated() {
         return updated;
     }
+    //endregion
 
     public void setUpdated(Date updated) {
         this.updated = updated;
     }
+
+//  public void setObjectId( String objectId )
+//  {
+//    this.objectId = objectId;
+//  }
 
     public Date getCreated() {
         return created;
@@ -173,10 +157,17 @@ public class ListItem {
     public void setCreated(Date created) {
         this.created = created;
     }
-    //endregion
 
     @Override
     public String toString() {
         return getName();
+    }
+
+    public ListItem save() {
+        return Backendless.Data.of(ListItem.class).save(this);
+    }
+
+    public Long remove() {
+        return Backendless.Data.of(ListItem.class).remove(this);
     }
 }

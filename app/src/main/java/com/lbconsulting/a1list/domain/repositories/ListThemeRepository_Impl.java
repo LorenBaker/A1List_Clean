@@ -208,11 +208,12 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 
     public static ListTheme listThemeFromCursor(Cursor cursor) {
         ListTheme listTheme = new ListTheme();
-        listTheme.setId(cursor.getLong(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_ID)));
+        listTheme.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_ID)));
         listTheme.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_OBJECT_ID)));
         listTheme.setDeviceUuid(MySettings.getDeviceUuid());
         listTheme.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_NAME)));
         listTheme.setDeviceUuid(MySettings.getDeviceUuid());
+        listTheme.setMessageChannel(MySettings.getActiveUserID());
         listTheme.setStartColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_START_COLOR)));
         listTheme.setEndColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_END_COLOR)));
         listTheme.setTextColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_TEXT_COLOR)));

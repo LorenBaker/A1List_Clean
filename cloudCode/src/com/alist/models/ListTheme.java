@@ -1,17 +1,8 @@
-package com.lbconsulting.a1list.domain.model;
-
-import com.lbconsulting.a1list.utils.MySettings;
+package com.alist.models;
 
 import java.util.Date;
-import java.util.UUID;
-
-
-/**
- * Java object for an A1List Theme.
- */
 
 public class ListTheme {
-
     private String objectId;
     private long SQLiteId;
     private String name;
@@ -36,59 +27,6 @@ public class ListTheme {
 
     public ListTheme() {
         // A default constructor.
-    }
-
-
-
-    public static ListTheme newInstance(String newThemeName,
-                                        int startColor, int endColor,
-                                        int textColor, float textSize,
-                                        float horizontalPaddingInDp, float verticalPaddingInDp,
-                                        boolean isBold, boolean isTransparent, boolean isDefaultTheme) {
-
-        ListTheme newTheme = new ListTheme();
-        newTheme.setName(newThemeName);
-        newTheme.setStartColor(startColor);
-        newTheme.setEndColor(endColor);
-        newTheme.setTextColor(textColor);
-        newTheme.setTextSize(textSize);
-        newTheme.setHorizontalPaddingInDp(horizontalPaddingInDp);
-        newTheme.setVerticalPaddingInDp(verticalPaddingInDp);
-        newTheme.setBold(isBold);
-        newTheme.setChecked(false);
-        newTheme.setDefaultTheme(isDefaultTheme);
-        newTheme.setMarkedForDeletion(false);
-        newTheme.setTransparent(isTransparent);
-        String newUuid = UUID.randomUUID().toString();
-        // replace uuid "-" with "_" to distinguish it from Backendless objectId
-        newUuid = newUuid.replace("-", "_");
-        newTheme.setUuid(newUuid);
-        newTheme.setMessageChannel(MySettings.getActiveUserID());
-
-        return newTheme;
-    }
-
-    public static ListTheme newInstance(ListTheme defaultListTheme) {
-        ListTheme newTheme = new ListTheme();
-        newTheme.setName("");
-        newTheme.setDeviceUuid(MySettings.getDeviceUuid());
-        newTheme.setStartColor(defaultListTheme.getStartColor());
-        newTheme.setEndColor(defaultListTheme.getEndColor());
-        newTheme.setTextColor(defaultListTheme.getTextColor());
-        newTheme.setTextSize(defaultListTheme.getTextSize());
-        newTheme.setHorizontalPaddingInDp(defaultListTheme.getHorizontalPaddingInDp());
-        newTheme.setVerticalPaddingInDp(defaultListTheme.getVerticalPaddingInDp());
-        newTheme.setBold(defaultListTheme.isBold());
-        newTheme.setChecked(false);
-        newTheme.setDefaultTheme(false);
-        newTheme.setMarkedForDeletion(false);
-        newTheme.setTransparent(defaultListTheme.isTransparent());
-        String newUuid = UUID.randomUUID().toString();
-        // replace uuid "-" with "_" to distinguish it from Backendless objectId
-        newUuid = newUuid.replace("-", "_");
-        newTheme.setUuid(newUuid);
-
-        return newTheme;
     }
 
     //region Getters and Setters
@@ -253,11 +191,4 @@ public class ListTheme {
     }
 
 //endregion
-
-    @Override
-    public String toString() {
-        return getName();
-    }
-
-
 }

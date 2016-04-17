@@ -6,7 +6,10 @@ import android.net.Uri;
 
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
+import com.backendless.messaging.MessageStatus;
 import com.lbconsulting.a1list.AndroidApplication;
+import com.lbconsulting.a1list.backendlessMessaging.ListItemMessage;
+import com.lbconsulting.a1list.backendlessMessaging.Messaging;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -15,6 +18,7 @@ import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
+import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.Date;
 
@@ -98,6 +102,9 @@ public class SaveListItemToCloud_InBackground extends AbstractInteractor impleme
                 // update the SQLite db
                 updateSQLiteDb(response, cv);
 
+                // send message to other devices
+                sendListItemMessage(mListItem, isNew);
+
                 String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
                 postListItemSavedToBackendless(successMessage);
 
@@ -117,6 +124,29 @@ public class SaveListItemToCloud_InBackground extends AbstractInteractor impleme
             String errorMessage = String.format("FAILED to save \"%s\" to Backendless. BackendlessException: Code: %s; Message: %s.",
                     mListItem.getName(), e.getCode(), e.getMessage());
             postListItemSaveToBackendlessFailed(errorMessage);
+        }
+    }
+
+    private void sendListItemMessage(ListItem listItem, boolean isNew) {
+        String messageChannel = MySettings.getActiveUserID();
+        int action = Messaging.ACTION_UPDATE;
+        if (isNew) {
+            action = Messaging.ACTION_CREATE;
+        }
+        int target = Messaging.TARGET_ALL_DEVICES;
+        String listItemMessageJson = ListItemMessage.toJson(listItem, action, target);
+        MessageStatus messageStatus = Backendless.Messaging.publish(messageChannel, listItemMessageJson);
+        if (messageStatus.getErrorMessage() == null) {
+            // successfully sent message to Backendless.
+            if (isNew) {
+                Timber.i("sendListItemMessage(): CREATE \"%s\" message successfully sent.", listItem.getName());
+            } else {
+                Timber.i("sendListItemMessage(): UPDATE \"%s\" message successfully sent.", listItem.getName());
+            }
+        } else {
+            // error sending message to Backendless.
+            Timber.e("sendListItemMessage(): FAILED to send message for \"%s\". %s.",
+                    listItem.getName(), messageStatus.getErrorMessage());
         }
     }
 

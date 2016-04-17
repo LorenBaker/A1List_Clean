@@ -223,15 +223,16 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
 
         // Get the most recent listTitle from the local repository ... it's objectId should not be null.
         mListTitle = mListTitleRepository.retrieveListTitleByUuid(mListTitle.getUuid());
+        if (mListTitle != null) {
+            int index = lvListItems.getFirstVisiblePosition();
+            View v = lvListItems.getChildAt(0);
+            int top = (v == null) ? 0 : (v.getTop() - lvListItems.getPaddingTop());
 
-        int index = lvListItems.getFirstVisiblePosition();
-        View v = lvListItems.getChildAt(0);
-        int top = (v == null) ? 0 : (v.getTop() - lvListItems.getPaddingTop());
-
-        mListTitle.setFirstVisiblePosition(index);
-        mListTitle.setListViewTop(top);
-        mListTitleRepository.update(mListTitle);
-        EventBus.getDefault().post(new MyEvents.replaceListTitle(mPosition, mListTitle));
+            mListTitle.setFirstVisiblePosition(index);
+            mListTitle.setListViewTop(top);
+            mListTitleRepository.update(mListTitle);
+//            EventBus.getDefault().post(new MyEvents.replaceListTitle(mPosition, mListTitle));
+        }
     }
 
     @Override

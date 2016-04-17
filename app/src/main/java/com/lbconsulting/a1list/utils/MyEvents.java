@@ -46,6 +46,11 @@ public class MyEvents {
 //        }
 //    }
 
+    public static class mainActivityPresenterResume{
+        public mainActivityPresenterResume(){
+
+        }
+    }
 
     public static class replaceListTitle {
         private final int mPosition;

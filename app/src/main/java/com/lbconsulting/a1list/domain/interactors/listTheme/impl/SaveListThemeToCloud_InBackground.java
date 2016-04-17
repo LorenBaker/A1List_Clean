@@ -6,7 +6,10 @@ import android.net.Uri;
 
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
+import com.backendless.messaging.MessageStatus;
 import com.lbconsulting.a1list.AndroidApplication;
+import com.lbconsulting.a1list.backendlessMessaging.ListThemeMessage;
+import com.lbconsulting.a1list.backendlessMessaging.Messaging;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -74,6 +77,9 @@ public class SaveListThemeToCloud_InBackground extends AbstractInteractor implem
                 // update the SQLite db
                 updateSQLiteDb(response, cv);
 
+                // send message to other devices
+                sendListThemeMessage(mListTheme, isNew);
+
                 String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
                 postListThemeSavedToCloud(successMessage);
 
@@ -95,6 +101,29 @@ public class SaveListThemeToCloud_InBackground extends AbstractInteractor implem
         }
     }
 
+    private void sendListThemeMessage(ListTheme listTheme, boolean isNew) {
+        String messageChannel = listTheme.getMessageChannel();
+        int action = Messaging.ACTION_UPDATE;
+        if (isNew) {
+            action = Messaging.ACTION_CREATE;
+        }
+        int target = Messaging.TARGET_ALL_DEVICES;
+        String listThemeMessageJson = ListThemeMessage.toJson(listTheme, action, target);
+        MessageStatus messageStatus = Backendless.Messaging.publish(messageChannel, listThemeMessageJson);
+        if (messageStatus.getErrorMessage() == null) {
+            // successfully sent message to Backendless.
+            if (isNew) {
+                Timber.i("sendListThemeMessage(): CREATE \"%s\" message successfully sent.", listTheme.getName());
+            } else {
+                Timber.i("sendListThemeMessage(): UPDATE \"%s\" message successfully sent.", listTheme.getName());
+            }
+        } else {
+            // error sending message to Backendless.
+            Timber.e("sendListThemeMessage(): FAILED to send message for \"%s\". %s.",
+                    listTheme.getName(), messageStatus.getErrorMessage());
+        }
+
+    }
     private void updateSQLiteDb(ListTheme listTheme, ContentValues cv) {
         int numberOfRecordsUpdated = 0;
         try {

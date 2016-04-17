@@ -1,16 +1,8 @@
-package com.lbconsulting.a1list.domain.model;
-
-import com.lbconsulting.a1list.utils.CommonMethods;
-import com.lbconsulting.a1list.utils.MySettings;
+package com.alist.models;
 
 import java.util.Date;
-import java.util.UUID;
 
-/**
- * Java object for AppSettings.
- */
 public class AppSettings {
-
     private long SQLiteId;
     private String uuid;
     private String objectId;
@@ -29,24 +21,6 @@ public class AppSettings {
 
     public AppSettings() {
         // A default constructor.
-    }
-
-    public static AppSettings newInstance() {
-        AppSettings newAppSettings = new AppSettings();
-
-        String newUuid = UUID.randomUUID().toString();
-        // replace uuid "-" with "_" to distinguish it from Backendless objectId
-        newUuid = newUuid.replace("-", "_");
-        newAppSettings.setUuid(newUuid);
-        newAppSettings.setDeviceUuid(MySettings.getDeviceUuid());
-        newAppSettings.setMessageChannel(MySettings.getActiveUserID());
-        newAppSettings.setName(MySettings.getActiveUserName());
-        newAppSettings.setTimeBetweenSynchronizations(0);
-        newAppSettings.setListTitleLastSortKey(0);
-        newAppSettings.setListTitlesSortedAlphabetically(true);
-        newAppSettings.setLastListTitleViewedUuid(CommonMethods.NOT_AVAILABLE);
-
-        return newAppSettings;
     }
 
     //region Getters and Setters
