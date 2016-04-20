@@ -10,16 +10,21 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.DeleteListTitleFromCloud_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.DeleteListTitlesFromCloud_InBackground;
+import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitlePositionToCloud_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitleToCloud_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitlesToCloud_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.DeleteListTitleFromCloud;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.DeleteListTitlesFromCloud;
+import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitlePositionToCloud;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitleToCloud;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitlesToCloud;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitlePosition;
+import com.lbconsulting.a1list.domain.model.ListTitlesPosition;
+import com.lbconsulting.a1list.domain.storage.ListTitlePositionsSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.MySettings;
@@ -38,12 +43,13 @@ import timber.log.Timber;
 public class ListTitleRepository_Impl implements ListTitleRepository,
         SaveListTitleToCloud.Callback,
         SaveListTitlesToCloud.Callback,
+        SaveListTitlePositionToCloud.Callback,
         DeleteListTitleFromCloud.Callback,
         DeleteListTitlesFromCloud.Callback {
 
-    private static ListThemeRepository_Impl mListThemeRepository = null;
     private static final int FALSE = 0;
     private static final int TRUE = 1;
+    private static ListThemeRepository_Impl mListThemeRepository = null;
     private final Context mContext;
     private final AppSettingsRepository_Impl mAppSettingsRepository;
 
@@ -64,7 +70,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         listTitle.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_ID)));
         listTitle.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_OBJECT_ID)));
         listTitle.setDeviceUuid(MySettings.getDeviceUuid());
-        listTitle.setMessageChannel(MySettings.getActiveUserID());
         listTitle.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_UUID)));
         listTitle.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_NAME)));
 
@@ -74,11 +79,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         listTitle.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_MANUAL_SORT_KEY)));
         listTitle.setListItemLastSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY)));
 
-        listTitle.setFirstVisiblePosition(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION)));
-        listTitle.setListViewTop(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_VIEW_TOP)));
-
         listTitle.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_CHECKED)) > 0);
-        listTitle.setForceViewInflation(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION)) > 0);
         listTitle.setListLocked(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_LOCKED)) > 0);
         listTitle.setListPrivateToThisDevice(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE)) > 0);
         listTitle.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlesSqlTable.COL_MARKED_FOR_DELETION)) > 0);
@@ -90,6 +91,55 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         listTitle.setUpdated(updated);
 
         return listTitle;
+    }
+
+    public static ContentValues makeListTitleContentValues(ListTitle listTitle) {
+        ContentValues cv = new ContentValues();
+
+        try {
+            cv.put(ListTitlesSqlTable.COL_NAME, listTitle.getName());
+            cv.put(ListTitlesSqlTable.COL_UUID, listTitle.getUuid());
+            cv.put(ListTitlesSqlTable.COL_OBJECT_ID, listTitle.getObjectId());
+            cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListThemeUuid());
+
+            cv.put(ListTitlesSqlTable.COL_MANUAL_SORT_KEY, listTitle.getManualSortKey());
+            cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, listTitle.getListItemLastSortKey());
+            cv.put(ListTitlesSqlTable.COL_LIST_LOCKED_STRING, listTitle.getListLockString());
+
+            cv.put(ListTitlesSqlTable.COL_CHECKED, (listTitle.isChecked()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, (listTitle.isListLocked()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, (listTitle.isListPrivateToThisDevice()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+            cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, (listTitle.isMarkedForDeletion()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, (listTitle.isSortListItemsAlphabetically()) ? TRUE : FALSE);
+            cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, (listTitle.isStruckOut()) ? TRUE : FALSE);
+
+            Date updatedDateTime = listTitle.getUpdated();
+            if (updatedDateTime != null) {
+                cv.put(ListTitlesSqlTable.COL_UPDATED, updatedDateTime.getTime());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return cv;
+    }
+
+
+    public static ContentValues makeListTitlePositionContentValues(ListTitlePosition listTitlePosition) {
+        ContentValues cv = new ContentValues();
+        cv.put(ListTitlePositionsSqlTable.COL_UUID, listTitlePosition.getUuid());
+        cv.put(ListTitlePositionsSqlTable.COL_OBJECT_ID, listTitlePosition.getObjectId());
+        cv.put(ListTitlePositionsSqlTable.COL_LIST_TITLE_UUID, listTitlePosition.getListTitleUuid());
+        cv.put(ListTitlePositionsSqlTable.COL_FIRST_POSITION, listTitlePosition.getListViewFirstVisiblePosition());
+        cv.put(ListTitlePositionsSqlTable.COL_LIST_VIEW_TOP, listTitlePosition.getListViewTop());
+        cv.put(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY, TRUE);
+
+        Date updatedDateTime = listTitlePosition.getUpdated();
+        if (updatedDateTime != null) {
+            cv.put(ListTitlePositionsSqlTable.COL_UPDATED, updatedDateTime.getTime());
+        }
+
+        return  cv;
     }
 
     @Override
@@ -111,6 +161,81 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             mAppSettingsRepository.update(dirtyListSettings);
         }
         return successfullyInsertedIntoSQLiteDb;
+    }
+
+    public List<ListTitlesPosition> insertListTitlePositions(List<ListTitlesPosition> listTitlesPositions) {
+        List<ListTitlesPosition> successfullyInsertedIntoLocalStorage = insertListTitlesPositionsIntoLocalStorage(listTitlesPositions);
+        if (successfullyInsertedIntoLocalStorage.size() > 0) {
+            insertListTitlePositionsInCloud(successfullyInsertedIntoLocalStorage);
+        }
+        return successfullyInsertedIntoLocalStorage;
+    }
+
+
+    public boolean insertListTitlePosition(ListTitlesPosition listTitlesPosition) {
+        // insert new listTitlePosition into SQLite db
+        boolean successfullyInsertedIntoSQLiteDb = insertListTitlePositionIntoLocalStorage(listTitlesPosition);
+        if (successfullyInsertedIntoSQLiteDb) {
+            insertListTitlePositionInCloud(listTitlesPosition);
+        }
+        return successfullyInsertedIntoSQLiteDb;
+    }
+
+    public List<ListTitlesPosition> insertListTitlesPositionsIntoLocalStorage(List<ListTitlesPosition> listTitlesPositions) {
+        List<ListTitlesPosition> successfullyInsertedListTitlePositions = new ArrayList<>();
+        for (ListTitlesPosition listTitlesPosition : listTitlesPositions) {
+            if (insertListTitlePositionIntoLocalStorage(listTitlesPosition)) {
+                successfullyInsertedListTitlePositions.add(listTitlesPosition);
+            }
+        }
+
+        if (successfullyInsertedListTitlePositions.size() == listTitlesPositions.size()) {
+            Timber.i("insertListTitlesPositionsIntoLocalStorage(): Successfully inserted all %d ListTitlePositions into the SQLite db.", listTitlesPositions.size());
+        } else {
+            Timber.e("insertListTitlesPositionsIntoLocalStorage(): Only inserted %d out of %d ListTitlePositions into the SQLite db.",
+                    successfullyInsertedListTitlePositions.size(), listTitlesPositions.size());
+        }
+        return successfullyInsertedListTitlePositions;
+    }
+
+    public boolean insertListTitlePositionIntoLocalStorage(ListTitlesPosition listTitlesPosition) {
+        boolean result = false;
+        long newListTitlePositionSqlId = -1;
+
+        ListTitle listTitle = listTitlesPosition.getListTitle();
+        ListTitlePosition listTitlePosition = listTitlesPosition.getListTitlePosition();
+
+        Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
+        listTitlePosition.setUpdated(Calendar.getInstance().getTime());
+        ContentValues cv = makeListTitlePositionContentValues(listTitlePosition);
+
+        ContentResolver cr = mContext.getContentResolver();
+        Uri newListTitlePositionUri = cr.insert(uri, cv);
+
+        if (newListTitlePositionUri != null) {
+            newListTitlePositionSqlId = Long.parseLong(newListTitlePositionUri.getLastPathSegment());
+        }
+        if (newListTitlePositionSqlId > -1) {
+            // successfully saved new ListTitlePosition to the SQLite db
+            result = true;
+            Timber.i("insertListTitlePositionIntoLocalStorage(): Successfully inserted \"%s's\" ListTitlePosition into the SQLite db.", listTitle.getName());
+        } else {
+            // failed to create listTitlePosition in the SQLite db
+            Timber.e("insertListTitlePositionIntoLocalStorage(): FAILED to insert \"%s's\" ListTitlePosition into the SQLite db.", listTitle.getName());
+        }
+
+        return result;
+    }
+
+    private void insertListTitlePositionsInCloud(List<ListTitlesPosition> listTitlesPositions) {
+        for (ListTitlesPosition listTitlesPosition : listTitlesPositions) {
+            insertListTitlePositionInCloud(listTitlesPosition);
+        }
+    }
+
+    private void insertListTitlePositionInCloud(ListTitlesPosition listTitlesPosition) {
+        new SaveListTitlePositionToCloud_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, listTitlesPosition).execute();
     }
 
     @Override
@@ -151,44 +276,10 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             Timber.i("insertIntoLocalStorage(): Successfully inserted \"%s\" into the SQLite db.", listTitle.getName());
         } else {
             // failed to create listTitle in the SQLite db
-            Timber.i("insertIntoLocalStorage(): FAILED to insert \"%s\" into the SQLite db.", listTitle.getName());
+            Timber.e("insertIntoLocalStorage(): FAILED to insert \"%s\" into the SQLite db.", listTitle.getName());
         }
 
         return result;
-    }
-
-    public static ContentValues makeListTitleContentValues(ListTitle listTitle) {
-        ContentValues cv = new ContentValues();
-
-        try {
-            cv.put(ListTitlesSqlTable.COL_NAME, listTitle.getName());
-            cv.put(ListTitlesSqlTable.COL_UUID, listTitle.getUuid());
-            cv.put(ListTitlesSqlTable.COL_OBJECT_ID, listTitle.getObjectId());
-            cv.put(ListTitlesSqlTable.COL_LIST_THEME_UUID, listTitle.getListThemeUuid());
-
-            cv.put(ListTitlesSqlTable.COL_FIRST_VISIBLE_POSITION, listTitle.getFirstVisiblePosition());
-            cv.put(ListTitlesSqlTable.COL_LIST_VIEW_TOP, listTitle.getListViewTop());
-            cv.put(ListTitlesSqlTable.COL_MANUAL_SORT_KEY, listTitle.getManualSortKey());
-            cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, listTitle.getListItemLastSortKey());
-            cv.put(ListTitlesSqlTable.COL_LIST_LOCKED_STRING, listTitle.getListLockString());
-
-            cv.put(ListTitlesSqlTable.COL_CHECKED, (listTitle.isChecked()) ? TRUE : FALSE);
-            cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, (listTitle.isForceViewInflation()) ? TRUE : FALSE);
-            cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, (listTitle.isListLocked()) ? TRUE : FALSE);
-            cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, (listTitle.isListPrivateToThisDevice()) ? TRUE : FALSE);
-            cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-            cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, (listTitle.isMarkedForDeletion()) ? TRUE : FALSE);
-            cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, (listTitle.isSortListItemsAlphabetically()) ? TRUE : FALSE);
-            cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, (listTitle.isStruckOut()) ? TRUE : FALSE);
-
-            Date updatedDateTime = listTitle.getUpdated();
-            if (updatedDateTime != null) {
-                cv.put(ListTitlesSqlTable.COL_UPDATED, updatedDateTime.getTime());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return cv;
     }
 
     @Override
@@ -399,6 +490,57 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     }
 
     @Override
+    public ListTitlePosition retrieveListTitlePosition(ListTitle listTitle) {
+        ListTitlePosition listTitlePosition=null;
+        Cursor cursor = null;
+        Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
+        String[] projection = ListTitlePositionsSqlTable.PROJECTION_ALL;
+        String selection = ListTitlePositionsSqlTable.COL_LIST_TITLE_UUID + " = ?";
+        String selectionArgs[] = new String[]{listTitle.getUuid()};
+        String sortOrder = null;
+        try {
+            ContentResolver cr = mContext.getContentResolver();
+            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+            if (cursor != null) {
+                if(cursor.moveToFirst()){
+                    listTitlePosition = listTitlePositionFromCursor(cursor);
+                }
+                cursor.close();
+            }
+
+        } catch (Exception e) {
+            Timber.e("retrieveListTitlePosition(): Exception: %s.", e.getMessage());
+        }
+
+        return listTitlePosition;
+    }
+
+    public static ListTitlePosition listTitlePositionFromCursor(Cursor cursor) {
+
+        ListTitlePosition listTitlePosition = new ListTitlePosition();
+
+        try {
+            listTitlePosition.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_ID)));
+            listTitlePosition.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_OBJECT_ID)));
+            listTitlePosition.setDeviceUuid(MySettings.getDeviceUuid());
+            listTitlePosition.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_UUID)));
+
+            listTitlePosition.setListTitleUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_LIST_TITLE_UUID)));
+            listTitlePosition.setListViewFirstVisiblePosition(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_FIRST_POSITION)));
+            listTitlePosition.setListViewTop(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_LIST_VIEW_TOP)));
+
+            long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_UPDATED));
+            Date updated = new Date(dateMillis);
+            listTitlePosition.setUpdated(updated);
+        } catch (IllegalArgumentException e) {
+            Timber.e("listTitlePositionFromCursor(): IllegalArgumentException: %s.", e.getMessage());
+        }catch (Exception e) {
+            Timber.e("listTitlePositionFromCursor(): Exception: %s.", e.getMessage());
+        }
+
+        return listTitlePosition;
+    }
+    @Override
     public int retrieveNumberOfStruckOutListTitles() {
         int struckOutListTitles = 0;
         Cursor cursor = null;
@@ -522,6 +664,66 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     }
 
     @Override
+    public void updateListTitlePosition(ListTitle listTitle, int firstVisiblePosition, int top) {
+        if (updateListTitlePositionInLocalStorage(listTitle, firstVisiblePosition, top) == 1) {
+            updateListTitlePositionInCloud(listTitle, firstVisiblePosition, top);
+        }
+    }
+
+    public int updateListTitlePositionInLocalStorage(ListTitle listTitle, int firstVisiblePosition,
+                                                      int top) {
+        ContentValues cv = new ContentValues();
+        cv.put(ListTitlePositionsSqlTable.COL_FIRST_POSITION, firstVisiblePosition);
+        cv.put(ListTitlePositionsSqlTable.COL_LIST_VIEW_TOP, top);
+        cv.put(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY, TRUE);
+        cv.put(ListTitlePositionsSqlTable.COL_UPDATED, Calendar.getInstance().getTimeInMillis());
+        int numberOfRecordsUpdated = 0;
+        try {
+            Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
+            String selection = ListTitlePositionsSqlTable.COL_LIST_TITLE_UUID + " = ?";
+            String[] selectionArgs = new String[]{listTitle.getUuid()};
+            ContentResolver cr = mContext.getContentResolver();
+            numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
+
+        } catch (Exception e) {
+            Timber.e("updateListTitlePositionInLocalStorage(): Exception: %s.", e.getMessage());
+        }
+
+        if (numberOfRecordsUpdated == 1) {
+            Timber.i("updateListTitlePositionInLocalStorage(): Successfully updated \"%s\" Position in SQLiteDb.", listTitle.getName());
+        } else {
+            Timber.e("updateListTitlePositionInLocalStorage(): FAILED to update \"%s\" Position in SQLiteDb.", listTitle.getName());
+        }
+        return numberOfRecordsUpdated;
+
+    }
+
+    private void updateListTitlePositionInCloud(ListTitle listTitle, int firstVisiblePosition, int top) {
+
+        ListTitlePosition listTitlePosition = retrieveListTitlePosition(listTitle);
+        if (listTitlePosition != null) {
+            // If the listTitlePosition is not new ... make sure that it has a Backendless objectId.
+            if (listTitlePosition.getObjectId() == null || listTitlePosition.getObjectId().isEmpty()) {
+                Timber.e("updateListTitlePositionInCloud(): Unable to update \"%s's\" ListTitlePosition. ObjectId not available.",
+                        listTitle.getName());
+                return;
+            }
+            listTitlePosition.setListViewFirstVisiblePosition(firstVisiblePosition);
+            listTitlePosition.setListViewTop(top);
+
+        } else {
+            Timber.e("updateListTitlePositionInCloud(): FAILED to retrieve \"%s's\" ListTitlePosition,",
+                    listTitle.getName());
+            return;
+        }
+
+        ListTitlesPosition listTitlesPosition = new ListTitlesPosition(listTitle, listTitlePosition);
+
+        new SaveListTitlePositionToCloud_InBackground(ThreadExecutor.getInstance(),
+                MainThreadImpl.getInstance(), this, listTitlesPosition).execute();
+    }
+
+    @Override
     public List<ListTitle> updateInLocalStorage(List<ListTitle> listTitles) {
         List<ListTitle> successfullyUpdatedListTitles = new ArrayList<>();
         for (ListTitle listTitle : listTitles) {
@@ -612,7 +814,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
 
     @Override
     public void onListTitlesListSaveToBackendlessFailed(String errorMessage, List<ListTitle> successfullySavedListTitles) {
-        Timber.i("onListTitlesListSaveToBackendlessFailed(): %s.", errorMessage);
+        Timber.e("onListTitlesListSaveToBackendlessFailed(): %s.", errorMessage);
     }
 
     @Override
@@ -633,7 +835,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         }
         new SaveListTitleToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listTitle).execute();
-        ;
     }
 
     @Override
@@ -667,18 +868,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     result--;
                 }
                 cv.put(ListTitlesSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
-                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-                updateInLocalStorage(listTitle, cv);
-                break;
-
-            case ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION:
-                newValue = !currentListTitle.isForceViewInflation();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListTitlesSqlTable.COL_FORCED_VIEW_INFLATION, newValue ? TRUE : FALSE);
                 cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
                 updateInLocalStorage(listTitle, cv);
                 break;
@@ -839,6 +1028,20 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         return numberOfDeletedListTitles;
     }
 
+    public int deleteListTitlePositionFromLocalStorage(ListTitlePosition listTitlePosition) {
+        int numberOfDeletedListTitlePositions = 0;
+        try {
+            Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
+            String selection = ListTitlePositionsSqlTable.COL_UUID + " = ?";
+            String[] selectionArgs = new String[]{listTitlePosition.getUuid()};
+            ContentResolver cr = mContext.getContentResolver();
+            numberOfDeletedListTitlePositions = cr.delete(uri, selection, selectionArgs);
+
+        } catch (Exception e) {
+            Timber.e("deleteListTitlePositionFromLocalStorage(): Exception: %s.", e.getMessage());
+        }
+        return numberOfDeletedListTitlePositions;
+    }
     @Override
     public void deleteFromCloud(List<ListTitle> listTitles) {
         new DeleteListTitlesFromCloud_InBackground(ThreadExecutor.getInstance(),
@@ -870,6 +1073,19 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     public void onListTitleDeleteFromBackendlessFailed(String errorMessage) {
         Timber.e("onListTitleDeleteFromBackendlessFailed(): %s.", errorMessage);
     }
+
+    @Override
+    public void onListTitlePositionSavedToCloud(String successMessage) {
+        Timber.i("onListTitlePositionSavedToCloud(): %s.", successMessage);
+    }
+
+    @Override
+    public void onListTitlePositionSaveToCloudFailed(String errorMessage) {
+        Timber.e("onListTitlePositionSaveToCloudFailed(): %s.", errorMessage);
+    }
+
+
+
     //endregion
 
 

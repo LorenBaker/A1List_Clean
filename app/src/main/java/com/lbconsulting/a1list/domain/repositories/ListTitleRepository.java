@@ -2,6 +2,7 @@ package com.lbconsulting.a1list.domain.repositories;
 
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitlePosition;
 
 import java.util.List;
 
@@ -35,9 +36,11 @@ public interface ListTitleRepository {
 
     List<ListTitle> retrieveStruckOutListTitles();
 
+    ListTitlePosition retrieveListTitlePosition(ListTitle listTitle);
+
     int retrieveNumberOfStruckOutListTitles();
 
-    long retrieveListItemNextSortKey(ListTitle listTitle,boolean saveToBackendless);
+    long retrieveListItemNextSortKey(ListTitle listTitle, boolean saveToBackendless);
 
     //endregion
 
@@ -46,6 +49,8 @@ public interface ListTitleRepository {
     void update(List<ListTitle> listTitles);
 
     void update(ListTitle listTitle);
+
+    void updateListTitlePosition(ListTitle listTitle, int firstVisiblePosition, int top);
 
     List<ListTitle> updateInLocalStorage(List<ListTitle> listTitles);
 

@@ -15,43 +15,51 @@ public class SyncStats {
     public int numAppSettingsBackendlessExceptions;
     public int numListThemeBackendlessExceptions;
     public int numListTitleBackendlessExceptions;
+    public int numListTitlePositionBackendlessExceptions;
     public int numListItemBackendlessExceptions;
 
     public int numAppSettingsDownloadExceptions;
     public int numListThemeDownloadExceptions;
     public int numListTitleDownloadExceptions;
+    public int numListTitlePositionDownloadExceptions;
     public int numListItemDownloadExceptions;
 
     public int numAppSettingsConflictsDetected;
     public int numListThemeConflictsDetected;
     public int numListTitleConflictsDetected;
+    public int numListTitlePositionConflictsDetected;
     public int numListItemConflictsDetected;
 
 
     public int numAppSettingsUpdates;
     public int numListThemeUpdates;
     public int numListTitleUpdates;
+    public int numListTitlePositionUpdates;
     public int numListItemUpdates;
 
     public int numAppSettingsDeletes;
     public int numListThemeDeletes;
     public int numListTitleDeletes;
+    public int numListTitlePositionDeletes;
     public int numListItemDeletes;
 
     public int numAppSettingsInserts;
     public int numListThemeInserts;
     public int numListTitleInserts;
+    public int numListTitlePositionInserts;
     public int numListItemInserts;
 
 
     public int numAppSettingsNoUpdateRequired;
     public int numListThemeNoUpdateRequired;
     public int numListTitleNoUpdateRequired;
+    public int numListTitlePositionNoUpdateRequired;
     public int numListItemNoUpdateRequired;
 
     public int numAppSettingsSkipped;
     public int numListThemeSkipped;
     public int numListTitleSkipped;
+    public int numListTitlePositionSkipped;
     public int numListItemSkipped;
 
 
@@ -68,9 +76,9 @@ public class SyncStats {
     }
 
     public String getSnackBarMessage() {
-        int numberOfUpdates = numAppSettingsUpdates + numListItemUpdates + numListTitleUpdates + numListThemeUpdates;
-        int numberOfInserts = numAppSettingsInserts + numListItemInserts + numListTitleInserts + numListThemeInserts;
-        int numberOfDeletes = numAppSettingsDeletes + numListItemDeletes + numListTitleDeletes + numListThemeDeletes;
+        int numberOfUpdates = numAppSettingsUpdates + numListItemUpdates + numListTitleUpdates +  numListTitlePositionBackendlessExceptions +numListThemeUpdates;
+        int numberOfInserts = numAppSettingsInserts + numListItemInserts + numListTitleInserts + numListTitlePositionBackendlessExceptions+ numListThemeInserts;
+        int numberOfDeletes = numAppSettingsDeletes + numListItemDeletes + numListTitleDeletes + numListTitlePositionBackendlessExceptions + numListThemeDeletes;
 
         int numberAffectedObjects = numberOfDeletes + numberOfInserts + numberOfUpdates;
 
@@ -196,6 +204,38 @@ public class SyncStats {
         return sb.toString();
     }
 
+    public String listTitlePositionStats() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(" ListTitlePosition stats [");
+
+        if (numListTitlePositionBackendlessExceptions > 0)
+            sb.append(" numListTitlePositionBackendlessExceptions: ").append(numListTitlePositionBackendlessExceptions);
+
+        if (numListTitlePositionDownloadExceptions > 0)
+            sb.append(" numListTitlePositionDownloadExceptions: ").append(numListTitlePositionDownloadExceptions);
+
+        if (numListTitlePositionConflictsDetected > 0)
+            sb.append(" numListTitlePositionConflictsDetected: ").append(numListTitlePositionConflictsDetected);
+
+        if (numListTitlePositionInserts > 0)
+            sb.append(" numListTitlePositionInserts: ").append(numListTitlePositionInserts);
+
+        if (numListTitlePositionUpdates > 0)
+            sb.append(" numListTitlePositionUpdates: ").append(numListTitlePositionUpdates);
+
+        if (numListTitlePositionDeletes > 0)
+            sb.append(" numListTitlePositionDeletes: ").append(numListTitlePositionDeletes);
+
+        if (numListTitlePositionNoUpdateRequired > 0)
+            sb.append(" numListTitlePositionNoUpdateRequired: ").append(numListTitlePositionNoUpdateRequired);
+
+        if (numListTitlePositionSkipped > 0)
+            sb.append(" numListTitlePositionSkipped: ").append(numListTitlePositionSkipped);
+
+
+        sb.append("]");
+        return sb.toString();
+    }
 
     public String listItemStats() {
         StringBuilder sb = new StringBuilder();
@@ -245,41 +285,49 @@ public class SyncStats {
         numAppSettingsBackendlessExceptions = 0;
         numListThemeBackendlessExceptions = 0;
         numListTitleBackendlessExceptions = 0;
+        numListTitlePositionBackendlessExceptions = 0;
         numListItemBackendlessExceptions = 0;
 
         numAppSettingsDownloadExceptions = 0;
         numListThemeDownloadExceptions = 0;
         numListTitleDownloadExceptions = 0;
+        numListTitlePositionDownloadExceptions = 0;
         numListItemDownloadExceptions = 0;
 
         numAppSettingsConflictsDetected = 0;
         numListThemeConflictsDetected = 0;
         numListTitleConflictsDetected = 0;
+        numListTitlePositionConflictsDetected = 0;
         numListItemConflictsDetected = 0;
 
         numAppSettingsInserts = 0;
         numListThemeInserts = 0;
         numListTitleInserts = 0;
+        numListTitlePositionInserts = 0;
         numListItemInserts = 0;
 
         numAppSettingsUpdates = 0;
         numListThemeUpdates = 0;
         numListTitleUpdates = 0;
+        numListTitlePositionUpdates = 0;
         numListItemUpdates = 0;
 
         numAppSettingsDeletes = 0;
         numListThemeDeletes = 0;
         numListTitleDeletes = 0;
+        numListTitlePositionDeletes = 0;
         numListItemDeletes = 0;
 
         numAppSettingsNoUpdateRequired = 0;
         numListThemeNoUpdateRequired = 0;
         numListTitleNoUpdateRequired = 0;
+        numListTitlePositionNoUpdateRequired = 0;
         numListItemNoUpdateRequired = 0;
 
         numAppSettingsSkipped = 0;
         numListThemeSkipped = 0;
         numListTitleSkipped = 0;
+        numListTitlePositionSkipped = 0;
         numListItemSkipped = 0;
     }
 

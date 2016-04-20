@@ -21,11 +21,14 @@ import com.lbconsulting.a1list.backendlessMessaging.AppSettingsMessage;
 import com.lbconsulting.a1list.backendlessMessaging.ListItemMessage;
 import com.lbconsulting.a1list.backendlessMessaging.ListThemeMessage;
 import com.lbconsulting.a1list.backendlessMessaging.ListTitleMessage;
+import com.lbconsulting.a1list.backendlessMessaging.ListTitlePositionMessage;
 import com.lbconsulting.a1list.backendlessMessaging.Messaging;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitlePosition;
+import com.lbconsulting.a1list.domain.model.ListTitlesPosition;
 import com.lbconsulting.a1list.utils.MyEvents;
 import com.lbconsulting.a1list.utils.MySettings;
 
@@ -48,6 +51,7 @@ public class BackendlessMessagingService extends Service {
     private final String APP_SETTINGS_MESSAGE_PREFIX = "\"appSettings\":{";
     private final String LIST_THEME_MESSAGE_PREFIX = "\"listTheme\":{";
     private final String LIST_TITLE_MESSAGE_PREFIX = "\"listTitle\":{";
+    private final String LIST_TITLE_POSITION_MESSAGE_PREFIX = "\"listTitlePosition\":{";
     private final String LIST_ITEM_MESSAGE_PREFIX = "\"listItem\":{";
 
     private ServiceHandler mServiceHandler;
@@ -215,6 +219,32 @@ public class BackendlessMessagingService extends Service {
 //                                        EventBus.getDefault().post(new MyEvents.mainActivityPresenterResume());
                                     } else {
                                         Timber.i("handleResponse(): Received ListTitle message with id = %s. Taking NO ACTION because it was sourced from this device.", message.getMessageId());
+                                    }
+
+                                } else if (messageJasonString.contains(LIST_TITLE_POSITION_MESSAGE_PREFIX)) {
+                                    ListTitlePositionMessage listTitlePositionMessage = ListTitlePositionMessage.fromJason(messageJasonString);
+                                    if (!listTitlePositionMessage.getListTitlePosition().getDeviceUuid().equals(MySettings.getDeviceUuid())) {
+                                        // The message is not from this device ... so update local storage
+                                        Timber.i("handleResponse(): Processing ListTitlePosition message with id = %s", message.getMessageId());
+                                        ListTitlePosition listTitlePosition = listTitlePositionMessage.getListTitlePosition();
+                                        String listTitleUuid = listTitlePosition.getListTitleUuid();
+                                        ListTitle listTitle = AndroidApplication.getListTitleRepository().retrieveListTitleByUuid(listTitleUuid);
+                                        ListTitlesPosition listTitlesPosition = new ListTitlesPosition(listTitle,listTitlePosition);
+                                        switch (listTitlePositionMessage.getAction()) {
+                                            case Messaging.ACTION_CREATE:
+                                                AndroidApplication.getListTitleRepository().insertListTitlePositionIntoLocalStorage(listTitlesPosition);
+                                                break;
+                                            case Messaging.ACTION_UPDATE:
+                                                AndroidApplication.getListTitleRepository().updateListTitlePositionInLocalStorage(listTitle,
+                                                        listTitlePosition.getListViewFirstVisiblePosition(), listTitlePosition.getListViewTop());
+                                                break;
+                                            case Messaging.ACTION_DELETE:
+                                                AndroidApplication.getListTitleRepository().deleteListTitlePositionFromLocalStorage(listTitlePosition);
+                                                break;
+                                        }
+
+                                    } else {
+                                        Timber.i("handleResponse(): Received ListTitlePosition message with id = %s. Taking NO ACTION because it was sourced from this device.", message.getMessageId());
                                     }
 
                                 } else if (messageJasonString.contains(LIST_THEME_MESSAGE_PREFIX)) {

@@ -18,12 +18,11 @@ public class ListTitle {
     private long SQLiteId;
     private String uuid;
     private String deviceUuid;
-    private String messageChannel;
-
     private String name;
+
     private String listThemeUuid;
+    private String listTitlePositionUuid;
     private boolean checked;
-    private boolean forceViewInflation;
     private boolean markedForDeletion;
     private boolean sortListItemsAlphabetically;
     private boolean struckOut;
@@ -32,9 +31,6 @@ public class ListTitle {
     private boolean listLocked;
     private boolean listPrivateToThisDevice;
     private long listItemLastSortKey;
-
-    private int firstVisiblePosition;
-    private int listViewTop;
 
     private Date updated;
     private Date created;
@@ -51,20 +47,16 @@ public class ListTitle {
         newUuid = newUuid.replace("-", "_");
         newListTitle.setUuid(newUuid);
         newListTitle.setDeviceUuid(MySettings.getDeviceUuid());
-        newListTitle.setMessageChannel(MySettings.getActiveUserID());
 
         newListTitle.setName(name);
         newListTitle.setListThemeUuid(defaultListTheme.getUuid());
         newListTitle.setChecked(false);
-        newListTitle.setForceViewInflation(false);
         newListTitle.setMarkedForDeletion(false);
         newListTitle.setManualSortKey(appSettings.retrieveNextListTitleSortKey());
         newListTitle.setSortListItemsAlphabetically(true);
         newListTitle.setListLockString(LIST_NOT_LOCK);
         newListTitle.setListPrivateToThisDevice(false);
         newListTitle.setListItemLastSortKey(0);
-        newListTitle.setFirstVisiblePosition(-1);
-        newListTitle.setListViewTop(0);
 
         return newListTitle;
     }
@@ -86,20 +78,20 @@ public class ListTitle {
         this.SQLiteId = SQLiteId;
     }
 
+    public String getListTitlePositionUuid() {
+        return listTitlePositionUuid;
+    }
+
+    public void setListTitlePositionUuid(String listTitlePositionUuid) {
+        this.listTitlePositionUuid = listTitlePositionUuid;
+    }
+
     public String getDeviceUuid() {
         return deviceUuid;
     }
 
     public void setDeviceUuid(String deviceUuid) {
         this.deviceUuid = deviceUuid;
-    }
-
-    public String getMessageChannel() {
-        return messageChannel;
-    }
-
-    public void setMessageChannel(String messageChannel) {
-        this.messageChannel = messageChannel;
     }
 
     public String getName() {
@@ -128,14 +120,6 @@ public class ListTitle {
 
     public void setChecked(boolean checked) {
         this.checked = checked;
-    }
-
-    public boolean isForceViewInflation() {
-        return forceViewInflation;
-    }
-
-    public void setForceViewInflation(boolean forceViewInflation) {
-        this.forceViewInflation = forceViewInflation;
     }
 
     public boolean isMarkedForDeletion() {
@@ -208,22 +192,6 @@ public class ListTitle {
 
     public void setListPrivateToThisDevice(boolean listPrivateToThisDevice) {
         this.listPrivateToThisDevice = listPrivateToThisDevice;
-    }
-
-    public int getFirstVisiblePosition() {
-        return firstVisiblePosition;
-    }
-
-    public void setFirstVisiblePosition(int firstVisiblePosition) {
-        this.firstVisiblePosition = firstVisiblePosition;
-    }
-
-    public int getListViewTop() {
-        return listViewTop;
-    }
-
-    public void setListViewTop(int listViewTop) {
-        this.listViewTop = listViewTop;
     }
 
     public Date getUpdated() {

@@ -36,6 +36,8 @@ import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitlePosition;
+import com.lbconsulting.a1list.domain.model.ListTitlesPosition;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
@@ -458,6 +460,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     private void addTestLists() {
         int numberOfLists = 5;
         List<ListTitle> listTitles = new ArrayList<>();
+        List<ListTitlesPosition> listTitlesPositions = new ArrayList<>();
 
         ListTheme defaultListTheme;
 
@@ -472,9 +475,14 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             }
             String listName = "List " + listNumber;
             newListTitle = ListTitle.newInstance(listName, defaultListTheme);
+            ListTitlePosition newListTitlePosition = ListTitlePosition.newInstance(newListTitle.getUuid());
+            newListTitle.setListTitlePositionUuid(newListTitlePosition.getUuid());
             listTitles.add(newListTitle);
+            ListTitlesPosition newPosition = new ListTitlesPosition(newListTitle,newListTitlePosition);
+            listTitlesPositions.add(newPosition);
         }
         mListTitleRepository.insert(listTitles);
+        mListTitleRepository.insertListTitlePositions(listTitlesPositions);
         AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
         if (dirtyAppSettings != null) {
             mAppSettingsRepository.updateInCloud(dirtyAppSettings, false);

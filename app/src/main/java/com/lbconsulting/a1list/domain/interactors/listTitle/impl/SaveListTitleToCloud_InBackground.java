@@ -17,6 +17,7 @@ import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveList
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
+import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.Date;
 
@@ -102,7 +103,7 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
     }
 
     private void sendListTitleMessage(ListTitle listTitle, boolean isNew) {
-        String messageChannel = listTitle.getMessageChannel();
+        String messageChannel = MySettings.getActiveUserID();
         int action = Messaging.ACTION_UPDATE;
         if (isNew) {
             action = Messaging.ACTION_CREATE;

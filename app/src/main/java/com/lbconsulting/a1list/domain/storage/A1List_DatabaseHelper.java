@@ -30,6 +30,7 @@ public class A1List_DatabaseHelper extends SQLiteOpenHelper {
         AppSettingsSqlTable.onCreate(database, mContext);
         ListThemesSqlTable.onCreate(database, mContext);
         ListTitlesSqlTable.onCreate(database, mContext);
+        ListTitlePositionsSqlTable.onCreate(database, mContext);
         ListItemsSqlTable.onCreate(database, mContext);
     }
 
@@ -39,6 +40,7 @@ public class A1List_DatabaseHelper extends SQLiteOpenHelper {
         AppSettingsSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
         ListThemesSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
         ListTitlesSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
+        ListTitlePositionsSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
         ListItemsSqlTable.onUpgrade(database, oldVersion, newVersion, mContext);
     }
 

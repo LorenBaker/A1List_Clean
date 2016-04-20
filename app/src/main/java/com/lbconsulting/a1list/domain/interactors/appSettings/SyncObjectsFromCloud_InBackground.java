@@ -20,6 +20,7 @@ import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitlePosition;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
@@ -28,6 +29,7 @@ import com.lbconsulting.a1list.domain.storage.A1List_ContentProvider;
 import com.lbconsulting.a1list.domain.storage.AppSettingsSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListThemesSqlTable;
+import com.lbconsulting.a1list.domain.storage.ListTitlePositionsSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.MySettings;
@@ -63,7 +65,8 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         final int APP_SETTINGS = 0;
         final int LIST_THEMES = 1;
         final int LIST_TITLES = 2;
-        final int LIST_ITEMS = 3;
+        final int LIST_TITLE_POSITIONS = 3;
+        final int LIST_ITEMS = 4;
 
         SyncStats syncStats = new SyncStats();
 
@@ -79,7 +82,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         Timber.i("run(): Starting download of Backendless objects.");
 
         // set all downloadOk booleans to false
-        boolean[] downloadsOk = new boolean[4];
+        boolean[] downloadsOk = new boolean[5];
         for (int i = 0; i < downloadsOk.length; i++) {
             downloadsOk[i] = false;
         }
@@ -88,6 +91,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         HashMap<String, AppSettings> appSettingsCloudMap = new HashMap<String, AppSettings>();
         HashMap<String, ListTheme> listThemesCloudMap = new HashMap<String, ListTheme>();
         HashMap<String, ListTitle> listTitlesCloudMap = new HashMap<String, ListTitle>();
+        HashMap<String, ListTitlePosition> listTitlePositionsCloudMap = new HashMap<String, ListTitlePosition>();
         HashMap<String, ListItem> listItemsCloudMap = new HashMap<String, ListItem>();
 
         //region Download A1List objects from Backendless
@@ -98,7 +102,6 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             Iterator<AppSettings> appSettingIterator;
             while (appSettingsCollection.getCurrentPage().size() > 0) {
                 appSettingIterator = appSettingsCollection.getCurrentPage().iterator();
-//                int size = appSettingsCollection.getCurrentPage().size();
                 while (appSettingIterator.hasNext()) {
                     AppSettings appSettings = appSettingIterator.next();
                     appSettingsCloudMap.put(appSettings.getUuid(), appSettings);
@@ -122,7 +125,6 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             Iterator<ListTheme> listThemeIterator;
             while (listThemesCollection.getCurrentPage().size() > 0) {
                 listThemeIterator = listThemesCollection.getCurrentPage().iterator();
-//                int size = listThemesCollection.getCurrentPage().size();
                 while (listThemeIterator.hasNext()) {
                     ListTheme listTheme = listThemeIterator.next();
                     listThemesCloudMap.put(listTheme.getUuid(), listTheme);
@@ -146,7 +148,6 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             Iterator<ListTitle> listTitleIterator;
             while (listTitlesCollection.getCurrentPage().size() > 0) {
                 listTitleIterator = listTitlesCollection.getCurrentPage().iterator();
-//                int size = listTitlesCollection.getCurrentPage().size();
                 while (listTitleIterator.hasNext()) {
                     ListTitle listTitle = listTitleIterator.next();
                     listTitlesCloudMap.put(listTitle.getUuid(), listTitle);
@@ -159,8 +160,31 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             syncStats.numListTitleBackendlessExceptions++;
             Timber.e("run(): FAILED to download ListTitles from Backendless. BackendlessException: %s", e.getMessage());
         } catch (Exception e) {
-            syncStats.numListThemeDownloadExceptions++;
+            syncStats.numListTitleDownloadExceptions++;
             Timber.e("run(): FAILED to sync ListTitles. Exception: %s", e.getMessage());
+        }
+
+        try {
+            BackendlessDataQuery listTitlePositionDataQuery = new BackendlessDataQuery();
+            listTitlePositionDataQuery.setPageSize(PAGE_SIZE);
+            BackendlessCollection<ListTitlePosition> listTitlePositionsCollection = Backendless.Data.of(ListTitlePosition.class).find(listTitlePositionDataQuery);
+            Iterator<ListTitlePosition> listTitlePositionIterator;
+            while (listTitlePositionsCollection.getCurrentPage().size() > 0) {
+                listTitlePositionIterator = listTitlePositionsCollection.getCurrentPage().iterator();
+                while (listTitlePositionIterator.hasNext()) {
+                    ListTitlePosition listTitlePosition = listTitlePositionIterator.next();
+                    listTitlePositionsCloudMap.put(listTitlePosition.getUuid(), listTitlePosition);
+                }
+                listTitlePositionsCollection = listTitlePositionsCollection.nextPage();
+            }
+            Timber.i("run(): Downloaded %d ListTitlePositions from Backendless.", listTitlePositionsCloudMap.size());
+            downloadsOk[LIST_TITLE_POSITIONS] = true;
+        } catch (BackendlessException e) {
+            syncStats.numListTitlePositionBackendlessExceptions++;
+            Timber.e("run(): FAILED to download ListTitlePositions from Backendless. BackendlessException: %s", e.getMessage());
+        } catch (Exception e) {
+            syncStats.numListTitlePositionDownloadExceptions++;
+            Timber.e("run(): FAILED to sync ListTitlePositions. Exception: %s", e.getMessage());
         }
 
         try {
@@ -170,7 +194,6 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             Iterator<ListItem> listItemIterator;
             while (listItemsCollection.getCurrentPage().size() > 0) {
                 listItemIterator = listItemsCollection.getCurrentPage().iterator();
-//                int size = listItemsCollection.getCurrentPage().size();
                 while (listItemIterator.hasNext()) {
                     ListItem listItem = listItemIterator.next();
                     listItemsCloudMap.put(listItem.getUuid(), listItem);
@@ -206,6 +229,9 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         List<ListTitle> listTitlesLocalList = getListTitleLocalList();
         Timber.i("run(): Retrieved %d ListTitles from SQLiteDb.", listTitlesLocalList.size());
 
+        List<ListTitlePosition> listTitlePositionsLocalList = getListTitlePositionLocalList();
+        Timber.i("run(): Retrieved %d ListTitlePositions from SQLiteDb.", listTitlePositionsLocalList.size());
+
         List<ListItem> listItemsLocalList = getListItemLocalList();
         Timber.i("run(): Retrieved %d ListItems from SQLiteDb.", listItemsLocalList.size());
 
@@ -215,6 +241,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         computeAppSettingsMergeSolution(appSettingsLocalList, appSettingsCloudMap, batch, syncStats);
         computeListThemeMergeSolution(listThemesLocalList, listThemesCloudMap, batch, syncStats);
         computeListTitleMergeSolution(listTitlesLocalList, listTitlesCloudMap, batch, syncStats);
+        computeListTitlePositionMergeSolution(listTitlePositionsLocalList, listTitlePositionsCloudMap, batch, syncStats);
 
 
         // Merge solution ready. Applying batch update
@@ -500,6 +527,96 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         }
     }
 
+    private void computeListTitlePositionMergeSolution(List<ListTitlePosition> listTitlePositionLocalList,
+                                                       HashMap<String, ListTitlePosition> listTitlePositionCloudMap,
+                                                       ArrayList<ContentProviderOperation> batch, SyncStats syncStats) {
+
+        // Iterate through the ListTitlePosition local list searching for a match in the cloud map
+        // If match found, check to see if the local ListTitlePosition needs to be updated
+        // If match not found, the ListTitlePosition is no longer exists in the cloud, so delete it from local storage
+
+        for (ListTitlePosition localListTitlePosition : listTitlePositionLocalList) {
+            try {
+                ListTitlePosition cloudListTitlePosition = listTitlePositionCloudMap.get(localListTitlePosition.getUuid());
+                if (cloudListTitlePosition != null) {
+                    // Match found. The ListTitlePosition exist both locally and in the cloud.
+                    // Remove from the ListTitlePosition from the map to prevent insert later.
+                    listTitlePositionCloudMap.remove(localListTitlePosition.getUuid());
+
+                    // Check to see if the local ListTitlePosition needs to be updated
+                    if (listTitlePositionRequiresUpdating(localListTitlePosition, cloudListTitlePosition)) {
+                        // Update existing record
+                        Timber.i("computeListTitlePositionMergeSolution(): Scheduling update for ListPosition ListTitleUuid = %s",
+                                localListTitlePosition.getListTitleUuid());
+                        Uri existingListTitlePositionUri = ListTitlePositionsSqlTable.CONTENT_URI.buildUpon()
+                                .appendPath(String.valueOf(localListTitlePosition.getSQLiteId())).build();
+                        ContentValues cvCloudListTitlePosition = ListTitleRepository_Impl.makeListTitlePositionContentValues(cloudListTitlePosition);
+                        if (cvCloudListTitlePosition.containsKey(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY)) {
+                            cvCloudListTitlePosition.remove(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY);
+                            cvCloudListTitlePosition.put(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY, FALSE);
+                        }
+                        batch.add(ContentProviderOperation.newUpdate(existingListTitlePositionUri)
+                                .withValues(cvCloudListTitlePosition)
+                                .build());
+                        syncStats.numListTitlePositionUpdates++;
+                    } else {
+                        // Local ListTitlePosition does not need updating
+                        Timber.i("computeListTitlePositionMergeSolution(): No update required for ListTitlePosition with ListTitle uuid = %s",
+                                localListTitlePosition.getListTitleUuid());
+                        syncStats.numListTitlePositionNoUpdateRequired++;
+
+                        // If dates are not the same then set local date equal to cloud date
+                        Date cloudListTitlePositionDate = cloudListTitlePosition.getUpdated();
+                        if (cloudListTitlePositionDate == null) {
+                            cloudListTitlePositionDate = cloudListTitlePosition.getCreated();
+                        }
+                        if (!cloudListTitlePositionDate.equals(localListTitlePosition.getUpdated())) {
+                            Timber.d("computeListTitlePositionMergeSolution(): Cloud and local ListTitlePosition dates not the same. Updating ListTitlePosition with ListTitle uuid = %s",
+                                    localListTitlePosition.getListTitleUuid());
+                            Uri existingListTitlePositionUri = ListTitlePositionsSqlTable.CONTENT_URI.buildUpon()
+                                    .appendPath(String.valueOf(localListTitlePosition.getSQLiteId())).build();
+                            ContentValues cv = new ContentValues();
+                            cv.put(ListTitlePositionsSqlTable.COL_UPDATED, cloudListTitlePositionDate.getTime());
+                            cv.put(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY, FALSE);
+                            batch.add(ContentProviderOperation.newUpdate(existingListTitlePositionUri)
+                                    .withValues(cv).build());
+                        }
+                    }
+                } else {
+                    // Match NOT found. The ListTitlePosition exist only locally and NOT in the cloud.
+                    // So, remove it from the database.
+                    Timber.i("computeListTitlePositionMergeSolution(): Scheduling deletion for ListTitlePosition with ListTitle uuid = %s",
+                            localListTitlePosition.getListTitleUuid());
+                    Uri deleteListTitlePositionUri = ListTitlePositionsSqlTable.CONTENT_URI.buildUpon()
+                            .appendPath(String.valueOf(localListTitlePosition.getSQLiteId())).build();
+
+                    batch.add(ContentProviderOperation.newDelete(deleteListTitlePositionUri).build());
+                    syncStats.numListTitlePositionDeletes++;
+                }
+            } catch (Exception e) {
+                Timber.e("computeListTitlePositionMergeSolution(): Exception: %s.", e.getMessage());
+            }
+        }
+        // Any remaining ListTitlePosition in the listTitlePositionCloudMap need to be inserted into local storage
+        for (ListTitlePosition newListTitlePosition : listTitlePositionCloudMap.values()) {
+            try {
+                Timber.i("computeListTitlePositionMergeSolution(): Scheduling insertion for ListTitlePosition with ListTitle uuid = %s",
+                        newListTitlePosition.getListTitleUuid());
+                ContentValues cvNewListTitlePosition = ListTitleRepository_Impl.makeListTitlePositionContentValues(newListTitlePosition);
+                if (cvNewListTitlePosition.containsKey(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY)) {
+                    cvNewListTitlePosition.remove(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY);
+                    cvNewListTitlePosition.put(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY, FALSE);
+                }
+                batch.add(ContentProviderOperation.newInsert(ListTitlePositionsSqlTable.CONTENT_URI)
+                        .withValues(cvNewListTitlePosition)
+                        .build());
+                syncStats.numListTitlePositionInserts++;
+            } catch (Exception e) {
+                Timber.e("computeListTitlePositionMergeSolution(): Exception: %s.", e.getMessage());
+            }
+        }
+    }
+
 
     private void computeListItemMergeSolution(List<ListItem> listItemLocalList,
                                               HashMap<String, ListItem> listItemCloudMap,
@@ -655,16 +772,11 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         }
 
         if (cloudListTitleDate.after(localListTitle.getUpdated())) {
-            // TODO: verify that all ListTitle fields have been checked.
-            if (cloudListTitle.getFirstVisiblePosition() != localListTitle.getFirstVisiblePosition()) {
-                return true;
-            } else if (cloudListTitle.getListViewTop() != localListTitle.getListViewTop()) {
-                return true;
-            } else if (!cloudListTitle.isStruckOut() == localListTitle.isStruckOut()) {
+            if (!cloudListTitle.isStruckOut() == localListTitle.isStruckOut()) {
                 return true;
             } else if (!cloudListTitle.getName().equals(localListTitle.getName())) {
                 return true;
-            } else if (!cloudListTitle.retrieveListTheme().getUuid().equals(localListTitle.retrieveListTheme().getUuid())) {
+            } else if (!cloudListTitle.getListThemeUuid().equals(localListTitle.getListThemeUuid())) {
                 return true;
             } else if (!cloudListTitle.isMarkedForDeletion() == localListTitle.isMarkedForDeletion()) {
                 return true;
@@ -681,6 +793,26 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             } else if (!cloudListTitle.isListPrivateToThisDevice() == localListTitle.isListPrivateToThisDevice()) {
                 return true;
             } else if (cloudListTitle.getListItemLastSortKey() != localListTitle.getListItemLastSortKey()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean listTitlePositionRequiresUpdating(ListTitlePosition localListTitlePosition, ListTitlePosition cloudListTitlePosition) {
+
+        Date cloudListTitlePositionDate = cloudListTitlePosition.getUpdated();
+        if (cloudListTitlePositionDate == null) {
+            cloudListTitlePositionDate = cloudListTitlePosition.getCreated();
+        }
+
+        if (cloudListTitlePositionDate.after(localListTitlePosition.getUpdated())) {
+            if (!cloudListTitlePosition.getListTitleUuid().equals(localListTitlePosition.getListTitleUuid())) {
+                return true;
+            } else if (cloudListTitlePosition.getListViewFirstVisiblePosition() != localListTitlePosition.getListViewFirstVisiblePosition()) {
+                return true;
+            }else if (cloudListTitlePosition.getListViewTop() != localListTitlePosition.getListViewTop()) {
                 return true;
             }
         }
@@ -714,24 +846,6 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                 return true;
             }
         }
-
-//        if (cloudListItemDate.equals(localListItem.getUpdated())) {
-//            return false;
-//        } else if (!cloudListItem.isStruckOut() == localListItem.isStruckOut()) {
-//            return true;
-//        } else if (!cloudListItem.getName().equals(localListItem.getName())) {
-//            return true;
-//        } else if (!cloudListItem.retrieveListTitle().getUuid().equals(localListItem.retrieveListTitle().getUuid())) {
-//            return true;
-//        } else if (!cloudListItem.isMarkedForDeletion() == localListItem.isMarkedForDeletion()) {
-//            return true;
-//        } else if (!cloudListItem.isFavorite() == localListItem.isFavorite()) {
-//            return true;
-//        } else if (!cloudListItem.isChecked() == localListItem.isChecked()) {
-//            return true;
-//        } else if (cloudListItem.getManualSortKey() != localListItem.getManualSortKey()) {
-//            return true;
-//        }
 
         return false;
     }
@@ -821,6 +935,34 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             cursor.close();
         }
         return ListTitleLocalList;
+    }
+
+    private List<ListTitlePosition> getListTitlePositionLocalList() {
+        List<ListTitlePosition> ListTitlePositionLocalList = new ArrayList<>();
+
+        Cursor cursor = null;
+        Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
+        String[] projection = ListTitlePositionsSqlTable.PROJECTION_ALL;
+        String selection = null;
+        String selectionArgs[] = null;
+        String sortOrder = null;
+
+        ContentResolver cr = AndroidApplication.getContext().getContentResolver();
+        try {
+            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+        } catch (Exception e) {
+            Timber.e("getListTitlePositionLocalList(): Exception: %s.", e.getMessage());
+        }
+
+        ListTitlePosition ListTitlePosition;
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                ListTitlePosition = ListTitleRepository_Impl.listTitlePositionFromCursor(cursor);
+                ListTitlePositionLocalList.add(ListTitlePosition);
+            }
+            cursor.close();
+        }
+        return ListTitlePositionLocalList;
     }
 
     private List<ListItem> getListItemLocalList() {

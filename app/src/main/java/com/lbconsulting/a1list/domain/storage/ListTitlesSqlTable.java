@@ -15,28 +15,26 @@ public class ListTitlesSqlTable {
     public static final String COL_OBJECT_ID = "objectId";
     public static final String COL_NAME = "name";
     public static final String COL_LIST_THEME_UUID = "listThemeUuid";
+    public static final String COL_LIST_TITLE_POSITION_UUID = "listTitlePositionUuid";
     public static final String COL_MANUAL_SORT_KEY = "manualSortKey";
     public static final String COL_LIST_ITEM_LAST_SORT_KEY = "listItemLastSortKey";
     public static final String COL_CHECKED = "checked";
     public static final String COL_LIST_TITLE_DIRTY = "listTitleDirty";
-    public static final String COL_FORCED_VIEW_INFLATION = "forceViewInflation";
     public static final String COL_MARKED_FOR_DELETION = "markedForDeletion";
     public static final String COL_STRUCK_OUT = "struckOut";
     public static final String COL_SORT_ALPHABETICALLY = "sortAlphabetically";
     public static final String COL_LIST_LOCKED = "listLocked";
     public static final String COL_LIST_LOCKED_STRING = "listLockString";
     public static final String COL_UUID = "uuid";
-    public static final String COL_FIRST_VISIBLE_POSITION = "firstVisiblePosition";
-    public static final String COL_LIST_VIEW_TOP = "listViewTop";
     public static final String COL_LIST_PRIVATE_TO_THIS_DEVICE = "listPrivateToThisDevice";
     public static final String COL_UPDATED = "updated";
 
     //region Projections and Content Path
     public static final String[] PROJECTION_ALL = {COL_ID, COL_OBJECT_ID, COL_NAME,
-            COL_LIST_THEME_UUID, COL_MANUAL_SORT_KEY, COL_LIST_ITEM_LAST_SORT_KEY, COL_CHECKED,
-            COL_LIST_TITLE_DIRTY, COL_FORCED_VIEW_INFLATION, COL_MARKED_FOR_DELETION, COL_STRUCK_OUT,
-            COL_SORT_ALPHABETICALLY, COL_LIST_LOCKED, COL_LIST_LOCKED_STRING, COL_UUID,
-            COL_FIRST_VISIBLE_POSITION, COL_LIST_PRIVATE_TO_THIS_DEVICE, COL_LIST_VIEW_TOP, COL_UPDATED};
+            COL_LIST_THEME_UUID, COL_LIST_TITLE_POSITION_UUID, COL_MANUAL_SORT_KEY,
+            COL_LIST_ITEM_LAST_SORT_KEY, COL_CHECKED, COL_LIST_TITLE_DIRTY, COL_MARKED_FOR_DELETION,
+            COL_STRUCK_OUT, COL_SORT_ALPHABETICALLY, COL_LIST_LOCKED, COL_LIST_LOCKED_STRING,
+            COL_UUID, COL_LIST_PRIVATE_TO_THIS_DEVICE, COL_UPDATED};
 
     public static final String CONTENT_PATH = "listTitles";
     public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + "vnd.lbconsulting."
@@ -58,20 +56,18 @@ public class ListTitlesSqlTable {
                     + COL_OBJECT_ID + " text default '', "
                     + COL_NAME + " text collate nocase default '', "
                     + COL_LIST_THEME_UUID + " text default '', "
+                    + COL_LIST_TITLE_POSITION_UUID + " text default '', "
                     + COL_MANUAL_SORT_KEY + " integer default 0, "
                     + COL_LIST_ITEM_LAST_SORT_KEY + " integer default 0, "
                     + COL_CHECKED + " integer default 0, "
                     + COL_LIST_TITLE_DIRTY + " integer default 0, "
-                    + COL_FORCED_VIEW_INFLATION + " integer default 0, "
                     + COL_MARKED_FOR_DELETION + " integer default 0, "
                     + COL_STRUCK_OUT + " integer default 0, "
                     + COL_SORT_ALPHABETICALLY + " integer default 1, "
                     + COL_LIST_LOCKED + " integer default 0, "
                     + COL_LIST_LOCKED_STRING + " text default '', "
                     + COL_UUID + " text default '', "
-                    + COL_FIRST_VISIBLE_POSITION + " integer default -1, "
                     + COL_LIST_PRIVATE_TO_THIS_DEVICE + " integer default 0, "
-                    + COL_LIST_VIEW_TOP + " integer default 0, "
                     + COL_UPDATED + " integer default 0"
                     + ");";
 

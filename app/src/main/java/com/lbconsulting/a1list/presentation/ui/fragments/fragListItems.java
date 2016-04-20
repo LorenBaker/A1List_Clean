@@ -15,6 +15,7 @@ import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitlePosition;
 import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListItemsPresenter;
@@ -221,18 +222,12 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
         super.onPause();
         Timber.i("onPause()for ListTitle \"%s\".", mListTitle.getName());
 
-        // Get the most recent listTitle from the local repository ... it's objectId should not be null.
-        mListTitle = mListTitleRepository.retrieveListTitleByUuid(mListTitle.getUuid());
-        if (mListTitle != null) {
-            int index = lvListItems.getFirstVisiblePosition();
-            View v = lvListItems.getChildAt(0);
-            int top = (v == null) ? 0 : (v.getTop() - lvListItems.getPaddingTop());
+        // Save the ListView's position
+        int firstVisiblePosition = lvListItems.getFirstVisiblePosition();
+        View v = lvListItems.getChildAt(0);
+        int top = (v == null) ? 0 : (v.getTop() - lvListItems.getPaddingTop());
 
-            mListTitle.setFirstVisiblePosition(index);
-            mListTitle.setListViewTop(top);
-            mListTitleRepository.update(mListTitle);
-//            EventBus.getDefault().post(new MyEvents.replaceListTitle(mPosition, mListTitle));
-        }
+        mListTitleRepository.updateListTitlePosition(mListTitle, firstVisiblePosition, top);
     }
 
     @Override
@@ -255,9 +250,15 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
         Drawable backgroundDrawable = CommonMethods.getBackgroundDrawable(
                 mListTitle.retrieveListTheme().getStartColor(), mListTitle.retrieveListTheme().getEndColor());
 
-        int index = mListTitle.getFirstVisiblePosition();
-        int top = mListTitle.getListViewTop();
-        lvListItems.setSelectionFromTop(index, top);
+        int firstVisiblePosition = 0;
+        int top = 0;
+        ListTitlePosition listTitlePosition = mListTitleRepository.retrieveListTitlePosition(mListTitle);
+        if (listTitlePosition != null) {
+            firstVisiblePosition = listTitlePosition.getListViewFirstVisiblePosition();
+            top = listTitlePosition.getListViewTop();
+        }
+
+        lvListItems.setSelectionFromTop(firstVisiblePosition, top);
 
         llListItems.setBackground(backgroundDrawable);
     }

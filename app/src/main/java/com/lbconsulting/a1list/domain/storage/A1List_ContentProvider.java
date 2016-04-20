@@ -24,8 +24,10 @@ public class A1List_ContentProvider extends ContentProvider {
     private static final int LIST_ITEMS_SINGLE_ROW = 21;
     private static final int LIST_TITLES_MULTI_ROWS = 30;
     private static final int LIST_TITLES_SINGLE_ROW = 31;
-    private static final int LIST_THEMES_MULTI_ROWS = 40;
-    private static final int LIST_THEMES_SINGLE_ROW = 41;
+    private static final int LIST_TITLE_POSITIONS_MULTI_ROWS = 40;
+    private static final int LIST_TITLE_POSITIONS_SINGLE_ROW = 41;
+    private static final int LIST_THEMES_MULTI_ROWS = 50;
+    private static final int LIST_THEMES_SINGLE_ROW = 51;
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     static {
@@ -37,6 +39,9 @@ public class A1List_ContentProvider extends ContentProvider {
 
         sURIMatcher.addURI(AUTHORITY, ListTitlesSqlTable.CONTENT_PATH, LIST_TITLES_MULTI_ROWS);
         sURIMatcher.addURI(AUTHORITY, ListTitlesSqlTable.CONTENT_PATH + "/#", LIST_TITLES_SINGLE_ROW);
+
+        sURIMatcher.addURI(AUTHORITY, ListTitlePositionsSqlTable.CONTENT_PATH, LIST_TITLE_POSITIONS_MULTI_ROWS);
+        sURIMatcher.addURI(AUTHORITY, ListTitlePositionsSqlTable.CONTENT_PATH + "/#", LIST_TITLE_POSITIONS_SINGLE_ROW);
 
         sURIMatcher.addURI(AUTHORITY, ListThemesSqlTable.CONTENT_PATH, LIST_THEMES_MULTI_ROWS);
         sURIMatcher.addURI(AUTHORITY, ListThemesSqlTable.CONTENT_PATH + "/#", LIST_THEMES_SINGLE_ROW);
@@ -125,6 +130,24 @@ public class A1List_ContentProvider extends ContentProvider {
                 deleteCount = db.delete(ListTitlesSqlTable.TABLE_LIST_TITLES, selection, selectionArgs);
                 break;
 
+            case LIST_TITLE_POSITIONS_MULTI_ROWS:
+                // To return the number of deleted items you must specify a where clause.
+                // To delete all rows and return a value pass in "1".
+                if (selection == null) {
+                    selection = "1";
+                }
+                // Perform the deletion
+                deleteCount = db.delete(ListTitlePositionsSqlTable.TABLE_LIST_TITLE_POSITIONS, selection, selectionArgs);
+                break;
+
+            case LIST_TITLE_POSITIONS_SINGLE_ROW:
+                // Limit deletion to a single row
+                rowId = uri.getLastPathSegment();
+                selection = ListTitlesSqlTable.COL_ID + "=" + rowId;
+                // Perform the deletion
+                deleteCount = db.delete(ListTitlePositionsSqlTable.TABLE_LIST_TITLE_POSITIONS, selection, selectionArgs);
+                break;
+
             case LIST_THEMES_MULTI_ROWS:
                 // To return the number of deleted items you must specify a where clause.
                 // To delete all rows and return a value pass in "1".
@@ -173,6 +196,11 @@ public class A1List_ContentProvider extends ContentProvider {
                 return ListTitlesSqlTable.CONTENT_TYPE;
             case LIST_TITLES_SINGLE_ROW:
                 return ListTitlesSqlTable.CONTENT_ITEM_TYPE;
+
+            case LIST_TITLE_POSITIONS_MULTI_ROWS:
+                return ListTitlePositionsSqlTable.CONTENT_TYPE;
+            case LIST_TITLE_POSITIONS_SINGLE_ROW:
+                return ListTitlePositionsSqlTable.CONTENT_ITEM_TYPE;
 
             case LIST_THEMES_MULTI_ROWS:
                 return ListThemesSqlTable.CONTENT_TYPE;
@@ -250,6 +278,23 @@ public class A1List_ContentProvider extends ContentProvider {
                 throw new IllegalArgumentException(
                         "Illegal URI: Cannot insert a new row with a single row URI. " + uri);
 
+            case LIST_TITLE_POSITIONS_MULTI_ROWS:
+                newRowId = db.insertOrThrow(ListTitlePositionsSqlTable.TABLE_LIST_TITLE_POSITIONS, nullColumnHack, values);
+                if (newRowId > 0) {
+                    // Construct and return the URI of the newly inserted row.
+                    Uri newRowUri = ContentUris.withAppendedId(ListTitlePositionsSqlTable.CONTENT_URI, newRowId);
+                    if (getContext() != null && getContext().getContentResolver() != null) {
+                        getContext().getContentResolver().notifyChange(ListTitlePositionsSqlTable.CONTENT_URI, null);
+                    }
+
+                    return newRowUri;
+                }
+                return null;
+
+            case LIST_TITLE_POSITIONS_SINGLE_ROW:
+                throw new IllegalArgumentException(
+                        "Illegal URI: Cannot insert a new row with a single row URI. " + uri);
+
             case LIST_THEMES_MULTI_ROWS:
                 newRowId = db.insertOrThrow(ListThemesSqlTable.TABLE_LIST_THEMES, nullColumnHack, values);
                 if (newRowId > 0) {
@@ -308,6 +353,15 @@ public class A1List_ContentProvider extends ContentProvider {
                 queryBuilder.appendWhere(ListTitlesSqlTable.COL_ID + "=" + uri.getLastPathSegment());
                 break;
 
+            case LIST_TITLE_POSITIONS_MULTI_ROWS:
+                queryBuilder.setTables(ListTitlePositionsSqlTable.TABLE_LIST_TITLE_POSITIONS);
+                break;
+
+            case LIST_TITLE_POSITIONS_SINGLE_ROW:
+                queryBuilder.setTables(ListTitlePositionsSqlTable.TABLE_LIST_TITLE_POSITIONS);
+                queryBuilder.appendWhere(ListTitlePositionsSqlTable.COL_ID + "=" + uri.getLastPathSegment());
+                break;
+
             case LIST_THEMES_MULTI_ROWS:
                 queryBuilder.setTables(ListThemesSqlTable.TABLE_LIST_THEMES);
                 break;
@@ -337,7 +391,7 @@ public class A1List_ContentProvider extends ContentProvider {
             try {
                 cursor = queryBuilder.query(db, projection, selection, selectionArgs, groupBy, having, sortOrder);
             } catch (Exception e) {
-                Timber.e("query(): Exception: $s.", e.getMessage());
+                Timber.e("query(): Exception: %s.", e.getMessage());
                 e.printStackTrace();
             }
 
@@ -388,6 +442,16 @@ public class A1List_ContentProvider extends ContentProvider {
                 rowID = uri.getLastPathSegment();
                 selection = ListTitlesSqlTable.COL_ID + "=" + rowID;
                 updateCount = db.update(ListTitlesSqlTable.TABLE_LIST_TITLES, values, selection, selectionArgs);
+                break;
+
+            case LIST_TITLE_POSITIONS_MULTI_ROWS:
+                updateCount = db.update(ListTitlePositionsSqlTable.TABLE_LIST_TITLE_POSITIONS, values, selection, selectionArgs);
+                break;
+
+            case LIST_TITLE_POSITIONS_SINGLE_ROW:
+                rowID = uri.getLastPathSegment();
+                selection = ListTitlePositionsSqlTable.COL_ID + "=" + rowID;
+                updateCount = db.update(ListTitlePositionsSqlTable.TABLE_LIST_TITLE_POSITIONS, values, selection, selectionArgs);
                 break;
 
             case LIST_THEMES_MULTI_ROWS:
