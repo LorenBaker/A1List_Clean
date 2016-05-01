@@ -6,7 +6,6 @@ import android.net.Uri;
 
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
-import com.backendless.messaging.MessageStatus;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.backendlessMessaging.ListTitlePositionMessage;
 import com.lbconsulting.a1list.backendlessMessaging.Messaging;
@@ -15,11 +14,10 @@ import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveListTitlePositionToCloud;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitleAndPosition;
 import com.lbconsulting.a1list.domain.model.ListTitlePosition;
-import com.lbconsulting.a1list.domain.model.ListTitlesPosition;
 import com.lbconsulting.a1list.domain.storage.ListTitlePositionsSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
-import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.Date;
 
@@ -35,7 +33,7 @@ public class SaveListTitlePositionToCloud_InBackground extends AbstractInteracto
 
     public SaveListTitlePositionToCloud_InBackground(Executor threadExecutor, MainThread mainThread,
                                                      Callback callback,
-                                                     ListTitlesPosition listTitlesPosition) {
+                                                     ListTitleAndPosition listTitlesPosition) {
         super(threadExecutor, mainThread);
         this.listTitle = listTitlesPosition.getListTitle();
         this.listTitlePosition = listTitlesPosition.getListTitlePosition();
@@ -76,15 +74,19 @@ public class SaveListTitlePositionToCloud_InBackground extends AbstractInteracto
 
                 cv.put(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY, FALSE);
 
-                // If a new ListTitlePosition, update SQLite db with objectID
+                // If a new ListTitlePosition, updateStorage SQLite db with objectID
                 if (isNew) {
                     cv.put(ListTitlePositionsSqlTable.COL_OBJECT_ID, response.getObjectId());
                 }
-                // update the SQLite db
+                // updateStorage the SQLite db
                 updateSQLiteDb(response, cv, listTitle);
 
                 // send message to other devices
-                sendListTitlePositionMessage(listTitlePosition, isNew);
+                int action = Messaging.ACTION_UPDATE;
+                if (isNew) {
+                    action = Messaging.ACTION_CREATE;
+                }
+                ListTitlePositionMessage.sendMessage(listTitle, listTitlePosition, action);
 
                 String successMessage = String.format("Successfully saved \"%s's\" ListTitlePosition to Backendless.", listTitle.getName());
                 postListTitleSavedToCloud(successMessage);
@@ -103,28 +105,6 @@ public class SaveListTitlePositionToCloud_InBackground extends AbstractInteracto
         }
     }
 
-    private void sendListTitlePositionMessage(ListTitlePosition listTitlePosition, boolean isNew) {
-        String messageChannel = MySettings.getActiveUserID();
-        int action = Messaging.ACTION_UPDATE;
-        if (isNew) {
-            action = Messaging.ACTION_CREATE;
-        }
-        int target = Messaging.TARGET_ALL_DEVICES;
-        String listTitleMessageJson = ListTitlePositionMessage.toJson(listTitlePosition, action, target);
-        MessageStatus messageStatus = Backendless.Messaging.publish(messageChannel, listTitleMessageJson);
-        if (messageStatus.getErrorMessage() == null) {
-            // successfully sent message to Backendless.
-            if (isNew) {
-                Timber.i("sendListTitlePositionMessage(): CREATE \"%s's\" ListTitlePosition message successfully sent.", listTitle.getName());
-            } else {
-                Timber.i("sendListTitlePositionMessage(): UPDATE \"%s's\" ListTitlePosition message successfully sent.", listTitle.getName());
-            }
-        } else {
-            // error sending message to Backendless.
-            Timber.e("sendListTitlePositionMessage(): FAILED to send message for \"%s's\" ListTitlePosition. %s.",
-                    listTitle.getName(), messageStatus.getErrorMessage());
-        }
-    }
 
     private void updateSQLiteDb(ListTitlePosition listTitlePosition, ContentValues cv, ListTitle listTitle) {
         int numberOfRecordsUpdated = 0;

@@ -82,8 +82,12 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> {
 
     @Override
     public long getItemId(int position) {
-        ListItem listItem = getItem(position);
-        return listItem.getSQLiteId();
+        long itemId = 0;
+        if (getListItems() != null && getListItems().size() > 0) {
+            ListItem listItem = getItem(position);
+            itemId = listItem.getSQLiteId();
+        }
+        return itemId;
     }
 
     @Override
@@ -186,7 +190,7 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> {
                     } else {
                         setNoStrikeOut((TextView) v);
                     }
-                    mListItemRepository.update(clickedItem);
+                    mListItemRepository.updateStorage(clickedItem);
                 }
             }
         });
@@ -202,7 +206,7 @@ public class ListItemsArrayAdapter extends ArrayAdapter<ListItem> {
                     } else {
                         setAsNotFavorite((ImageButton) v);
                     }
-                    mListItemRepository.update(clickedItem);
+                    mListItemRepository.updateStorage(clickedItem);
                 }
             }
         });

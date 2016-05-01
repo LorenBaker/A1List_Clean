@@ -94,7 +94,7 @@ public class dialogEditListItemName extends DialogFragment {
                         String listItemProposedName = txtListItemName.getText().toString().trim();
                         if (okToReviseListItemName(listItemProposedName)) {
                             mListItem.setName(listItemProposedName);
-                            mListItemRepository.update(mListItem);
+                            mListItemRepository.updateStorage(mListItem);
                             EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mListItem.retrieveListTitle().getUuid()));
                             dismiss();
                         }

@@ -93,7 +93,7 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
 
     @Subscribe
     public void onEvent(MyEvents.updateFragListItemsUI event) {
-        // if event.getListTitleUuid() == null then all fragments update their UI
+        // if event.getListTitleUuid() == null then all fragments updateStorage their UI
         if (event.getListTitleUuid() == null || mListTitle.getUuid().equals(event.getListTitleUuid())) {
             List<ListItem> listItems = mListItemRepository.retrieveAllListItems(mListTitle, false);
             displayListItems(listItems);

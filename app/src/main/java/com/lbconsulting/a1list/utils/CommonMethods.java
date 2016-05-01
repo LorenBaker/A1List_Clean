@@ -42,6 +42,8 @@ public class CommonMethods {
 
     public final static String NOT_AVAILABLE = "NOT_AVAILABLE";
 
+
+
     public static void saveDirtyObjectsToCloud(){
         Timber.i("saveDirtyObjectsToCloud(): Starting to save dirty objects to Backendless.");
 
@@ -97,7 +99,7 @@ public class CommonMethods {
                     listTitlesWithObjectId.add(listTitle);
                 }
             }
-            listTitleRepository.insertInCloud(listTitlesNoObjectId);
+            listTitleRepository.insertIntoCloudStorage(listTitlesNoObjectId);
             listTitleRepository.updateInCloud(listTitlesWithObjectId, false);
 
         } else {
@@ -114,8 +116,8 @@ public class CommonMethods {
                     listItemsWithObjectId.add(listItem);
                 }
             }
-            listItemRepository.insertInCloud(listItemsNoObjectId);
-            listItemRepository.updateInCloud(listItemsWithObjectId, false);
+            listItemRepository.insertIntoCloudStorage(listItemsNoObjectId);
+            listItemRepository.updateInCloudStorage(listItemsWithObjectId, false);
 
         } else {
             Timber.i("saveDirtyObjectsToCloud(): No ListItems to save.");

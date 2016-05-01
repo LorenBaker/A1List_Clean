@@ -36,8 +36,8 @@ import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitleAndPosition;
 import com.lbconsulting.a1list.domain.model.ListTitlePosition;
-import com.lbconsulting.a1list.domain.model.ListTitlesPosition;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListThemeRepository_Impl;
@@ -460,7 +460,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     private void addTestLists() {
         int numberOfLists = 5;
         List<ListTitle> listTitles = new ArrayList<>();
-        List<ListTitlesPosition> listTitlesPositions = new ArrayList<>();
+        List<ListTitleAndPosition> listTitleAndPositions = new ArrayList<>();
 
         ListTheme defaultListTheme;
 
@@ -478,11 +478,11 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             ListTitlePosition newListTitlePosition = ListTitlePosition.newInstance(newListTitle.getUuid());
             newListTitle.setListTitlePositionUuid(newListTitlePosition.getUuid());
             listTitles.add(newListTitle);
-            ListTitlesPosition newPosition = new ListTitlesPosition(newListTitle,newListTitlePosition);
-            listTitlesPositions.add(newPosition);
+            ListTitleAndPosition newPosition = new ListTitleAndPosition(newListTitle,newListTitlePosition);
+            listTitleAndPositions.add(newPosition);
         }
-        mListTitleRepository.insert(listTitles);
-        mListTitleRepository.insertListTitlePositions(listTitlesPositions);
+        mListTitleRepository.insertIntoStorage(listTitles);
+        mListTitleRepository.insertListTitlePositions(listTitleAndPositions);
         AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
         if (dirtyAppSettings != null) {
             mAppSettingsRepository.updateInCloud(dirtyAppSettings, false);
@@ -511,7 +511,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             }
             numberOfItemsPerList++;
         }
-        mListItemRepository.insert(listItems);
+        mListItemRepository.insertIntoStorage(listItems);
 
         mMainActivityPresenter.resume();
 
@@ -522,9 +522,9 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 
     private void deleteStruckOutItems() {
         List<ListItem> struckOutListItems = mListItemRepository.retrieveStruckOutListItems(mActiveListTitle);
-        Timber.i("deleteStruckOutItems(): Found %d struck out ListItems to delete.", struckOutListItems.size());
+        Timber.i("deleteStruckOutItems(): Found %d struck out ListItems to deleteFromStorage.", struckOutListItems.size());
         if (struckOutListItems.size() > 0) {
-            mListItemRepository.delete(struckOutListItems);
+            mListItemRepository.deleteFromStorage(struckOutListItems);
             EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(mActiveListTitle.getUuid()));
         }
     }
@@ -636,6 +636,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(null));
         CommonMethods.showSnackbar(mFab, syncStats.getSnackBarMessage(), Snackbar.LENGTH_LONG);
         cancelDownLoadNotification();
+        mMainActivityPresenter.resume();
     }
 
     @Override

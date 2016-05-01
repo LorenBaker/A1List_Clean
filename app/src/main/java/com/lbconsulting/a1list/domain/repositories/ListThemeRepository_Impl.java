@@ -51,6 +51,61 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 
     // CRUD operations
 
+    public static ContentValues makeListThemeContentValues(ListTheme listTheme) {
+
+        ContentValues cv = new ContentValues();
+        cv.put(ListThemesSqlTable.COL_NAME, listTheme.getName());
+        cv.put(ListThemesSqlTable.COL_UUID, listTheme.getUuid());
+        cv.put(ListThemesSqlTable.COL_OBJECT_ID, listTheme.getObjectId());
+        cv.put(ListThemesSqlTable.COL_START_COLOR, listTheme.getStartColor());
+        cv.put(ListThemesSqlTable.COL_END_COLOR, listTheme.getEndColor());
+        cv.put(ListThemesSqlTable.COL_TEXT_COLOR, listTheme.getTextColor());
+        cv.put(ListThemesSqlTable.COL_TEXT_SIZE, listTheme.getTextSize());
+        cv.put(ListThemesSqlTable.COL_HORIZONTAL_PADDING_IN_DP, listTheme.getHorizontalPaddingInDp());
+        cv.put(ListThemesSqlTable.COL_VERTICAL_PADDING_IN_DP, listTheme.getVerticalPaddingInDp());
+
+        cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
+        cv.put(ListThemesSqlTable.COL_BOLD, (listTheme.isBold()) ? TRUE : FALSE);
+        cv.put(ListThemesSqlTable.COL_CHECKED, (listTheme.isChecked()) ? TRUE : FALSE);
+        cv.put(ListThemesSqlTable.COL_DEFAULT_THEME, (listTheme.isDefaultTheme()) ? TRUE : FALSE);
+        cv.put(ListThemesSqlTable.COL_MARKED_FOR_DELETION, (listTheme.isMarkedForDeletion()) ? TRUE : FALSE);
+        cv.put(ListThemesSqlTable.COL_STRUCK_OUT, (listTheme.isStruckOut()) ? TRUE : FALSE);
+        cv.put(ListThemesSqlTable.COL_TRANSPARENT, (listTheme.isTransparent()) ? TRUE : FALSE);
+        Date updatedDateTime = listTheme.getUpdated();
+        if (updatedDateTime != null) {
+            cv.put(ListThemesSqlTable.COL_UPDATED, updatedDateTime.getTime());
+        }
+        return cv;
+    }
+
+    public static ListTheme listThemeFromCursor(Cursor cursor) {
+        ListTheme listTheme = new ListTheme();
+        listTheme.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_ID)));
+        listTheme.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_OBJECT_ID)));
+        listTheme.setDeviceUuid(MySettings.getDeviceUuid());
+        listTheme.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_NAME)));
+        listTheme.setDeviceUuid(MySettings.getDeviceUuid());
+        listTheme.setMessageChannel(MySettings.getActiveUserID());
+        listTheme.setStartColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_START_COLOR)));
+        listTheme.setEndColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_END_COLOR)));
+        listTheme.setTextColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_TEXT_COLOR)));
+        listTheme.setTextSize(cursor.getFloat(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_TEXT_SIZE)));
+        listTheme.setHorizontalPaddingInDp(cursor.getFloat(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_HORIZONTAL_PADDING_IN_DP)));
+        listTheme.setVerticalPaddingInDp(cursor.getFloat(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_VERTICAL_PADDING_IN_DP)));
+        listTheme.setBold(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_BOLD)) > 0);
+        listTheme.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_CHECKED)) > 0);
+        listTheme.setDefaultTheme(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_DEFAULT_THEME)) > 0);
+        listTheme.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_MARKED_FOR_DELETION)) > 0);
+        listTheme.setStruckOut(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_STRUCK_OUT)) > 0);
+        listTheme.setTransparent(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_TRANSPARENT)) > 0);
+        listTheme.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_UUID)));
+        long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_UPDATED));
+        Date updated = new Date(dateMillis);
+        listTheme.setUpdated(updated);
+
+        return listTheme;
+    }
+
     //region Insert ListTheme
     @Override
     public List<ListTheme> insert(List<ListTheme> listThemes) {
@@ -110,47 +165,15 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
             Timber.i("insertIntoLocalStorage(): ListThemeRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listTheme.getName());
         } else {
             // failed to create listTheme in the SQLite db
-            Timber.e("insertIntoLocalStorage(): ListThemeRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listTheme.getName());
+            Timber.e("insertIntoLocalStorage(): ListThemeRepository_Impl: FAILED to insertIntoStorage \"%s\" into the SQLite db.", listTheme.getName());
         }
 
         return result;
     }
 
-    public static ContentValues makeListThemeContentValues(ListTheme listTheme) {
-
-        ContentValues cv = new ContentValues();
-        cv.put(ListThemesSqlTable.COL_NAME, listTheme.getName());
-        cv.put(ListThemesSqlTable.COL_UUID, listTheme.getUuid());
-        cv.put(ListThemesSqlTable.COL_OBJECT_ID, listTheme.getObjectId());
-        cv.put(ListThemesSqlTable.COL_START_COLOR, listTheme.getStartColor());
-        cv.put(ListThemesSqlTable.COL_END_COLOR, listTheme.getEndColor());
-        cv.put(ListThemesSqlTable.COL_TEXT_COLOR, listTheme.getTextColor());
-        cv.put(ListThemesSqlTable.COL_TEXT_SIZE, listTheme.getTextSize());
-        cv.put(ListThemesSqlTable.COL_HORIZONTAL_PADDING_IN_DP, listTheme.getHorizontalPaddingInDp());
-        cv.put(ListThemesSqlTable.COL_VERTICAL_PADDING_IN_DP, listTheme.getVerticalPaddingInDp());
-
-        cv.put(ListThemesSqlTable.COL_THEME_DIRTY, TRUE);
-        cv.put(ListThemesSqlTable.COL_BOLD, (listTheme.isBold()) ? TRUE : FALSE);
-        cv.put(ListThemesSqlTable.COL_CHECKED, (listTheme.isChecked()) ? TRUE : FALSE);
-        cv.put(ListThemesSqlTable.COL_DEFAULT_THEME, (listTheme.isDefaultTheme()) ? TRUE : FALSE);
-        cv.put(ListThemesSqlTable.COL_MARKED_FOR_DELETION, (listTheme.isMarkedForDeletion()) ? TRUE : FALSE);
-        cv.put(ListThemesSqlTable.COL_STRUCK_OUT, (listTheme.isStruckOut()) ? TRUE : FALSE);
-        cv.put(ListThemesSqlTable.COL_TRANSPARENT, (listTheme.isTransparent()) ? TRUE : FALSE);
-        Date updatedDateTime = listTheme.getUpdated();
-        if (updatedDateTime != null) {
-            cv.put(ListThemesSqlTable.COL_UPDATED, updatedDateTime.getTime());
-        }
-        return cv;
-    }
-
     @Override
     public void insertInCloud(List<ListTheme> listThemes) {
         updateInCloud(listThemes, true);
-    }
-
-    @Override
-    public void insertInCloud(ListTheme listTheme) {
-        updateInCloud(listTheme, true);
     }
     //endregion
 
@@ -167,7 +190,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 //            ContentResolver cr = mContext.getContentResolver();
 //            String selection = ListThemesSqlTable.COL_UUID + " = ?";
 //            String[] selectionArgs = new String[]{listTheme.getUuid()};
-//            numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
+//            numberOfRecordsUpdated = cr.updateStorage(uri, cv, selection, selectionArgs);
 //
 //        } catch (Exception e) {
 //            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
@@ -183,6 +206,10 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 
     //region Read ListTheme
 
+    @Override
+    public void insertInCloud(ListTheme listTheme) {
+        updateInCloud(listTheme, true);
+    }
 
     @Override
     public ListTheme retrieveListThemeByUuid(String uuid) {
@@ -205,35 +232,6 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 
         return foundListTheme;
     }
-
-    public static ListTheme listThemeFromCursor(Cursor cursor) {
-        ListTheme listTheme = new ListTheme();
-        listTheme.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_ID)));
-        listTheme.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_OBJECT_ID)));
-        listTheme.setDeviceUuid(MySettings.getDeviceUuid());
-        listTheme.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_NAME)));
-        listTheme.setDeviceUuid(MySettings.getDeviceUuid());
-        listTheme.setMessageChannel(MySettings.getActiveUserID());
-        listTheme.setStartColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_START_COLOR)));
-        listTheme.setEndColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_END_COLOR)));
-        listTheme.setTextColor(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_TEXT_COLOR)));
-        listTheme.setTextSize(cursor.getFloat(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_TEXT_SIZE)));
-        listTheme.setHorizontalPaddingInDp(cursor.getFloat(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_HORIZONTAL_PADDING_IN_DP)));
-        listTheme.setVerticalPaddingInDp(cursor.getFloat(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_VERTICAL_PADDING_IN_DP)));
-        listTheme.setBold(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_BOLD)) > 0);
-        listTheme.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_CHECKED)) > 0);
-        listTheme.setDefaultTheme(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_DEFAULT_THEME)) > 0);
-        listTheme.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_MARKED_FOR_DELETION)) > 0);
-        listTheme.setStruckOut(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_STRUCK_OUT)) > 0);
-        listTheme.setTransparent(cursor.getInt(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_TRANSPARENT)) > 0);
-        listTheme.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_UUID)));
-        long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListThemesSqlTable.COL_UPDATED));
-        Date updated = new Date(dateMillis);
-        listTheme.setUpdated(updated);
-
-        return listTheme;
-    }
-
 
     private Cursor getThemeCursorByUuid(String uuid) {
         Cursor cursor = null;
@@ -566,7 +564,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
         if (numberOfRecordsUpdated == 1) {
             Timber.i("updateInLocalStorage(): Successfully updated \"%s\" in the SQLiteDb.", listTheme.getName());
         } else {
-            Timber.e("updateInLocalStorage(): FAILED to update \"%s\" in the SQLiteDb.", listTheme.getName());
+            Timber.e("updateInLocalStorage(): FAILED to updateStorage \"%s\" in the SQLiteDb.", listTheme.getName());
         }
         return numberOfRecordsUpdated;
     }
@@ -758,7 +756,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
                     MainThreadImpl.getInstance(), this, listThemesThatHaveObjectIds).execute();
 
             for (ListTheme listTheme : listThemesThatDoNotHaveObjectIds) {
-                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                Timber.e("updateInCloudStorage(): Unable to updateStorage \"%s\" in the Cloud. No Backendless objectId available!",
                         listTheme.getName());
             }
 
@@ -788,8 +786,8 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
             }
             if (listTheme.getObjectId() == null || listTheme.getObjectId().isEmpty()) {
                 // The listTheme is not new AND there is no Backendless objectId available ... so,
-                // Unable to update the listTheme in Backendless
-                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                // Unable to updateStorage the listTheme in Backendless
+                Timber.e("updateInCloudStorage(): Unable to updateStorage \"%s\" in the Cloud. No Backendless objectId available!",
                         listTheme.getName());
                 return;
             }
@@ -815,7 +813,7 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 
     //region Delete
 
-    // TODO: Make sure that there is at least one ListTheme ... can't delete default ListTheme
+    // TODO: Make sure that there is at least one ListTheme ... can't deleteFromStorage default ListTheme
     @Override
     public int delete(List<ListTheme> listThemes) {
         List<ListTheme> successfullyMarkedForDeletionListThemes = deleteFromLocalStorage(listThemes);
@@ -860,6 +858,18 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
 
     @Override
     public int deleteFromLocalStorage(ListTheme listTheme, ListTheme defaultListTheme) {
+        int numberOfDeletedListThemes = deleteFromLocalStorage(listTheme);
+        if (numberOfDeletedListThemes == 1) {
+            AndroidApplication.getListTitleRepository().replaceListTheme(listTheme, defaultListTheme);
+            Timber.i("deleteFromLocalStorage(): Successfully marked \"%s\" for deletion.", listTheme.getName());
+        } else {
+            Timber.e("deleteFromLocalStorage(): FAILED to marked \"%s\" for deletion.", listTheme.getName());
+        }
+
+        return numberOfDeletedListThemes;
+    }
+
+    public int deleteFromLocalStorage(ListTheme listTheme) {
         int numberOfDeletedListThemes = 0;
         try {
             Uri uri = ListThemesSqlTable.CONTENT_URI;
@@ -871,15 +881,9 @@ public class ListThemeRepository_Impl implements ListThemeRepository,
             cv.put(ListThemesSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
             cv.put(ListThemesSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
             numberOfDeletedListThemes = cr.update(uri, cv, selection, selectionArgs);
-            if (numberOfDeletedListThemes == 1) {
-                AndroidApplication.getListTitleRepository().replaceListTheme(listTheme, defaultListTheme);
-                Timber.i("deleteFromLocalStorage(): Successfully marked \"%s\" for deletion.", listTheme.getName());
-            } else {
-                Timber.e("deleteFromLocalStorage(): FAILED to marked \"%s\" for deletion.", listTheme.getName());
-            }
 
         } catch (Exception e) {
-            Timber.e("delete(): Exception: %s.", e.getMessage());
+            Timber.e("deleteFromLocalStorage(): Exception: %s.", e.getMessage());
         }
 
         return numberOfDeletedListThemes;

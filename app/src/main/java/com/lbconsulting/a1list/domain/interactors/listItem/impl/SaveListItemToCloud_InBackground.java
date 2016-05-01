@@ -1,12 +1,7 @@
 package com.lbconsulting.a1list.domain.interactors.listItem.impl;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.net.Uri;
-
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
-import com.backendless.messaging.MessageStatus;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.backendlessMessaging.ListItemMessage;
 import com.lbconsulting.a1list.backendlessMessaging.Messaging;
@@ -16,11 +11,7 @@ import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.SaveListItemToCloud;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
-import com.lbconsulting.a1list.utils.MySettings;
-
-import java.util.Date;
 
 import timber.log.Timber;
 
@@ -80,44 +71,20 @@ public class SaveListItemToCloud_InBackground extends AbstractInteractor impleme
         boolean isNew = objectId == null || objectId.isEmpty();
         try {
             response = Backendless.Data.of(ListItem.class).save(mListItem);
-            try {
-                // Update the SQLite db: set dirty to false, and updated date and time
-                ContentValues cv = new ContentValues();
-                Date updatedDate = response.getUpdated();
-                if (updatedDate == null) {
-                    updatedDate = response.getCreated();
-                }
-                if (updatedDate != null) {
-                    long updated = updatedDate.getTime();
-                    cv.put(ListItemsSqlTable.COL_UPDATED, updated);
-                }
+            int numberOfClearedRecords = AndroidApplication.getListItemRepository().clearLocalStorageDirtyFlag(response);
 
-
-                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, FALSE);
-
-                // If a new ListItem, update SQLite db with objectID
-                if (isNew) {
-                    cv.put(ListItemsSqlTable.COL_OBJECT_ID, response.getObjectId());
-                }
-                // update the SQLite db
-                updateSQLiteDb(response, cv);
-
-                // send message to other devices
-                sendListItemMessage(mListItem, isNew);
-
-                String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
-                postListItemSavedToBackendless(successMessage);
-
-            } catch (Exception e) {
-                // Set dirty flag to true in SQLite db
-                ContentValues cv = new ContentValues();
-
-                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-                updateSQLiteDb(mListItem, cv);
-
-                String errorMessage = String.format("saveListItemToBackendless(): \"%s\" FAILED to save to Backendless. Exception: %s", mListItem.getName(), e.getMessage());
-                postListItemSaveToBackendlessFailed(errorMessage);
+            // send message to other devices
+            int action = Messaging.ACTION_UPDATE;
+            if (isNew) {
+                action = Messaging.ACTION_CREATE;
             }
+            ListItemMessage.sendMessage(mListItem, action);
+
+            String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
+            if (numberOfClearedRecords != 1) {
+                successMessage = successMessage + " But FAILED to clear local storage dirty flag!";
+            }
+            postListItemSavedToBackendless(successMessage);
 
         } catch (BackendlessException e) {
 
@@ -127,45 +94,23 @@ public class SaveListItemToCloud_InBackground extends AbstractInteractor impleme
         }
     }
 
-    private void sendListItemMessage(ListItem listItem, boolean isNew) {
-        String messageChannel = MySettings.getActiveUserID();
-        int action = Messaging.ACTION_UPDATE;
-        if (isNew) {
-            action = Messaging.ACTION_CREATE;
-        }
-        int target = Messaging.TARGET_ALL_DEVICES;
-        String listItemMessageJson = ListItemMessage.toJson(listItem, action, target);
-        MessageStatus messageStatus = Backendless.Messaging.publish(messageChannel, listItemMessageJson);
-        if (messageStatus.getErrorMessage() == null) {
-            // successfully sent message to Backendless.
-            if (isNew) {
-                Timber.i("sendListItemMessage(): CREATE \"%s\" message successfully sent.", listItem.getName());
-            } else {
-                Timber.i("sendListItemMessage(): UPDATE \"%s\" message successfully sent.", listItem.getName());
-            }
-        } else {
-            // error sending message to Backendless.
-            Timber.e("sendListItemMessage(): FAILED to send message for \"%s\". %s.",
-                    listItem.getName(), messageStatus.getErrorMessage());
-        }
-    }
 
-    private void updateSQLiteDb(ListItem listItem, ContentValues cv) {
-        int numberOfRecordsUpdated = 0;
-        try {
-            Uri uri = ListItemsSqlTable.CONTENT_URI;
-            String selection = ListItemsSqlTable.COL_UUID + " = ?";
-            String[] selectionArgs = new String[]{listItem.getUuid()};
-            ContentResolver cr = AndroidApplication.getContext().getContentResolver();
-            numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
-
-        } catch (Exception e) {
-            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
-        }
-        if (numberOfRecordsUpdated != 1) {
-            Timber.e("updateInLocalStorage(): Error updating ListItem with uuid = %s", listItem.getUuid());
-        }
-    }
+//    private void updateSQLiteDb(ListItem listItem, ContentValues cv) {
+//        int numberOfRecordsUpdated = 0;
+//        try {
+//            Uri uri = ListItemsSqlTable.CONTENT_URI;
+//            String selection = ListItemsSqlTable.COL_UUID + " = ?";
+//            String[] selectionArgs = new String[]{listItem.getUuid()};
+//            ContentResolver cr = AndroidApplication.getContext().getContentResolver();
+//            numberOfRecordsUpdated = cr.updateStorage(uri, cv, selection, selectionArgs);
+//
+//        } catch (Exception e) {
+//            Timber.e("updateInLocalStorage(): Exception: %s.", e.getMessage());
+//        }
+//        if (numberOfRecordsUpdated != 1) {
+//            Timber.e("updateInLocalStorage(): Error updating ListItem with uuid = %s", listItem.getUuid());
+//        }
+//    }
 
     private void postListItemSavedToBackendless(final String successMessage) {
         mMainThread.post(new Runnable() {

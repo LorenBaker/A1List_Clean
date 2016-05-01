@@ -48,6 +48,7 @@ public class ListTheme {
 
         ListTheme newTheme = new ListTheme();
         newTheme.setName(newThemeName);
+        newTheme.setDeviceUuid(MySettings.getDeviceUuid());
         newTheme.setStartColor(startColor);
         newTheme.setEndColor(endColor);
         newTheme.setTextColor(textColor);

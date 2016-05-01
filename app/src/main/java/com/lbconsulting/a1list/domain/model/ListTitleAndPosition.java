@@ -1,14 +1,14 @@
 package com.lbconsulting.a1list.domain.model;
 
 /**
- * This class holds the ListTitlesPosition
+ * This class holds the ListTitleAndPosition
  */
-public class ListTitlesPosition {
+public class ListTitleAndPosition {
 
     private ListTitle listTitle;
     private ListTitlePosition listTitlePosition;
 
-    public ListTitlesPosition(ListTitle listTitle, ListTitlePosition listTitlePosition) {
+    public ListTitleAndPosition(ListTitle listTitle, ListTitlePosition listTitlePosition) {
         this.listTitle = listTitle;
         this.listTitlePosition = listTitlePosition;
     }

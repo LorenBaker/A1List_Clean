@@ -12,17 +12,17 @@ import java.util.List;
 public interface ListTitleRepository {
 
     //region Insert ListTitle
-    List<ListTitle> insert(List<ListTitle> listTitles);
+    List<ListTitle> insertIntoStorage(List<ListTitle> listTitles);
 
-    boolean insert(ListTitle listTitle);
+    boolean insertIntoStorage(ListTitle listTitle);
 
     List<ListTitle> insertIntoLocalStorage(List<ListTitle> listTitles);
 
     boolean insertIntoLocalStorage(ListTitle listTitle);
 
-    void insertInCloud(List<ListTitle> listTitles);
+    void insertIntoCloudStorage(List<ListTitle> listTitles);
 
-    void insertInCloud(ListTitle listTitle);
+    void insertIntoCloudStorage(ListTitle listTitle);
 
     //endregion
 
@@ -46,9 +46,9 @@ public interface ListTitleRepository {
 
 
     //region Update ListTitle
-    void update(List<ListTitle> listTitles);
+    void updateStorage(List<ListTitle> listTitles);
 
-    void update(ListTitle listTitle);
+    void updateStorage(ListTitle listTitle);
 
     void updateListTitlePosition(ListTitle listTitle, int firstVisiblePosition, int top);
 
@@ -60,23 +60,28 @@ public interface ListTitleRepository {
 
     void updateInCloud(ListTitle listTitle, boolean isNew);
 
-    int toggle(ListTitle listTitle, String fieldName);
-
     void replaceListTheme(ListTheme listTheme, ListTheme defaultListTheme);
     //endregion
 
     //region Delete ListTitle
-    int delete(List<ListTitle> listTitles);
 
-    int delete(ListTitle listTitle);
+    int deleteFromStorage(ListTitle listTitle);
+
+    List<ListTitle> setDeleteFlagInLocalStorage(List<ListTitle> listTitles);
+
+    int setDeleteFlagInLocalStorage(ListTitle listTitle);
+
+    void deleteFromCloudStorage(List<ListTitle> listTitles);
+
+    void deleteFromCloudStorage(ListTitle listTitle);
 
     List<ListTitle> deleteFromLocalStorage(List<ListTitle> listTitles);
 
     int deleteFromLocalStorage(ListTitle listTitle);
 
-    void deleteFromCloud(List<ListTitle> listTitles);
+    int deleteFromLocalStorage(ListTitle listTitle,ListTitlePosition listTitlePosition);
 
-    void deleteFromCloud(ListTitle listTitle);
     //endregion
 
+    int clearLocalStorageDirtyFlag(ListTitle listTitle);
 }

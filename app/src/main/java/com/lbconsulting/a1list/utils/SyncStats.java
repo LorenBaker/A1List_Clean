@@ -71,14 +71,14 @@ public class SyncStats {
 
     public String getAllStats() {
         String results = networkNotAvailableExceptions();
-        results = results + appSettingsStats() + "\n" + listThemeStats() + "\n" + listTitleStats() + "\n" + listItemStats();
+        results = results + appSettingsStats() + "\n" + listThemeStats() + "\n" + listTitleStats() + "\n" + listTitlePositionStats()+ "\n" + listItemStats();
         return results;
     }
 
     public String getSnackBarMessage() {
         int numberOfUpdates = numAppSettingsUpdates + numListItemUpdates + numListTitleUpdates +  numListTitlePositionBackendlessExceptions +numListThemeUpdates;
-        int numberOfInserts = numAppSettingsInserts + numListItemInserts + numListTitleInserts + numListTitlePositionBackendlessExceptions+ numListThemeInserts;
-        int numberOfDeletes = numAppSettingsDeletes + numListItemDeletes + numListTitleDeletes + numListTitlePositionBackendlessExceptions + numListThemeDeletes;
+        int numberOfInserts = numAppSettingsInserts + numListItemInserts + numListTitleInserts + numListTitlePositionInserts+ numListThemeInserts;
+        int numberOfDeletes = numAppSettingsDeletes + numListItemDeletes + numListTitleDeletes + numListTitlePositionDeletes + numListThemeDeletes;
 
         int numberAffectedObjects = numberOfDeletes + numberOfInserts + numberOfUpdates;
 

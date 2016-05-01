@@ -16,6 +16,7 @@ public class ListItemsSqlTable {
     public static final String COL_OBJECT_ID = "objectId";
     public static final String COL_NAME = "name";
     public static final String COL_LIST_TITLE_UUID = "listTitleUuid";
+    public static final String COL_URL_LINK = "urlLink";
     public static final String COL_MANUAL_SORT_KEY = "manualSortKey";
     public static final String COL_CHECKED = "checked";
     public static final String COL_FAVORITE = "favorite";
@@ -25,7 +26,7 @@ public class ListItemsSqlTable {
     public static final String COL_UPDATED = "updated";
 
     public static final String[] PROJECTION_ALL = {COL_ID, COL_UUID, COL_OBJECT_ID, COL_NAME,
-            COL_LIST_TITLE_UUID, COL_MANUAL_SORT_KEY, COL_CHECKED, COL_FAVORITE,
+            COL_LIST_TITLE_UUID, COL_URL_LINK, COL_MANUAL_SORT_KEY, COL_CHECKED, COL_FAVORITE,
             COL_LIST_ITEM_DIRTY, COL_MARKED_FOR_DELETION, COL_STRUCK_OUT, COL_UPDATED};
 
     public static final String CONTENT_PATH = "listItems";
@@ -48,6 +49,7 @@ public class ListItemsSqlTable {
                     + COL_OBJECT_ID + " text default '', "
                     + COL_NAME + " text collate nocase default '', "
                     + COL_LIST_TITLE_UUID + " text default '', "
+                    + COL_URL_LINK + " text default '', "
                     + COL_MANUAL_SORT_KEY + " integer default 0, "
                     + COL_CHECKED + " integer default 0, "
                     + COL_FAVORITE + " integer default 0, "

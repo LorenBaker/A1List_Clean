@@ -6,7 +6,6 @@ import android.net.Uri;
 
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
-import com.backendless.messaging.MessageStatus;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.backendlessMessaging.ListTitleMessage;
 import com.lbconsulting.a1list.backendlessMessaging.Messaging;
@@ -17,7 +16,6 @@ import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.SaveList
 import com.lbconsulting.a1list.domain.model.ListTitle;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
-import com.lbconsulting.a1list.utils.MySettings;
 
 import java.util.Date;
 
@@ -71,15 +69,19 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
 
                 cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, FALSE);
 
-                // If a new ListTitle, update SQLite db with objectID
+                // If a new ListTitle, updateStorage SQLite db with objectID
                 if (isNew) {
                     cv.put(ListTitlesSqlTable.COL_OBJECT_ID, response.getObjectId());
                 }
-                // update the SQLite db
+                // updateStorage the SQLite db
                 updateSQLiteDb(response, cv);
 
                 // send message to other devices
-                sendListTitleMessage(mListTitle, isNew);
+                int action = Messaging.ACTION_UPDATE;
+                if(isNew){
+                    action = Messaging.ACTION_CREATE;
+                }
+                ListTitleMessage.sendMessage(mListTitle, action);
 
                 String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
                 postListTitleSavedToCloud(successMessage);
@@ -102,28 +104,7 @@ public class SaveListTitleToCloud_InBackground extends AbstractInteractor implem
         }
     }
 
-    private void sendListTitleMessage(ListTitle listTitle, boolean isNew) {
-        String messageChannel = MySettings.getActiveUserID();
-        int action = Messaging.ACTION_UPDATE;
-        if (isNew) {
-            action = Messaging.ACTION_CREATE;
-        }
-        int target = Messaging.TARGET_ALL_DEVICES;
-        String listTitleMessageJson = ListTitleMessage.toJson(listTitle, action, target);
-        MessageStatus messageStatus = Backendless.Messaging.publish(messageChannel, listTitleMessageJson);
-        if (messageStatus.getErrorMessage() == null) {
-            // successfully sent message to Backendless.
-            if (isNew) {
-                Timber.i("sendListTitleMessage(): CREATE \"%s\" message successfully sent.", listTitle.getName());
-            } else {
-                Timber.i("sendListTitleMessage(): UPDATE \"%s\" message successfully sent.", listTitle.getName());
-            }
-        } else {
-            // error sending message to Backendless.
-            Timber.e("sendListTitleMessage(): FAILED to send message for \"%s\". %s.",
-                    listTitle.getName(), messageStatus.getErrorMessage());
-        }
-    }
+
 
     private void updateSQLiteDb(ListTitle listTitle, ContentValues cv) {
         int numberOfRecordsUpdated = 0;

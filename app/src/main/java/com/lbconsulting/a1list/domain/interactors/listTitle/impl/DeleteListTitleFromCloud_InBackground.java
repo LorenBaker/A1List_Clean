@@ -1,20 +1,21 @@
 package com.lbconsulting.a1list.domain.interactors.listTitle.impl;
 
-import android.content.ContentResolver;
-import android.net.Uri;
-
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
 import com.lbconsulting.a1list.AndroidApplication;
+import com.lbconsulting.a1list.backendlessMessaging.ListTitleMessage;
+import com.lbconsulting.a1list.backendlessMessaging.ListTitlePositionMessage;
+import com.lbconsulting.a1list.backendlessMessaging.Messaging;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.interactors.DeleteListTitleFromCloud;
 import com.lbconsulting.a1list.domain.model.ListTitle;
-import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
+import com.lbconsulting.a1list.domain.model.ListTitlePosition;
+import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
-import java.util.Date;
+import java.util.Locale;
 
 /**
  * An interactor that saves the provided ListTitle to Backendless.
@@ -22,12 +23,14 @@ import java.util.Date;
 public class DeleteListTitleFromCloud_InBackground extends AbstractInteractor implements DeleteListTitleFromCloud {
     private final Callback mCallback;
     private final ListTitle mListTitle;
+    private final ListTitlePosition mListTitlePosition;
 
     public DeleteListTitleFromCloud_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                 Callback callback,ListTitle listTitle) {
+                                                 Callback callback, ListTitle listTitle, ListTitlePosition listTitlePosition) {
         super(threadExecutor, mainThread);
-        mListTitle = listTitle;
         mCallback = callback;
+        mListTitle = listTitle;
+        mListTitlePosition = listTitlePosition;
     }
 
 
@@ -42,35 +45,49 @@ public class DeleteListTitleFromCloud_InBackground extends AbstractInteractor im
             return;
         }
 
+        ListTitleRepository_Impl listTitleRepository = AndroidApplication.getListTitleRepository();
         try {
-            // Delete ListTitle from Backendless.
-            long timestamp = Backendless.Data.of(ListTitle.class).remove(mListTitle);
+            // Delete ListTitle and its ListTitlePosition from cloud storage.
+            Backendless.Data.of(ListTitle.class).remove(mListTitle);
+            Backendless.Data.of(ListTitlePosition.class).remove(mListTitlePosition);
 
-            try {
-                // Delete ListTitle from the SQLite Db
-                int numberOfDeletedListTitles = 0;
+            // Delete ListTitle  and its ListTitlePosition from local storage
+            int numberOfDeletedListTitlesFromLocalStorage = listTitleRepository.deleteFromLocalStorage(mListTitle);
+            int numberOfDeletedListTitlePositionsFromLocalStorage = listTitleRepository.deleteFromLocalStorage(mListTitle, mListTitlePosition);
 
-                Uri uri = ListTitlesSqlTable.CONTENT_URI;
-                String selection = ListTitlesSqlTable.COL_UUID + " = ?";
-                String[] selectionArgs = new String[]{mListTitle.getUuid()};
-                ContentResolver cr = AndroidApplication.getContext().getContentResolver();
-                numberOfDeletedListTitles = cr.delete(uri, selection, selectionArgs);
+            // Send delete message to other devices.
+            ListTitleMessage.sendMessage(mListTitle, Messaging.ACTION_DELETE);
+            ListTitlePositionMessage.sendMessage(mListTitle, mListTitlePosition, Messaging.ACTION_DELETE);
 
-                if (numberOfDeletedListTitles == 1) {
-                    String successMessage = "\"" + mListTitle.getName() + "\" successfully deleted from SQLiteDb and removed from Backendless at " + new Date(timestamp).toString();
-                    postListTitleDeletedFromBackendless(successMessage);
-                } else {
-                    String errorMessage = "\"" + mListTitle.getName() + "\" NOT DELETED from SQLiteDb but removed from Backendless at " + new Date(timestamp).toString();
-                    postListTitleDeletionFromBackendlessFailed(errorMessage);
-                }
-
-            } catch (Exception e) {
-                String errorMessage = "\"" + mListTitle.getName() + "\" DELETION EXCEPTION: " + e.getMessage();
+            if (numberOfDeletedListTitlesFromLocalStorage == 1) {
+                String successMessage = String.format(Locale.getDefault(),
+                        "Successfully deleted \"%s\" from both Backendless and the SQLiteDB.",
+                        mListTitle.getName());
+                postListTitleDeletedFromBackendless(successMessage);
+            } else {
+                String errorMessage = String.format(Locale.getDefault(),
+                        "Successfully deleted \"%s\" from Backendless BUT NOT from the SQLiteDB.",
+                        mListTitle.getName());
                 postListTitleDeletionFromBackendlessFailed(errorMessage);
             }
 
+            if (numberOfDeletedListTitlePositionsFromLocalStorage == 1) {
+                String successMessage = String.format(Locale.getDefault(),
+                        "Successfully deleted \"%s's\" ListTitlePosition from both Backendless and the SQLiteDB.",
+                        mListTitle.getName());
+                postListTitleDeletedFromBackendless(successMessage);
+            } else {
+                String errorMessage = String.format(Locale.getDefault(),
+                        "Successfully deleted \"%s's\" ListTitlePosition from Backendless BUT NOT from the SQLiteDB.",
+                        mListTitle.getName());
+                postListTitleDeletionFromBackendlessFailed(errorMessage);
+            }
+
+
         } catch (BackendlessException e) {
-            String errorMessage = "\"" + mListTitle.getName() + "\" FAILED TO BE REMOVED from Backendless. " + e.getMessage();
+            String errorMessage = String.format(Locale.getDefault(),
+                    "FAILED to deleted \"%s\" from Backendless. BackendlessException: %s",
+                    mListTitle.getName(), e.getMessage());
             postListTitleDeletionFromBackendlessFailed(errorMessage);
         }
     }

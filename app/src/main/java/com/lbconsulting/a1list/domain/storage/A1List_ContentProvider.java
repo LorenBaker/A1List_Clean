@@ -70,7 +70,7 @@ public class A1List_ContentProvider extends ContentProvider {
         String rowId;
         int deleteCount;
 
-        // Open a WritableDatabase database to support the delete transaction
+        // Open a WritableDatabase database to support the deleteFromStorage transaction
         SQLiteDatabase db = database.getWritableDatabase();
 
         int uriType = sURIMatcher.match(uri);
@@ -78,7 +78,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case APP_SETTINGS_MULTI_ROWS:
                 // To return the number of deleted items you must specify a where clause.
-                // To delete all rows and return a value pass in "1".
+                // To deleteFromStorage all rows and return a value pass in "1".
                 if (selection == null) {
                     selection = "1";
                 }
@@ -96,7 +96,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case LIST_ITEMS_MULTI_ROWS:
                 // To return the number of deleted items you must specify a where clause.
-                // To delete all rows and return a value pass in "1".
+                // To deleteFromStorage all rows and return a value pass in "1".
                 if (selection == null) {
                     selection = "1";
                 }
@@ -114,7 +114,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case LIST_TITLES_MULTI_ROWS:
                 // To return the number of deleted items you must specify a where clause.
-                // To delete all rows and return a value pass in "1".
+                // To deleteFromStorage all rows and return a value pass in "1".
                 if (selection == null) {
                     selection = "1";
                 }
@@ -132,7 +132,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case LIST_TITLE_POSITIONS_MULTI_ROWS:
                 // To return the number of deleted items you must specify a where clause.
-                // To delete all rows and return a value pass in "1".
+                // To deleteFromStorage all rows and return a value pass in "1".
                 if (selection == null) {
                     selection = "1";
                 }
@@ -150,7 +150,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case LIST_THEMES_MULTI_ROWS:
                 // To return the number of deleted items you must specify a where clause.
-                // To delete all rows and return a value pass in "1".
+                // To deleteFromStorage all rows and return a value pass in "1".
                 if (selection == null) {
                     selection = "1";
                 }
@@ -167,7 +167,7 @@ public class A1List_ContentProvider extends ContentProvider {
                 break;
 
             default:
-                throw new IllegalArgumentException("Method delete: Unknown URI: " + uri);
+                throw new IllegalArgumentException("Method deleteFromStorage: Unknown URI: " + uri);
         }
 
         if (getContext() != null && getContext().getContentResolver() != null) {
@@ -219,7 +219,7 @@ public class A1List_ContentProvider extends ContentProvider {
         long newRowId;
         String nullColumnHack = null;
 
-        // Open a WritableDatabase database to support the insert transaction
+        // Open a WritableDatabase database to support the insertIntoStorage transaction
         db = database.getWritableDatabase();
 
         int uriType = sURIMatcher.match(uri);
@@ -241,7 +241,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case APP_SETTINGS_SINGLE_ROW:
                 throw new IllegalArgumentException(
-                        "Illegal URI: Cannot insert a new row with a single row URI. " + uri);
+                        "Illegal URI: Cannot insertIntoStorage a new row with a single row URI. " + uri);
 
             case LIST_ITEMS_MULTI_ROWS:
                 newRowId = db.insertOrThrow(ListItemsSqlTable.TABLE_LIST_ITEMS, nullColumnHack, values);
@@ -259,7 +259,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case LIST_ITEMS_SINGLE_ROW:
                 throw new IllegalArgumentException(
-                        "Illegal URI: Cannot insert a new row with a single row URI. " + uri);
+                        "Illegal URI: Cannot insertIntoStorage a new row with a single row URI. " + uri);
 
             case LIST_TITLES_MULTI_ROWS:
                 newRowId = db.insertOrThrow(ListTitlesSqlTable.TABLE_LIST_TITLES, nullColumnHack, values);
@@ -276,7 +276,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case LIST_TITLES_SINGLE_ROW:
                 throw new IllegalArgumentException(
-                        "Illegal URI: Cannot insert a new row with a single row URI. " + uri);
+                        "Illegal URI: Cannot insertIntoStorage a new row with a single row URI. " + uri);
 
             case LIST_TITLE_POSITIONS_MULTI_ROWS:
                 newRowId = db.insertOrThrow(ListTitlePositionsSqlTable.TABLE_LIST_TITLE_POSITIONS, nullColumnHack, values);
@@ -293,7 +293,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case LIST_TITLE_POSITIONS_SINGLE_ROW:
                 throw new IllegalArgumentException(
-                        "Illegal URI: Cannot insert a new row with a single row URI. " + uri);
+                        "Illegal URI: Cannot insertIntoStorage a new row with a single row URI. " + uri);
 
             case LIST_THEMES_MULTI_ROWS:
                 newRowId = db.insertOrThrow(ListThemesSqlTable.TABLE_LIST_THEMES, nullColumnHack, values);
@@ -310,10 +310,10 @@ public class A1List_ContentProvider extends ContentProvider {
 
             case LIST_THEMES_SINGLE_ROW:
                 throw new IllegalArgumentException(
-                        "Illegal URI: Cannot insert a new row with a single row URI. " + uri);
+                        "Illegal URI: Cannot insertIntoStorage a new row with a single row URI. " + uri);
 
             default:
-                throw new IllegalArgumentException("Method insert: Unknown URI:" + uri);
+                throw new IllegalArgumentException("Method insertIntoStorage: Unknown URI:" + uri);
         }
     }
 
@@ -408,7 +408,7 @@ public class A1List_ContentProvider extends ContentProvider {
         String rowID;
         int updateCount = 0;
 
-        // Open a WritableDatabase database to support the update transaction
+        // Open a WritableDatabase database to support the updateStorage transaction
         SQLiteDatabase db = database.getWritableDatabase();
 
         int uriType = sURIMatcher.match(uri);
@@ -468,7 +468,7 @@ public class A1List_ContentProvider extends ContentProvider {
 
 
             default:
-                throw new IllegalArgumentException("Method update: Unknown URI: " + uri);
+                throw new IllegalArgumentException("Method updateStorage: Unknown URI: " + uri);
         }
         if (getContext() != null && getContext().getContentResolver() != null) {
             getContext().getContentResolver().notifyChange(uri, null);
@@ -478,7 +478,7 @@ public class A1List_ContentProvider extends ContentProvider {
     }
 
     /**
-     * A test package can call this to get a handle to the database underlying HW311ContentProvider, so it can insert
+     * A test package can call this to get a handle to the database underlying HW311ContentProvider, so it can insertIntoStorage
      * test data into the database. The test case class is responsible for instantiating the provider in a test context;
      * {@link android.test.ProviderTestCase2} does this during the call to setUp()
      *

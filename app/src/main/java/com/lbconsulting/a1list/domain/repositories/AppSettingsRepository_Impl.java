@@ -47,7 +47,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 
     @Override
     public boolean insertIntoLocalStorage(AppSettings appSettings) {
-        // insert new appSettings into SQLite db
+        // insertIntoStorage new appSettings into SQLite db
         boolean result = false;
         long newAppSettingsId = -1;
 
@@ -64,10 +64,10 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         if (newAppSettingsId > -1) {
             // successfully saved new AppSettings to the SQLite db
             result = true;
-            Timber.i("insert(): AppSettingsRepository_Impl: Successfully inserted user %s's AppSettings into local storage.", appSettings.getName());
+            Timber.i("insertIntoStorage(): AppSettingsRepository_Impl: Successfully inserted user %s's AppSettings into local storage.", appSettings.getName());
         } else {
             // failed to create appSettings in the SQLite db
-            Timber.e("insert(): AppSettingsRepository_Impl: FAILED to insert user %s's AppSettings into local storage.", appSettings.getName());
+            Timber.e("insertIntoStorage(): AppSettingsRepository_Impl: FAILED to insertIntoStorage user %s's AppSettings into local storage.", appSettings.getName());
         }
         return result;
     }
@@ -120,7 +120,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
         if (numberOfRecordsUpdated == 1) {
             Timber.i("updateInLocalStorage(): Successfully updated user %s's AppSettings into SQLiteDb.", appSettings.getName());
         }else{
-            Timber.e("updateInLocalStorage(): FAILED to update user %s's AppSettings into SQLiteDb.", appSettings.getName());
+            Timber.e("updateInLocalStorage(): FAILED to updateStorage user %s's AppSettings into SQLiteDb.", appSettings.getName());
         }
         return numberOfRecordsUpdated;
     }
@@ -190,8 +190,8 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
             }
             if (appSettings.getObjectId() == null || appSettings.getObjectId().isEmpty()) {
                 // The appSettings is not new AND there is no Backendless objectId available ... so,
-                // Unable to update the appSettings in Backendless
-                Timber.e("updateInCloud(): Unable to update \"%s\" AppSettings in the Cloud. No Backendless objectId available!",
+                // Unable to updateStorage the appSettings in Backendless
+                Timber.e("updateInCloudStorage(): Unable to updateStorage \"%s\" AppSettings in the Cloud. No Backendless objectId available!",
                         appSettings.getName());
                 return;
             }

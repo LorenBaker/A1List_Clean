@@ -27,8 +27,8 @@ import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitleAndPosition;
 import com.lbconsulting.a1list.domain.model.ListTitlePosition;
-import com.lbconsulting.a1list.domain.model.ListTitlesPosition;
 import com.lbconsulting.a1list.utils.MyEvents;
 import com.lbconsulting.a1list.utils.MySettings;
 
@@ -125,7 +125,7 @@ public class BackendlessMessagingService extends Service {
             Timber.e("onStartCommand(): Exception: %s.", e.getMessage());
         }
 
-        // TODO: Dow we want to START_STICKY ?
+        // TODO: Do we want to START_STICKY ?
         // If we get killed, after returning from here, restart
         return Service.START_STICKY;
     }
@@ -179,7 +179,7 @@ public class BackendlessMessagingService extends Service {
                                 if (messageJasonString.contains(LIST_ITEM_MESSAGE_PREFIX)) {
                                     ListItemMessage listItemMessage = ListItemMessage.fromJason(messageJasonString);
                                     if (!listItemMessage.getListItem().getDeviceUuid().equals(MySettings.getDeviceUuid())) {
-                                        // The message is not from this device ... so update local storage
+                                        // The message is not from this device ... so updateStorage local storage
                                         Timber.i("handleResponse(): Processing ListItem message with id = %s", message.getMessageId());
                                         ListItem listItem = listItemMessage.getListItem();
                                         switch (listItemMessage.getAction()) {
@@ -190,7 +190,7 @@ public class BackendlessMessagingService extends Service {
                                                 AndroidApplication.getListItemRepository().updateInLocalStorage(listItem);
                                                 break;
                                             case Messaging.ACTION_DELETE:
-                                                AndroidApplication.getListItemRepository().delete(listItem);
+                                                AndroidApplication.getListItemRepository().deleteFromLocalStorage(listItem);
                                                 break;
                                         }
                                         EventBus.getDefault().post(new MyEvents.updateFragListItemsUI(listItem.getListTitleUuid()));
@@ -201,7 +201,7 @@ public class BackendlessMessagingService extends Service {
                                 } else if (messageJasonString.contains(LIST_TITLE_MESSAGE_PREFIX)) {
                                     ListTitleMessage listTitleMessage = ListTitleMessage.fromJason(messageJasonString);
                                     if (!listTitleMessage.getListTitle().getDeviceUuid().equals(MySettings.getDeviceUuid())) {
-                                        // The message is not from this device ... so update local storage
+                                        // The message is not from this device ... so updateStorage local storage
                                         Timber.i("handleResponse(): Processing ListTitle message with id = %s", message.getMessageId());
                                         ListTitle listTitle = listTitleMessage.getListTitle();
                                         switch (listTitleMessage.getAction()) {
@@ -212,11 +212,11 @@ public class BackendlessMessagingService extends Service {
                                                 AndroidApplication.getListTitleRepository().updateInLocalStorage(listTitle);
                                                 break;
                                             case Messaging.ACTION_DELETE:
-                                                AndroidApplication.getListTitleRepository().delete(listTitle);
+                                                AndroidApplication.getListTitleRepository().deleteFromLocalStorage(listTitle);
                                                 break;
                                         }
-                                        // TODO: Figure out what ui to update with a ListTitle change
-//                                        EventBus.getDefault().post(new MyEvents.mainActivityPresenterResume());
+                                        // TODO: Figure out what ui to updateStorage with a ListTitle change
+                                        EventBus.getDefault().post(new MyEvents.mainActivityPresenterResume());
                                     } else {
                                         Timber.i("handleResponse(): Received ListTitle message with id = %s. Taking NO ACTION because it was sourced from this device.", message.getMessageId());
                                     }
@@ -224,12 +224,12 @@ public class BackendlessMessagingService extends Service {
                                 } else if (messageJasonString.contains(LIST_TITLE_POSITION_MESSAGE_PREFIX)) {
                                     ListTitlePositionMessage listTitlePositionMessage = ListTitlePositionMessage.fromJason(messageJasonString);
                                     if (!listTitlePositionMessage.getListTitlePosition().getDeviceUuid().equals(MySettings.getDeviceUuid())) {
-                                        // The message is not from this device ... so update local storage
+                                        // The message is not from this device ... so updateStorage local storage
                                         Timber.i("handleResponse(): Processing ListTitlePosition message with id = %s", message.getMessageId());
                                         ListTitlePosition listTitlePosition = listTitlePositionMessage.getListTitlePosition();
                                         String listTitleUuid = listTitlePosition.getListTitleUuid();
                                         ListTitle listTitle = AndroidApplication.getListTitleRepository().retrieveListTitleByUuid(listTitleUuid);
-                                        ListTitlesPosition listTitlesPosition = new ListTitlesPosition(listTitle,listTitlePosition);
+                                        ListTitleAndPosition listTitlesPosition = new ListTitleAndPosition(listTitle, listTitlePosition);
                                         switch (listTitlePositionMessage.getAction()) {
                                             case Messaging.ACTION_CREATE:
                                                 AndroidApplication.getListTitleRepository().insertListTitlePositionIntoLocalStorage(listTitlesPosition);
@@ -250,7 +250,7 @@ public class BackendlessMessagingService extends Service {
                                 } else if (messageJasonString.contains(LIST_THEME_MESSAGE_PREFIX)) {
                                     ListThemeMessage listThemeMessage = ListThemeMessage.fromJason(messageJasonString);
                                     if (!listThemeMessage.getListTheme().getDeviceUuid().equals(MySettings.getDeviceUuid())) {
-                                        // The message is not from this device ... so update local storage
+                                        // The message is not from this device ... so updateStorage local storage
                                         Timber.i("handleResponse(): Processing ListTheme message with id = %s", message.getMessageId());
                                         ListTheme listTheme = listThemeMessage.getListTheme();
                                         switch (listThemeMessage.getAction()) {
@@ -261,11 +261,13 @@ public class BackendlessMessagingService extends Service {
                                                 AndroidApplication.getListThemeRepository().updateInLocalStorage(listTheme);
                                                 break;
                                             case Messaging.ACTION_DELETE:
-                                                AndroidApplication.getListThemeRepository().delete(listTheme);
+                                                String defaultListThemeUuid = listThemeMessage.getDefaultListThemeUuid();
+                                                ListTheme defaultListTheme = AndroidApplication.getListThemeRepository().retrieveListThemeByUuid(defaultListThemeUuid);
+                                                AndroidApplication.getListThemeRepository().deleteFromLocalStorage(listTheme, defaultListTheme);
                                                 break;
                                         }
-                                        // TODO: Figure out what ui to update with a ListTheme change
-//                                        EventBus.getDefault().post(new MyEvents.mainActivityPresenterResume());
+                                        // TODO: Figure out what ui to updateStorage with a ListTheme change
+                                        EventBus.getDefault().post(new MyEvents.mainActivityPresenterResume());
                                     } else {
                                         Timber.i("handleResponse(): Received ListTheme message with id = %s. Taking NO ACTION because it was sourced from this device.", message.getMessageId());
                                     }
@@ -273,7 +275,7 @@ public class BackendlessMessagingService extends Service {
                                 } else if (messageJasonString.contains(APP_SETTINGS_MESSAGE_PREFIX)) {
                                     AppSettingsMessage appSettingsMessage = AppSettingsMessage.fromJason(messageJasonString);
                                     if (!appSettingsMessage.getAppSettings().getDeviceUuid().equals(MySettings.getDeviceUuid())) {
-                                        // The message is not from this device ... so update local storage
+                                        // The message is not from this device ... so updateStorage local storage
                                         Timber.i("handleResponse(): Processing AppSettings message with id = %s", message.getMessageId());
                                         AppSettings appSettings = appSettingsMessage.getAppSettings();
                                         switch (appSettingsMessage.getAction()) {
@@ -284,11 +286,11 @@ public class BackendlessMessagingService extends Service {
                                                 AndroidApplication.getAppSettingsRepository().updateInLocalStorage(appSettings);
                                                 break;
                                             case Messaging.ACTION_DELETE:
-                                                Timber.e("handleResponse(): Cannot delete AppSettings!");
-//                                                AndroidApplication.getAppSettingsRepository().delete(appSettings);
+                                                Timber.e("handleResponse(): Cannot deleteFromStorage AppSettings!");
+//                                                AndroidApplication.getAppSettingsRepository().deleteFromStorage(appSettings);
                                                 break;
                                         }
-                                        // TODO: Figure out what ui to update with a AppSettings change
+                                        // TODO: Figure out what ui to updateStorage with a AppSettings change
 //                                        EventBus.getDefault().post(new MyEvents.updateFragAppSettingssUI(appSettings.getListTitleUuid()));
                                     } else {
                                         Timber.i("handleResponse(): Received AppSettings message with id = %s. Taking NO ACTION because it was sourced from this device.", message.getMessageId());
@@ -302,7 +304,7 @@ public class BackendlessMessagingService extends Service {
 
                         @Override
                         public void handleFault(BackendlessFault fault) {
-                            Timber.e("handleFault(): BackendlessFault: %s.", fault.getMessage());
+                            Timber.e("handleFault(): BackendlessFault: message = %s; code = %s; detail = %s.", fault.getMessage(), fault.getCode(), fault.getDetail());
                         }
                     }, new AsyncCallback<Subscription>() {
 

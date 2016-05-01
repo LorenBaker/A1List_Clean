@@ -20,6 +20,7 @@ public class ListItem {
     private String listTitleUuid;
     private String deviceUuid;
     private String messageChannel;
+    private String urlLink;
     private long manualSortKey;
     private boolean checked;
     private boolean favorite;
@@ -31,7 +32,7 @@ public class ListItem {
 
 
     public ListItem() {
-// A default constructor.
+    // Default constructor.
     }
 
     public static ListItem newInstance(String name, ListTitle listTitle, boolean saveNextSortKeyToBackendless) {
@@ -47,6 +48,7 @@ public class ListItem {
         newListItem.setListTitleUuid(listTitle.getUuid());
         newListItem.setDeviceUuid(MySettings.getDeviceUuid());
         newListItem.setMessageChannel(MySettings.getActiveUserID());
+        newListItem.setUrlLink("");
         newListItem.setManualSortKey(listTitleRepository.retrieveListItemNextSortKey(listTitle, saveNextSortKeyToBackendless));
         newListItem.setChecked(false);
         newListItem.setFavorite(false);
@@ -117,6 +119,14 @@ public class ListItem {
         this.messageChannel = messageChannel;
     }
 
+    public String getUrlLink() {
+        return urlLink;
+    }
+
+    public void setUrlLink(String urlLink) {
+        this.urlLink = urlLink;
+    }
+
     public long getManualSortKey() {
         return manualSortKey;
     }
@@ -179,4 +189,7 @@ public class ListItem {
     public String toString() {
         return getName();
     }
+
+
+    
 }

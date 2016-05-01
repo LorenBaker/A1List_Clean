@@ -75,15 +75,11 @@ public class ManageListTitlesActivity extends AppCompatActivity implements ListT
                     //The "Yes" button clicked
                     List<ListTitle> struckOutListTitles = mListTitleRepository.retrieveStruckOutListTitles();
                     if (struckOutListTitles.size() > 0) {
-                        List<ListTitle> listTitlesMarkedForDeletion = mListTitleRepository
-                                .deleteFromLocalStorage(struckOutListTitles);
-                        mPresenter.resume();
-                        hideProgress("");
-                        if (listTitlesMarkedForDeletion.size() > 0) {
-                            mListTitleRepository.deleteFromCloud(listTitlesMarkedForDeletion);
+                        for (ListTitle struckOutListTitle : struckOutListTitles) {
+                            mListTitleRepository.deleteFromStorage(struckOutListTitle);
                         }
                     }
-
+                    mPresenter.resume();
                     break;
 
                 case DialogInterface.BUTTON_NEGATIVE:

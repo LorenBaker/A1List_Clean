@@ -159,8 +159,8 @@ public class ListTitleArrayAdapter extends ArrayAdapter<ListTitle> {
                             mSelectedListTitle.retrieveListTheme().getTextColor());
                 }
                 EventBus.getDefault().post(new MyEvents.incrementStrikeOutCount(strikeOutIncrement));
-//                mListTitleRepository.update(mSelectedListTitle);
-                // Only update in local storage. ListTitle will be saved to Cloud when and if ListTitle is deleted.
+//                mListTitleRepository.updateStorage(mSelectedListTitle);
+                // Only updateStorage in local storage. ListTitle will be saved to Cloud when and if ListTitle is deleted.
                 mListTitleRepository.updateInLocalStorage(mSelectedListTitle);
 
             }

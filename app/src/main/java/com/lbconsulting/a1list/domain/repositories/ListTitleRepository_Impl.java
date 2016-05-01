@@ -9,7 +9,6 @@ import android.net.Uri;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.domain.executor.impl.ThreadExecutor;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.DeleteListTitleFromCloud_InBackground;
-import com.lbconsulting.a1list.domain.interactors.listTitle.impl.DeleteListTitlesFromCloud_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitlePositionToCloud_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitleToCloud_InBackground;
 import com.lbconsulting.a1list.domain.interactors.listTitle.impl.SaveListTitlesToCloud_InBackground;
@@ -22,8 +21,8 @@ import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListItem;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitleAndPosition;
 import com.lbconsulting.a1list.domain.model.ListTitlePosition;
-import com.lbconsulting.a1list.domain.model.ListTitlesPosition;
 import com.lbconsulting.a1list.domain.storage.ListTitlePositionsSqlTable;
 import com.lbconsulting.a1list.domain.storage.ListTitlesSqlTable;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
@@ -139,51 +138,95 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             cv.put(ListTitlePositionsSqlTable.COL_UPDATED, updatedDateTime.getTime());
         }
 
-        return  cv;
+        return cv;
     }
 
+    public static ListTitlePosition listTitlePositionFromCursor(Cursor cursor) {
+
+        ListTitlePosition listTitlePosition = new ListTitlePosition();
+
+        try {
+            listTitlePosition.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_ID)));
+            listTitlePosition.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_OBJECT_ID)));
+            listTitlePosition.setDeviceUuid(MySettings.getDeviceUuid());
+            listTitlePosition.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_UUID)));
+
+            listTitlePosition.setListTitleUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_LIST_TITLE_UUID)));
+            listTitlePosition.setListViewFirstVisiblePosition(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_FIRST_POSITION)));
+            listTitlePosition.setListViewTop(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_LIST_VIEW_TOP)));
+
+            long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_UPDATED));
+            Date updated = new Date(dateMillis);
+            listTitlePosition.setUpdated(updated);
+        } catch (IllegalArgumentException e) {
+            Timber.e("listTitlePositionFromCursor(): IllegalArgumentException: %s.", e.getMessage());
+        } catch (Exception e) {
+            Timber.e("listTitlePositionFromCursor(): Exception: %s.", e.getMessage());
+        }
+
+        return listTitlePosition;
+    }
+
+    /**
+     * This method inserts a list of ListTitle into local storage.
+     * For each successfully inserted ListTitle, this method inserts the ListTitle into cloud storage.
+     *
+     * @param listTitles The list of ListTitle to be stored.
+     * @return Returns a list of ListTitle successfully inserted into local storage.
+     */
     @Override
-    public List<ListTitle> insert(List<ListTitle> listTitles) {
+    public List<ListTitle> insertIntoStorage(List<ListTitle> listTitles) {
         List<ListTitle> successfullyInsertedListItemsIntoLocalStorage = insertIntoLocalStorage(listTitles);
         if (successfullyInsertedListItemsIntoLocalStorage.size() > 0) {
-            insertInCloud(successfullyInsertedListItemsIntoLocalStorage);
+            insertIntoCloudStorage(successfullyInsertedListItemsIntoLocalStorage);
         }
         return successfullyInsertedListItemsIntoLocalStorage;
     }
 
+    /**
+     * This method inserts a ListTitle into local storage, and if successful, inserts the ListTitle into cloud storage.
+     *
+     * @param listTitle ListTitle to be inserted into storage.
+     * @return Returns TRUE if ListTitle successfully inserted into local storage.
+     */
     @Override
-    public boolean insert(ListTitle listTitle) {
-        // insert new listTitle into SQLite db
+    public boolean insertIntoStorage(ListTitle listTitle) {
+        // insertIntoStorage new listTitle into SQLite db
         boolean successfullyInsertedIntoSQLiteDb = insertIntoLocalStorage(listTitle);
         if (successfullyInsertedIntoSQLiteDb) {
-            insertInCloud(listTitle);
+            insertIntoCloudStorage(listTitle);
             AppSettings dirtyListSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
             mAppSettingsRepository.update(dirtyListSettings);
         }
         return successfullyInsertedIntoSQLiteDb;
     }
 
-    public List<ListTitlesPosition> insertListTitlePositions(List<ListTitlesPosition> listTitlesPositions) {
-        List<ListTitlesPosition> successfullyInsertedIntoLocalStorage = insertListTitlesPositionsIntoLocalStorage(listTitlesPositions);
+    /**
+     * This method inserts a list of ListTitleAndPosition into local storage.
+     * For each successfully inserted ListTitleAndPosition, this method inserts the ListTitleAndPosition into cloud storage.
+     *
+     * @param listTitlesPositions The list of ListTitleAndPosition to be inserted into local storage.
+     * @return Returns a list of ListTitleAndPosition successfully inserted into local storage.
+     */
+    public List<ListTitleAndPosition> insertListTitlePositions(List<ListTitleAndPosition> listTitlesPositions) {
+        List<ListTitleAndPosition> successfullyInsertedIntoLocalStorage = insertListTitlesPositionsIntoLocalStorage(listTitlesPositions);
         if (successfullyInsertedIntoLocalStorage.size() > 0) {
             insertListTitlePositionsInCloud(successfullyInsertedIntoLocalStorage);
         }
         return successfullyInsertedIntoLocalStorage;
     }
 
-
-    public boolean insertListTitlePosition(ListTitlesPosition listTitlesPosition) {
-        // insert new listTitlePosition into SQLite db
-        boolean successfullyInsertedIntoSQLiteDb = insertListTitlePositionIntoLocalStorage(listTitlesPosition);
-        if (successfullyInsertedIntoSQLiteDb) {
-            insertListTitlePositionInCloud(listTitlesPosition);
-        }
-        return successfullyInsertedIntoSQLiteDb;
-    }
-
-    public List<ListTitlesPosition> insertListTitlesPositionsIntoLocalStorage(List<ListTitlesPosition> listTitlesPositions) {
-        List<ListTitlesPosition> successfullyInsertedListTitlePositions = new ArrayList<>();
-        for (ListTitlesPosition listTitlesPosition : listTitlesPositions) {
+    /**
+     * Inserts a list of ListTitleAndPosition into local storage. For each ListTitleAndPosition
+     * successfully inserted into local storage, this method inserts the ListTitleAndPosition into
+     * cloud storage.
+     *
+     * @param listTitlesPositions The list of ListTitleAndPosition to be inserted.
+     * @return Returns a list of ListTitleAndPosition successfully inserted into local storage.
+     */
+    public List<ListTitleAndPosition> insertListTitlesPositionsIntoLocalStorage(List<ListTitleAndPosition> listTitlesPositions) {
+        List<ListTitleAndPosition> successfullyInsertedListTitlePositions = new ArrayList<>();
+        for (ListTitleAndPosition listTitlesPosition : listTitlesPositions) {
             if (insertListTitlePositionIntoLocalStorage(listTitlesPosition)) {
                 successfullyInsertedListTitlePositions.add(listTitlesPosition);
             }
@@ -198,12 +241,37 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         return successfullyInsertedListTitlePositions;
     }
 
-    public boolean insertListTitlePositionIntoLocalStorage(ListTitlesPosition listTitlesPosition) {
+    /**
+     * This method inserts a ListTitleAndPosition into local storage, and if successful,
+     * inserts the ListTitleAndPosition into cloud storage.
+     *
+     * @param listTitleAndPosition ListTitleAndPosition to be inserted into storage.
+     * @return Returns TRUE if ListTitleAndPosition successfully inserted into local storage.
+     */
+    public boolean insertListTitlePosition(ListTitleAndPosition listTitleAndPosition) {
+        // insertIntoStorage new listTitlePosition into SQLite db
+        boolean successfullyInsertedIntoSQLiteDb = insertListTitlePositionIntoLocalStorage(listTitleAndPosition);
+        if (successfullyInsertedIntoSQLiteDb) {
+            insertListTitlePositionInCloud(listTitleAndPosition);
+        }
+        return successfullyInsertedIntoSQLiteDb;
+    }
+
+    /**
+     * Inserts a ListTitleAndPosition into local storage.
+     *
+     * @param listTitleAndPosition The ListTitleAndPosition to be inserted.
+     * @return Returns TRUE if successfully inserted into local storage.
+     */
+    public boolean insertListTitlePositionIntoLocalStorage(ListTitleAndPosition listTitleAndPosition) {
         boolean result = false;
         long newListTitlePositionSqlId = -1;
 
-        ListTitle listTitle = listTitlesPosition.getListTitle();
-        ListTitlePosition listTitlePosition = listTitlesPosition.getListTitlePosition();
+        ListTitle listTitle = listTitleAndPosition.getListTitle();
+        if (listTitle == null) {
+            Timber.e("insertListTitlePositionIntoLocalStorage(): FAILED to retrieve ListTitle!");
+        }
+        ListTitlePosition listTitlePosition = listTitleAndPosition.getListTitlePosition();
 
         Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
         listTitlePosition.setUpdated(Calendar.getInstance().getTime());
@@ -218,26 +286,54 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         if (newListTitlePositionSqlId > -1) {
             // successfully saved new ListTitlePosition to the SQLite db
             result = true;
-            Timber.i("insertListTitlePositionIntoLocalStorage(): Successfully inserted \"%s's\" ListTitlePosition into the SQLite db.", listTitle.getName());
+            if (listTitle != null) {
+                Timber.i("insertListTitlePositionIntoLocalStorage(): Successfully inserted \"%s's\" ListTitlePosition into the SQLite db.", listTitle.getName());
+            } else {
+                Timber.i("insertListTitlePositionIntoLocalStorage(): Successfully inserted ListTitlePosition with ListTitle uuid = %s into the SQLite db.", listTitlePosition.getListTitleUuid());
+            }
         } else {
             // failed to create listTitlePosition in the SQLite db
-            Timber.e("insertListTitlePositionIntoLocalStorage(): FAILED to insert \"%s's\" ListTitlePosition into the SQLite db.", listTitle.getName());
+            if (listTitle != null) {
+                Timber.e("insertListTitlePositionIntoLocalStorage(): FAILED to insertIntoStorage \"%s's\" ListTitlePosition into the SQLite db.", listTitle.getName());
+            } else {
+                Timber.e("insertListTitlePositionIntoLocalStorage(): FAILED to insertIntoStorage ListTitlePosition with ListTitle uuid = %s into the SQLite db.", listTitlePosition.getListTitleUuid());
+            }
         }
 
         return result;
     }
 
-    private void insertListTitlePositionsInCloud(List<ListTitlesPosition> listTitlesPositions) {
-        for (ListTitlesPosition listTitlesPosition : listTitlesPositions) {
+    /**
+     * Inserts a list of ListTitleAndPosition into cloud storage via a background thread.
+     * For each successfully inserted ListTitleAndPosition clears the local storage dirty flag and
+     * sends an Insert message to other devices.
+     *
+     * @param listTitlesPositions The list of ListTitleAndPosition to be inserted.
+     */
+    private void insertListTitlePositionsInCloud(List<ListTitleAndPosition> listTitlesPositions) {
+        for (ListTitleAndPosition listTitlesPosition : listTitlesPositions) {
             insertListTitlePositionInCloud(listTitlesPosition);
         }
     }
 
-    private void insertListTitlePositionInCloud(ListTitlesPosition listTitlesPosition) {
+    /**
+     * Inserts ListTitleAndPosition into cloud storage via a background thread,
+     * and if successful, clears the local storage dirty flag and
+     * sends an Insert message to other devices.
+     *
+     * @param listTitlesPosition
+     */
+    private void insertListTitlePositionInCloud(ListTitleAndPosition listTitlesPosition) {
         new SaveListTitlePositionToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listTitlesPosition).execute();
     }
 
+    /**
+     * Inserts a list of ListTitle into local storage.
+     *
+     * @param listTitles The list of ListTitle to be inserted.
+     * @return Returns a list of ListTitle successfully inserted into local storage.
+     */
     @Override
     public List<ListTitle> insertIntoLocalStorage(List<ListTitle> listTitles) {
         List<ListTitle> successfullyInsertedListTitles = new ArrayList<>();
@@ -256,6 +352,12 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         return successfullyInsertedListTitles;
     }
 
+    /**
+     * Inserts a ListTitle into local storage.
+     *
+     * @param listTitle the ListTitle to be stored.
+     * @return Returns TRUE if ListTitle successfully inserted into local storage.
+     */
     @Override
     public boolean insertIntoLocalStorage(ListTitle listTitle) {
         boolean result = false;
@@ -276,21 +378,35 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             Timber.i("insertIntoLocalStorage(): Successfully inserted \"%s\" into the SQLite db.", listTitle.getName());
         } else {
             // failed to create listTitle in the SQLite db
-            Timber.e("insertIntoLocalStorage(): FAILED to insert \"%s\" into the SQLite db.", listTitle.getName());
+            Timber.e("insertIntoLocalStorage(): FAILED to insertIntoStorage \"%s\" into the SQLite db.", listTitle.getName());
         }
 
         return result;
     }
 
+    //endregion
+
+    /**
+     * Inserts a list of ListTitle into cloud storage via a background thread.
+     * For each successfully inserted ListTitle, the method clears the local storage dirty flag and
+     * sends an Insert message to other devices.
+     *
+     * @param listTitles
+     */
     @Override
-    public void insertInCloud(List<ListTitle> listTitles) {
+    public void insertIntoCloudStorage(List<ListTitle> listTitles) {
         updateInCloud(listTitles, true);
     }
 
-    //endregion
-
+    /**
+     * Inserts a ListTitle into cloud storage via a background thread.
+     * For each successfully inserted ListTitle, the method clears the local storage dirty flag and
+     * sends an Insert message to other devices.
+     *
+     * @param listTitle
+     */
     @Override
-    public void insertInCloud(ListTitle listTitle) {
+    public void insertIntoCloudStorage(ListTitle listTitle) {
         updateInCloud(listTitle, true);
     }
 
@@ -457,7 +573,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         return cursor;
     }
 
-
     @Override
     public List<ListTitle> retrieveStruckOutListTitles() {
         List<ListTitle> struckOutListTitles = new ArrayList<>();
@@ -491,7 +606,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
 
     @Override
     public ListTitlePosition retrieveListTitlePosition(ListTitle listTitle) {
-        ListTitlePosition listTitlePosition=null;
+        ListTitlePosition listTitlePosition = null;
         Cursor cursor = null;
         Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
         String[] projection = ListTitlePositionsSqlTable.PROJECTION_ALL;
@@ -502,7 +617,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             ContentResolver cr = mContext.getContentResolver();
             cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
             if (cursor != null) {
-                if(cursor.moveToFirst()){
+                if (cursor.moveToFirst()) {
                     listTitlePosition = listTitlePositionFromCursor(cursor);
                 }
                 cursor.close();
@@ -515,31 +630,6 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         return listTitlePosition;
     }
 
-    public static ListTitlePosition listTitlePositionFromCursor(Cursor cursor) {
-
-        ListTitlePosition listTitlePosition = new ListTitlePosition();
-
-        try {
-            listTitlePosition.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_ID)));
-            listTitlePosition.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_OBJECT_ID)));
-            listTitlePosition.setDeviceUuid(MySettings.getDeviceUuid());
-            listTitlePosition.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_UUID)));
-
-            listTitlePosition.setListTitleUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_LIST_TITLE_UUID)));
-            listTitlePosition.setListViewFirstVisiblePosition(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_FIRST_POSITION)));
-            listTitlePosition.setListViewTop(cursor.getInt(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_LIST_VIEW_TOP)));
-
-            long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListTitlePositionsSqlTable.COL_UPDATED));
-            Date updated = new Date(dateMillis);
-            listTitlePosition.setUpdated(updated);
-        } catch (IllegalArgumentException e) {
-            Timber.e("listTitlePositionFromCursor(): IllegalArgumentException: %s.", e.getMessage());
-        }catch (Exception e) {
-            Timber.e("listTitlePositionFromCursor(): Exception: %s.", e.getMessage());
-        }
-
-        return listTitlePosition;
-    }
     @Override
     public int retrieveNumberOfStruckOutListTitles() {
         int struckOutListTitles = 0;
@@ -582,7 +672,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         }
 
         if (saveToBackendless) {
-            update(refreshedListTitle);
+            updateStorage(refreshedListTitle);
         } else {
             updateInLocalStorage(refreshedListTitle);
         }
@@ -648,16 +738,27 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
 
 
     //region Update ListTitle
+
+    /**
+     * Updates a list of ListTitle in local and cloud storage.
+     *
+     * @param listTitles The list of ListTitle to be stored.
+     */
     @Override
-    public void update(List<ListTitle> listTitles) {
+    public void updateStorage(List<ListTitle> listTitles) {
         List<ListTitle> successfullyUpdatedListTitlesInLocalStorage = updateInLocalStorage(listTitles);
         if (successfullyUpdatedListTitlesInLocalStorage.size() > 0) {
             updateInCloud(successfullyUpdatedListTitlesInLocalStorage, false);
         }
     }
 
+    /**
+     * Updates a ListTitle in local and cloud storage.
+     *
+     * @param listTitle The ListTitle to be stored.
+     */
     @Override
-    public void update(ListTitle listTitle) {
+    public void updateStorage(ListTitle listTitle) {
         if (updateInLocalStorage(listTitle) == 1) {
             updateInCloud(listTitle, false);
         }
@@ -671,28 +772,33 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
     }
 
     public int updateListTitlePositionInLocalStorage(ListTitle listTitle, int firstVisiblePosition,
-                                                      int top) {
-        ContentValues cv = new ContentValues();
-        cv.put(ListTitlePositionsSqlTable.COL_FIRST_POSITION, firstVisiblePosition);
-        cv.put(ListTitlePositionsSqlTable.COL_LIST_VIEW_TOP, top);
-        cv.put(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY, TRUE);
-        cv.put(ListTitlePositionsSqlTable.COL_UPDATED, Calendar.getInstance().getTimeInMillis());
+                                                     int top) {
+
         int numberOfRecordsUpdated = 0;
-        try {
-            Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
-            String selection = ListTitlePositionsSqlTable.COL_LIST_TITLE_UUID + " = ?";
-            String[] selectionArgs = new String[]{listTitle.getUuid()};
-            ContentResolver cr = mContext.getContentResolver();
-            numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
+        if (listTitle != null) {
+            ContentValues cv = new ContentValues();
+            cv.put(ListTitlePositionsSqlTable.COL_FIRST_POSITION, firstVisiblePosition);
+            cv.put(ListTitlePositionsSqlTable.COL_LIST_VIEW_TOP, top);
+            cv.put(ListTitlePositionsSqlTable.COL_LIST_TITLE_POSITION_DIRTY, TRUE);
+            cv.put(ListTitlePositionsSqlTable.COL_UPDATED, Calendar.getInstance().getTimeInMillis());
+            try {
+                Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
+                String selection = ListTitlePositionsSqlTable.COL_LIST_TITLE_UUID + " = ?";
+                String[] selectionArgs = new String[]{listTitle.getUuid()};
+                ContentResolver cr = mContext.getContentResolver();
+                numberOfRecordsUpdated = cr.update(uri, cv, selection, selectionArgs);
 
-        } catch (Exception e) {
-            Timber.e("updateListTitlePositionInLocalStorage(): Exception: %s.", e.getMessage());
-        }
+            } catch (Exception e) {
+                Timber.e("updateListTitlePositionInLocalStorage(): Exception: %s.", e.getMessage());
+            }
 
-        if (numberOfRecordsUpdated == 1) {
-            Timber.i("updateListTitlePositionInLocalStorage(): Successfully updated \"%s\" Position in SQLiteDb.", listTitle.getName());
+            if (numberOfRecordsUpdated == 1) {
+                Timber.i("updateListTitlePositionInLocalStorage(): Successfully updated \"%s\" Position in SQLiteDb.", listTitle.getName());
+            } else {
+                Timber.e("updateListTitlePositionInLocalStorage(): FAILED to updateStorage \"%s\" Position in SQLiteDb.", listTitle.getName());
+            }
         } else {
-            Timber.e("updateListTitlePositionInLocalStorage(): FAILED to update \"%s\" Position in SQLiteDb.", listTitle.getName());
+            Timber.e("updateListTitlePositionInLocalStorage(): FAILED to updateStorage ListTitle Position. ListTitle is null!");
         }
         return numberOfRecordsUpdated;
 
@@ -704,7 +810,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         if (listTitlePosition != null) {
             // If the listTitlePosition is not new ... make sure that it has a Backendless objectId.
             if (listTitlePosition.getObjectId() == null || listTitlePosition.getObjectId().isEmpty()) {
-                Timber.e("updateListTitlePositionInCloud(): Unable to update \"%s's\" ListTitlePosition. ObjectId not available.",
+                Timber.e("updateListTitlePositionInCloud(): Unable to updateStorage \"%s's\" ListTitlePosition. ObjectId not available.",
                         listTitle.getName());
                 return;
             }
@@ -717,7 +823,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             return;
         }
 
-        ListTitlesPosition listTitlesPosition = new ListTitlesPosition(listTitle, listTitlePosition);
+        ListTitleAndPosition listTitlesPosition = new ListTitleAndPosition(listTitle, listTitlePosition);
 
         new SaveListTitlePositionToCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listTitlesPosition).execute();
@@ -749,7 +855,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         if (numberOfRecordsUpdated == 1) {
             Timber.i("updateInLocalStorage(): Successfully updated \"%s\" in SQLiteDb.", listTitle.getName());
         } else {
-            Timber.e("updateInLocalStorage(): FAILED to update \"%s\" in SQLiteDb.", listTitle.getName());
+            Timber.e("updateInLocalStorage(): FAILED to updateStorage \"%s\" in SQLiteDb.", listTitle.getName());
         }
         return numberOfRecordsUpdated;
 
@@ -796,7 +902,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     MainThreadImpl.getInstance(), this, listTitlesThatHaveObjectIds).execute();
 
             for (ListTitle listTitle : listTitlesThatDoNotHaveObjectIds) {
-                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                Timber.e("updateInCloudStorage(): Unable to updateStorage \"%s\" in the Cloud. No Backendless objectId available!",
                         listTitle.getName());
             }
 
@@ -827,8 +933,8 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             }
             if (listTitle.getObjectId() == null || listTitle.getObjectId().isEmpty()) {
                 // The listTitle is not new AND there is no Backendless objectId available ... so,
-                // Unable to update the listTitle in Backendless
-                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                // Unable to updateStorage the listTitle in Backendless
+                Timber.e("updateInCloudStorage(): Unable to updateStorage \"%s\" in the Cloud. No Backendless objectId available!",
                         listTitle.getName());
                 return;
             }
@@ -847,97 +953,97 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         Timber.e("onListTitleSavedToCloud(): %s", errorMessage);
     }
 
-    @Override
-    public int toggle(ListTitle listTitle, String fieldName) {
-        int result = 0;
-        ListTitle currentListTitle = retrieveListTitleByUuid(listTitle.getUuid());
-        if (currentListTitle == null) {
-            Timber.e("toggle(): Unable to toggle field \"%s\". Could not find ListTitle \"%s\".", fieldName, listTitle.getName());
-            return 0;
-        }
-
-        boolean newValue;
-        ContentValues cv = new ContentValues();
-
-        switch (fieldName) {
-            case ListTitlesSqlTable.COL_CHECKED:
-                newValue = !currentListTitle.isChecked();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListTitlesSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
-                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-                updateInLocalStorage(listTitle, cv);
-                break;
-
-            case ListTitlesSqlTable.COL_LIST_LOCKED:
-                newValue = !currentListTitle.isListLocked();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, newValue ? TRUE : FALSE);
-                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-                updateInLocalStorage(listTitle, cv);
-                break;
-
-            case ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE:
-                newValue = !currentListTitle.isListPrivateToThisDevice();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, newValue ? TRUE : FALSE);
-                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-                updateInLocalStorage(listTitle, cv);
-                break;
-
-            case ListTitlesSqlTable.COL_MARKED_FOR_DELETION:
-                newValue = !currentListTitle.isMarkedForDeletion();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
-                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-                updateInLocalStorage(listTitle, cv);
-                break;
-
-            case ListTitlesSqlTable.COL_SORT_ALPHABETICALLY:
-                newValue = !currentListTitle.isSortListItemsAlphabetically();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, newValue ? TRUE : FALSE);
-                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-                updateInLocalStorage(listTitle, cv);
-                break;
-
-            case ListTitlesSqlTable.COL_STRUCK_OUT:
-                newValue = !currentListTitle.isStruckOut();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
-                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
-                updateInLocalStorage(listTitle, cv);
-                break;
-
-            default:
-                Timber.e("toggle(): Unknown Field Name! \"%s\"", fieldName);
-                break;
-        }
-        return result;
-    }
+//    @Override
+//    public int toggle(ListTitle listTitle, String fieldName) {
+//        int result = 0;
+//        ListTitle currentListTitle = retrieveListTitleByUuid(listTitle.getUuid());
+//        if (currentListTitle == null) {
+//            Timber.e("toggle(): Unable to toggle field \"%s\". Could not find ListTitle \"%s\".", fieldName, listTitle.getName());
+//            return 0;
+//        }
+//
+//        boolean newValue;
+//        ContentValues cv = new ContentValues();
+//
+//        switch (fieldName) {
+//            case ListTitlesSqlTable.COL_CHECKED:
+//                newValue = !currentListTitle.isChecked();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListTitlesSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
+//                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+//                updateInLocalStorage(listTitle, cv);
+//                break;
+//
+//            case ListTitlesSqlTable.COL_LIST_LOCKED:
+//                newValue = !currentListTitle.isListLocked();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListTitlesSqlTable.COL_LIST_LOCKED, newValue ? TRUE : FALSE);
+//                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+//                updateInLocalStorage(listTitle, cv);
+//                break;
+//
+//            case ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE:
+//                newValue = !currentListTitle.isListPrivateToThisDevice();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListTitlesSqlTable.COL_LIST_PRIVATE_TO_THIS_DEVICE, newValue ? TRUE : FALSE);
+//                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+//                updateInLocalStorage(listTitle, cv);
+//                break;
+//
+//            case ListTitlesSqlTable.COL_MARKED_FOR_DELETION:
+//                newValue = !currentListTitle.isMarkedForDeletion();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
+//                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+//                updateInLocalStorage(listTitle, cv);
+//                break;
+//
+//            case ListTitlesSqlTable.COL_SORT_ALPHABETICALLY:
+//                newValue = !currentListTitle.isSortListItemsAlphabetically();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListTitlesSqlTable.COL_SORT_ALPHABETICALLY, newValue ? TRUE : FALSE);
+//                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+//                updateInLocalStorage(listTitle, cv);
+//                break;
+//
+//            case ListTitlesSqlTable.COL_STRUCK_OUT:
+//                newValue = !currentListTitle.isStruckOut();
+//                if (newValue) {
+//                    result++;
+//                } else {
+//                    result--;
+//                }
+//                cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
+//                cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, TRUE);
+//                updateInLocalStorage(listTitle, cv);
+//                break;
+//
+//            default:
+//                Timber.e("toggle(): Unknown Field Name! \"%s\"", fieldName);
+//                break;
+//        }
+//        return result;
+//    }
 
     @Override
     public void replaceListTheme(ListTheme deletedListTheme, ListTheme defaultListTheme) {
@@ -947,64 +1053,125 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             for (ListTitle listTitle : listTitles) {
                 listTitle.setListThemeUuid(defaultListTheme.getUuid());
             }
-            update(listTitles);
+            updateStorage(listTitles);
         }
     }
     //endregion
 
     //region Delete ListTitle
-    @Override
-    public int delete(List<ListTitle> listTitles) {
-        List<ListTitle> successfullyMarkedForDeletionListTitles = deleteFromLocalStorage(listTitles);
-        if (successfullyMarkedForDeletionListTitles.size() > 0) {
-            deleteFromCloud(successfullyMarkedForDeletionListTitles);
-        }
+    //    The general deletion process:
+    //    i)	First, delete any ListItems associated with the ListTitle;
+    //    ii)   Second, set the the ListTitle's delete flag in local storage;
+    //    iii)	Third, delete the ListTitle from cloud storage;
+    //    iv)	Fourth, if ListTitle successfully deleted from cloud storage then delete it from local storage.
 
-        return successfullyMarkedForDeletionListTitles.size();
-    }
-
+    /**
+     * Deletes a ListTitle and its associated ListItems and ListTitlePosition from local and cloud storage.
+     *
+     * @param listTitle The ListTitle to be deleted.
+     * @return Returns the number of ListTitles marked for deletion in local storage.
+     */
     @Override
-    public int delete(ListTitle listTitle) {
-        // TODO: get all the favorite items in the listTitle and remove the favorite flag.
-        // delete any items that are held in the listTitle to be deleted.
+    public int deleteFromStorage(ListTitle listTitle) {
+        // delete any ListItems that are held in the listTitle to be deleted.
         ListItemRepository_Impl listItemRepository = AndroidApplication.getListItemRepository();
-        List<ListItem> itemsForDeletion = listItemRepository.retrieveListItems(listTitle);
-        if (itemsForDeletion.size() > 0) {
-            listItemRepository.delete(itemsForDeletion);
-        }
-        int numberOfDeletedListTitles = deleteFromLocalStorage(listTitle);
-        if (numberOfDeletedListTitles == 1) {
-            deleteFromCloud(listTitle);
+        List<ListItem> listItemsForDeletion = listItemRepository.retrieveListItems(listTitle);
+        if (listItemsForDeletion.size() > 0) {
+            for (ListItem listItem : listItemsForDeletion) {
+                // Make sure all favorite flags are set to false
+                // so listItem will be deleted from local and cloud storage.
+                if (listItem.isFavorite()) {
+                    listItem.setFavorite(false);
+                }
+            }
+            // delete all ListItems
+            listItemRepository.deleteFromStorage(listItemsForDeletion);
         }
 
-        return numberOfDeletedListTitles;
+        // Mark the ListTitle for deletion
+        int numberOfListTitlesMarkedForDeletion = setDeleteFlagInLocalStorage(listTitle);
+        if (numberOfListTitlesMarkedForDeletion == 1) {
+            // delete the ListTitle and its ListTitlePosition from cloud storage.
+            deleteFromCloudStorage(listTitle);
+        }
+
+        return numberOfListTitlesMarkedForDeletion;
     }
 
+//
+//    private int deleteFromLocalStorage(ListTitle listTitle, ListTitlePosition listTitlePosition) {
+//        int numberOfDeletedListTitlePositions = 0;
+//        try {
+//            Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
+//            String selection = ListTitlePositionsSqlTable.COL_UUID + " = ?";
+//            String[] selectionArgs = new String[]{listTitlePosition.getUuid()};
+//            ContentResolver cr = mContext.getContentResolver();
+//            numberOfDeletedListTitlePositions = cr.delete(uri, selection, selectionArgs);
+//            if (numberOfDeletedListTitlePositions == 1) {
+//                Timber.i("deleteFromLocalStorage(): Successfully deleted \"%s's\" ListTitlePosition from the SQLiteDb.", listTitle.getName());
+//            } else {
+//                Timber.e("deleteFromLocalStorage(): FAILED to deleteFromStorage \"%s's\" ListTitlePosition from the SQLiteDb.", listTitle.getName());
+//            }
+//
+//        } catch (Exception e) {
+//            Timber.e("deleteFromLocalStorage(): Exception: %s.", e.getMessage());
+//        }
+//
+//        return numberOfDeletedListTitlePositions;
+//    }
+
     @Override
-    public List<ListTitle> deleteFromLocalStorage(List<ListTitle> listTitles) {
+    public List<ListTitle> setDeleteFlagInLocalStorage(List<ListTitle> listTitles) {
         List<ListTitle> successfullyMarkedListTitles = new ArrayList<>();
 
-        ListItemRepository_Impl listItemRepository = AndroidApplication.getListItemRepository();
+        int numberOfListTitlesMarkedForDeletion;
         for (ListTitle listTitle : listTitles) {
-            List<ListItem> itemsForDeletion = listItemRepository.retrieveListItems(listTitle);
-            if (itemsForDeletion.size() > 0) {
-                listItemRepository.delete(itemsForDeletion);
-            }
-
-            if (deleteFromLocalStorage(listTitle) == 1) {
+            numberOfListTitlesMarkedForDeletion = setDeleteFlagInLocalStorage(listTitle);
+            if (numberOfListTitlesMarkedForDeletion == 1) {
                 successfullyMarkedListTitles.add(listTitle);
             }
         }
 
         if (successfullyMarkedListTitles.size() == listTitles.size()) {
-            Timber.i("deleteFromLocalStorage(): Successfully marked all %d ListTitles for deletion.",
+            Timber.i("setDeleteFlagInLocalStorage(): Successfully marked all %d ListTitles for deletion.",
                     successfullyMarkedListTitles.size());
         } else {
-            Timber.e("deleteFromLocalStorage(): Only marked %d of of %d ListTitles for deletion.",
+            Timber.e("setDeleteFlagInLocalStorage(): Only marked %d of of %d ListTitles for deletion.",
                     successfullyMarkedListTitles.size(), listTitles.size());
         }
 
         return successfullyMarkedListTitles;
+    }
+
+    @Override
+    public int setDeleteFlagInLocalStorage(ListTitle listTitle) {
+        int numberOfListTitlesMarkedForDeletion = 0;
+        try {
+            Uri uri = ListTitlesSqlTable.CONTENT_URI;
+            String selection = ListTitlesSqlTable.COL_UUID + " = ?";
+            String[] selectionArgs = new String[]{listTitle.getUuid()};
+            ContentResolver cr = mContext.getContentResolver();
+            ContentValues cv = new ContentValues();
+            cv.put(ListTitlesSqlTable.COL_UPDATED, Calendar.getInstance().getTimeInMillis());
+            cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
+            cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
+            numberOfListTitlesMarkedForDeletion = cr.update(uri, cv, selection, selectionArgs);
+
+        } catch (Exception e) {
+            Timber.e("setDeleteFlagInLocalStorage(): Exception: %s.", e.getMessage());
+        }
+        return numberOfListTitlesMarkedForDeletion;
+    }
+
+    @Override
+    public List<ListTitle> deleteFromLocalStorage(List<ListTitle> listTitles) {
+        List<ListTitle> successfullyDeletedListTitles = new ArrayList<>();
+        for (ListTitle listTitle : listTitles) {
+            if (deleteFromLocalStorage(listTitle) == 1) {
+                successfullyDeletedListTitles.add(listTitle);
+            }
+        }
+        return successfullyDeletedListTitles;
     }
 
     @Override
@@ -1015,17 +1182,58 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
             String selection = ListTitlesSqlTable.COL_UUID + " = ?";
             String[] selectionArgs = new String[]{listTitle.getUuid()};
             ContentResolver cr = mContext.getContentResolver();
-            ContentValues cv = new ContentValues();
-            Calendar rightNow = Calendar.getInstance();
-            cv.put(ListTitlesSqlTable.COL_UPDATED, rightNow.getTimeInMillis());
-            cv.put(ListTitlesSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
-            cv.put(ListTitlesSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
-            numberOfDeletedListTitles = cr.update(uri, cv, selection, selectionArgs);
+            numberOfDeletedListTitles = cr.delete(uri, selection, selectionArgs);
+            if (numberOfDeletedListTitles == 1) {
+                Timber.i("deleteFromLocalStorage(): Successfully deleted \"%s\" from the SQLiteDb.", listTitle.getName());
+            } else {
+                Timber.e("deleteFromLocalStorage(): FAILED to deleteFromStorage \"%s\" from the SQLiteDb.", listTitle.getName());
+            }
 
         } catch (Exception e) {
-            Timber.e("deleteFromLocalStorage(): Exception: %s.", e.getMessage());
+            Timber.e("deleteFromStorage(): Exception: %s.", e.getMessage());
         }
+
         return numberOfDeletedListTitles;
+    }
+
+    @Override
+    public int deleteFromLocalStorage(ListTitle listTitle, ListTitlePosition listTitlePosition) {
+        int numberOfDeletedListTitlePositions = 0;
+        try {
+            Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
+            String selection = ListTitlePositionsSqlTable.COL_UUID + " = ?";
+            String[] selectionArgs = new String[]{listTitlePosition.getUuid()};
+            ContentResolver cr = mContext.getContentResolver();
+            numberOfDeletedListTitlePositions = cr.delete(uri, selection, selectionArgs);
+            if (numberOfDeletedListTitlePositions == 1) {
+                Timber.i("deleteFromLocalStorage(): Successfully deleted \"%s's\" ListTitlePosition from the SQLiteDb.", listTitle.getName());
+            } else {
+                Timber.e("deleteFromLocalStorage(): FAILED to deleteFromStorage \"%s's\" ListTitlePosition from the SQLiteDb.", listTitle.getName());
+            }
+
+        } catch (Exception e) {
+            Timber.e("deleteFromStorage(): Exception: %s.", e.getMessage());
+        }
+
+        return numberOfDeletedListTitlePositions;
+    }
+
+    @Override
+    public int clearLocalStorageDirtyFlag(ListTitle listTitle) {
+        ContentValues cv = new ContentValues();
+        Date updatedDate = listTitle.getUpdated();
+        if (updatedDate == null) {
+            updatedDate = listTitle.getCreated();
+        }
+        if (updatedDate != null) {
+            long updated = updatedDate.getTime();
+            cv.put(ListTitlesSqlTable.COL_UPDATED, updated);
+        }
+
+        cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, FALSE);
+        cv.put(ListTitlesSqlTable.COL_OBJECT_ID, listTitle.getObjectId());
+
+        return updateInLocalStorage(listTitle, cv);
     }
 
     public int deleteListTitlePositionFromLocalStorage(ListTitlePosition listTitlePosition) {
@@ -1042,16 +1250,20 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         }
         return numberOfDeletedListTitlePositions;
     }
-    @Override
-    public void deleteFromCloud(List<ListTitle> listTitles) {
-        new DeleteListTitlesFromCloud_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, listTitles).execute();
-    }
 
     @Override
-    public void deleteFromCloud(ListTitle listTitle) {
+    public void deleteFromCloudStorage(List<ListTitle> listTitles) {
+        for (ListTitle listTitle : listTitles) {
+            deleteFromCloudStorage(listTitle);
+        }
+    }
+
+
+    @Override
+    public void deleteFromCloudStorage(ListTitle listTitle) {
+        ListTitlePosition listTitlePosition = retrieveListTitlePosition(listTitle);
         new DeleteListTitleFromCloud_InBackground(ThreadExecutor.getInstance(),
-                MainThreadImpl.getInstance(), this, listTitle).execute();
+                MainThreadImpl.getInstance(), this, listTitle, listTitlePosition).execute();
     }
 
     @Override

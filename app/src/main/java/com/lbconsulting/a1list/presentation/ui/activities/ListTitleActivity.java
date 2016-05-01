@@ -23,6 +23,8 @@ import com.lbconsulting.a1list.R;
 import com.lbconsulting.a1list.domain.model.AppSettings;
 import com.lbconsulting.a1list.domain.model.ListTheme;
 import com.lbconsulting.a1list.domain.model.ListTitle;
+import com.lbconsulting.a1list.domain.model.ListTitleAndPosition;
+import com.lbconsulting.a1list.domain.model.ListTitlePosition;
 import com.lbconsulting.a1list.domain.repositories.AppSettingsRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeSpinnerArrayAdapter;
@@ -40,7 +42,7 @@ import butterknife.ButterKnife;
 import timber.log.Timber;
 
 
-public class ListTitleActivity extends AppCompatActivity implements View.OnClickListener{
+public class ListTitleActivity extends AppCompatActivity implements View.OnClickListener {
 
 
     public static final String ARG_LIST_TITLE_JSON = "argListTitleJson";
@@ -212,7 +214,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
-//    @Override
+    //    @Override
     public void onAllListThemesRetrieved(List<ListTheme> listThemes) {
         mListThemeSpinnerArrayAdapter.setData(listThemes);
         mListThemeSpinnerArrayAdapter.notifyDataSetChanged();
@@ -281,11 +283,18 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
 
         switch (mMode) {
             case EDIT_EXISTING_LIST_TITLE:
-                listTitleRepository.update(listTitle);
+                listTitleRepository.updateStorage(listTitle);
                 break;
 
             case CREATE_NEW_LIST_TITLE:
-                listTitleRepository.insert(listTitle);
+
+                ListTitlePosition newListTitlePosition = ListTitlePosition.newInstance(listTitle.getUuid());
+                listTitle.setListTitlePositionUuid(newListTitlePosition.getUuid());
+                ListTitleAndPosition newListTitleAndPosition = new ListTitleAndPosition(listTitle, newListTitlePosition);
+
+                listTitleRepository.insertIntoStorage(listTitle);
+                listTitleRepository.insertListTitlePosition(newListTitleAndPosition);
+
                 AppSettingsRepository_Impl appSettingsRepository = AndroidApplication.getAppSettingsRepository();
                 AppSettings appSettings = appSettingsRepository.retrieveAppSettings();
                 appSettings.setLastListTitleViewedUuid(listTitle.getUuid());

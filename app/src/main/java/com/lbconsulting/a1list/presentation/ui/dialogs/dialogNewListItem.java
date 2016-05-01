@@ -135,7 +135,7 @@ public class dialogNewListItem extends DialogFragment {
         } else {
             // ok to create item
             ListItem newListItem = ListItem.newInstance(newItemName, mListTitle, true);
-            mListItemRepository.insert(newListItem);
+            mListItemRepository.insertIntoStorage(newListItem);
             result = true;
         }
         return result;

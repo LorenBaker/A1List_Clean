@@ -6,10 +6,8 @@ import android.net.Uri;
 
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
-import com.backendless.messaging.MessageStatus;
 import com.lbconsulting.a1list.AndroidApplication;
 import com.lbconsulting.a1list.backendlessMessaging.AppSettingsMessage;
-import com.lbconsulting.a1list.backendlessMessaging.Messaging;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -68,15 +66,15 @@ public class SaveAppSettingsToCloud_InBackground extends AbstractInteractor impl
 
                 cv.put(AppSettingsSqlTable.COL_APP_SETTINGS_DIRTY, FALSE);
 
-                // If a new AppSettings, update SQLite db with objectID
+                // If a new AppSettings, updateStorage SQLite db with objectID
                 if (isNew) {
                     cv.put(AppSettingsSqlTable.COL_OBJECT_ID, response.getObjectId());
                 }
-                // update the SQLite db
+                // updateStorage the SQLite db
                 updateSQLiteDb(response, cv);
 
                 // send message to other devices
-                sendAppSettingsMessage(mAppSettings, isNew);
+                AppSettingsMessage.sendMessage(mAppSettings, isNew);
 
                 String successMessage = String.format("Successfully saved \"%s's\" AppSettings to Backendless.", response.getName());
                 postAppSettingsSavedToBackendless(successMessage);
@@ -99,28 +97,7 @@ public class SaveAppSettingsToCloud_InBackground extends AbstractInteractor impl
         }
     }
 
-    private void sendAppSettingsMessage(AppSettings appSettings, boolean isNew) {
-        String messageChannel = appSettings.getMessageChannel();
-        int action = Messaging.ACTION_UPDATE;
-        if (isNew) {
-            action = Messaging.ACTION_CREATE;
-        }
-        int target = Messaging.TARGET_ALL_DEVICES;
-        String appSettingsMessageJson = AppSettingsMessage.toJson(appSettings, action, target);
-        MessageStatus messageStatus = Backendless.Messaging.publish(messageChannel, appSettingsMessageJson);
-        if (messageStatus.getErrorMessage() == null) {
-            // successfully sent message to Backendless.
-            if (isNew) {
-                Timber.i("sendAppSettingsMessage(): CREATE \"%s\" message successfully sent.", appSettings.getName());
-            } else {
-                Timber.i("sendAppSettingsMessage(): UPDATE \"%s\" message successfully sent.", appSettings.getName());
-            }
-        } else {
-            // error sending message to Backendless.
-            Timber.e("sendAppSettingsMessage(): FAILED to send message for \"%s\". %s.",
-                    appSettings.getName(), messageStatus.getErrorMessage());
-        }
-    }
+
 
     private void updateSQLiteDb(AppSettings appSettings, ContentValues cv) {
         int numberOfRecordsUpdated = 0;

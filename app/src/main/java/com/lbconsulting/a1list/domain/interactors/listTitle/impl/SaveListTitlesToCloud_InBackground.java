@@ -7,6 +7,8 @@ import android.net.Uri;
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
 import com.lbconsulting.a1list.AndroidApplication;
+import com.lbconsulting.a1list.backendlessMessaging.ListTitleMessage;
+import com.lbconsulting.a1list.backendlessMessaging.Messaging;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
@@ -86,12 +88,19 @@ public class SaveListTitlesToCloud_InBackground extends AbstractInteractor imple
 
                     cv.put(ListTitlesSqlTable.COL_LIST_TITLE_DIRTY, FALSE);
 
-                    // If a new ListTitle, update SQLite db with objectID
+                    // If a new ListTitle, updateStorage SQLite db with objectID
                     if (isNew) {
                         cv.put(ListTitlesSqlTable.COL_OBJECT_ID, response.getObjectId());
                     }
-                    // update the SQLite db
+                    // updateStorage the SQLite db
                     updateSQLiteDb(response, cv);
+
+                    // send message to other devices
+                    int action = Messaging.ACTION_UPDATE;
+                    if(isNew){
+                        action = Messaging.ACTION_CREATE;
+                    }
+                    ListTitleMessage.sendMessage(listTitle, action);
 
                     String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
                     Timber.i("run(): %s", successMessage);

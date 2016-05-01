@@ -66,7 +66,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
     //    private AppSettingsRepository_Impl mAppSettingsRepository;
     private ListThemeRepository_Impl mListThemeRepository;
     // Note: these Toggle Methods run on the UI thread
-    // The update one field on one record in one SQLite table (ListThemesSqlTable)
+    // The updateStorage one field on one record in one SQLite table (ListThemesSqlTable)
     // After the toggle method complete, querying the SQLite ListThemesSqlTable for all ListThemes
     // is executed on a background thread. Upon its completion, the ListThemeArray adapter is notified
     // of a data change.

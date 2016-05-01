@@ -202,7 +202,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
 
 //            AppSettings dirtyAppSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
 //            if (dirtyAppSettings != null) {
-//                mAppSettingsRepository.updateInCloud(dirtyAppSettings, false);
+//                mAppSettingsRepository.updateInCloudStorage(dirtyAppSettings, false);
 //            }
 
 //                new SaveDirtyObjectsToBackendless_InBackground(mThreadExecutor, mMainThread).execute();

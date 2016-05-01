@@ -236,7 +236,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         Timber.i("run(): Retrieved %d ListItems from SQLiteDb.", listItemsLocalList.size());
 
         Timber.i("run(): Computing merge solutions...");
-        ArrayList<ContentProviderOperation> batch = new ArrayList<ContentProviderOperation>();
+        ArrayList<ContentProviderOperation> batch = new ArrayList<>();
 
         computeAppSettingsMergeSolution(appSettingsLocalList, appSettingsCloudMap, batch, syncStats);
         computeListThemeMergeSolution(listThemesLocalList, listThemesCloudMap, batch, syncStats);
@@ -244,8 +244,8 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
         computeListTitlePositionMergeSolution(listTitlePositionsLocalList, listTitlePositionsCloudMap, batch, syncStats);
 
 
-        // Merge solution ready. Applying batch update
-        Timber.i("run(): Merge solution ready. Applying batch update");
+        // Merge solution ready. Applying batch updateStorage
+        Timber.i("run(): Merge solution ready. Applying batch updateStorage");
 
         try {
             ContentResolver contentResolver = AndroidApplication.getContext().getContentResolver();
@@ -256,7 +256,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
             Timber.e("run(): OperationApplicationException: %s.", e.getMessage());
         }
 
-        batch = new ArrayList<ContentProviderOperation>();
+        batch = new ArrayList<>();
         computeListItemMergeSolution(listItemsLocalList, listItemsCloudMap, batch, syncStats);
         try {
             ContentResolver contentResolver = AndroidApplication.getContext().getContentResolver();
@@ -280,20 +280,20 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
 
         // Iterate through the AppSettings local list searching for a match in the cloud map
         // If match found, check to see if the local AppSettings needs to be updated
-        // If match not found, the AppSettings is no longer exists in the cloud, so delete it from local storage
+        // If match not found, the AppSettings is no longer exists in the cloud, so deleteFromStorage it from local storage
 
         for (AppSettings localAppSettings : appSettingsLocalList) {
             AppSettings cloudAppSettings = appSettingsCloudMap.get(localAppSettings.getUuid());
             if (cloudAppSettings != null) {
                 // Match found. The AppSettings exist both locally and in the cloud.
-                // Remove from the AppSettings from the map to prevent insert later.
+                // Remove from the AppSettings from the map to prevent insertIntoStorage later.
                 appSettingsCloudMap.remove(localAppSettings.getUuid());
 
                 // Check to see if the local AppSettings needs to be updated
 
                 if (appSettingsRequiresUpdating(localAppSettings, cloudAppSettings)) {
                     // Update existing record
-                    Timber.i("computeAppSettingsMergeSolution(): Scheduling update for: \"%s\".",
+                    Timber.i("computeAppSettingsMergeSolution(): Scheduling updateStorage for: \"%s\".",
                             localAppSettings.getName());
                     Uri existingAppSettingsUri = AppSettingsSqlTable.CONTENT_URI.buildUpon()
                             .appendPath(String.valueOf(localAppSettings.getSQLiteId())).build();
@@ -308,7 +308,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                     syncStats.numAppSettingsUpdates++;
                 } else {
                     // Local AppSettings do not need updating
-                    Timber.i("computeAppSettingsMergeSolution(): No update required for \"%s\" AppSettings.",
+                    Timber.i("computeAppSettingsMergeSolution(): No updateStorage required for \"%s\" AppSettings.",
                             localAppSettings.getName());
                     syncStats.numAppSettingsNoUpdateRequired++;
                     // If dates are not the same then set local date equal to cloud date
@@ -362,19 +362,19 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
 
         // Iterate through the ListTheme local list searching for a match in the cloud map
         // If match found, check to see if the local ListTheme needs to be updated
-        // If match not found, the ListTheme is no longer exists in the cloud, so delete it from local storage
+        // If match not found, the ListTheme is no longer exists in the cloud, so deleteFromStorage it from local storage
 
         for (ListTheme localListTheme : listThemeLocalList) {
             ListTheme cloudListTheme = listThemeCloudMap.get(localListTheme.getUuid());
             if (cloudListTheme != null) {
                 // Match found. The ListTheme exist both locally and in the cloud.
-                // Remove from the ListTheme from the map to prevent insert later.
+                // Remove from the ListTheme from the map to prevent insertIntoStorage later.
                 listThemeCloudMap.remove(localListTheme.getUuid());
 
                 // Check to see if the local ListTheme needs to be updated
                 if (listThemeRequiresUpdating(localListTheme, cloudListTheme)) {
                     // Update existing record
-                    Timber.i("computeListThemeMergeSolution(): Scheduling update for: \"%s\".",
+                    Timber.i("computeListThemeMergeSolution(): Scheduling updateStorage for: \"%s\".",
                             localListTheme.getName());
                     Uri existingListThemeUri = ListThemesSqlTable.CONTENT_URI.buildUpon()
                             .appendPath(String.valueOf(localListTheme.getSQLiteId())).build();
@@ -389,7 +389,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                     syncStats.numListThemeUpdates++;
                 } else {
                     // Local ListTheme do not need updating
-                    Timber.i("computeListThemeMergeSolution(): No update required for \"%s\".",
+                    Timber.i("computeListThemeMergeSolution(): No updateStorage required for \"%s\".",
                             localListTheme.getName());
                     syncStats.numListThemeNoUpdateRequired++;
                     // If dates are not the same then set local date equal to cloud date
@@ -443,20 +443,20 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
 
         // Iterate through the ListTitle local list searching for a match in the cloud map
         // If match found, check to see if the local ListTitle needs to be updated
-        // If match not found, the ListTitle is no longer exists in the cloud, so delete it from local storage
+        // If match not found, the ListTitle is no longer exists in the cloud, so deleteFromStorage it from local storage
 
         for (ListTitle localListTitle : listTitleLocalList) {
             try {
                 ListTitle cloudListTitle = listTitleCloudMap.get(localListTitle.getUuid());
                 if (cloudListTitle != null) {
                     // Match found. The ListTitle exist both locally and in the cloud.
-                    // Remove from the ListTitle from the map to prevent insert later.
+                    // Remove from the ListTitle from the map to prevent insertIntoStorage later.
                     listTitleCloudMap.remove(localListTitle.getUuid());
 
                     // Check to see if the local ListTitle needs to be updated
                     if (listTitleRequiresUpdating(localListTitle, cloudListTitle)) {
                         // Update existing record
-                        Timber.i("computeListTitleMergeSolution(): Scheduling update for: \"%s\".",
+                        Timber.i("computeListTitleMergeSolution(): Scheduling updateStorage for: \"%s\".",
                                 localListTitle.getName());
                         Uri existingListTitleUri = ListTitlesSqlTable.CONTENT_URI.buildUpon()
                                 .appendPath(String.valueOf(localListTitle.getSQLiteId())).build();
@@ -471,7 +471,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                         syncStats.numListTitleUpdates++;
                     } else {
                         // Local ListTitle do not need updating
-                        Timber.i("computeListTitleMergeSolution(): No update required for \"%s\".",
+                        Timber.i("computeListTitleMergeSolution(): No updateStorage required for \"%s\".",
                                 localListTitle.getName());
                         syncStats.numListTitleNoUpdateRequired++;
 
@@ -533,20 +533,20 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
 
         // Iterate through the ListTitlePosition local list searching for a match in the cloud map
         // If match found, check to see if the local ListTitlePosition needs to be updated
-        // If match not found, the ListTitlePosition is no longer exists in the cloud, so delete it from local storage
+        // If match not found, the ListTitlePosition is no longer exists in the cloud, so deleteFromStorage it from local storage
 
         for (ListTitlePosition localListTitlePosition : listTitlePositionLocalList) {
             try {
                 ListTitlePosition cloudListTitlePosition = listTitlePositionCloudMap.get(localListTitlePosition.getUuid());
                 if (cloudListTitlePosition != null) {
                     // Match found. The ListTitlePosition exist both locally and in the cloud.
-                    // Remove from the ListTitlePosition from the map to prevent insert later.
+                    // Remove from the ListTitlePosition from the map to prevent insertIntoStorage later.
                     listTitlePositionCloudMap.remove(localListTitlePosition.getUuid());
 
                     // Check to see if the local ListTitlePosition needs to be updated
                     if (listTitlePositionRequiresUpdating(localListTitlePosition, cloudListTitlePosition)) {
                         // Update existing record
-                        Timber.i("computeListTitlePositionMergeSolution(): Scheduling update for ListPosition ListTitleUuid = %s",
+                        Timber.i("computeListTitlePositionMergeSolution(): Scheduling updateStorage for ListPosition ListTitleUuid = %s",
                                 localListTitlePosition.getListTitleUuid());
                         Uri existingListTitlePositionUri = ListTitlePositionsSqlTable.CONTENT_URI.buildUpon()
                                 .appendPath(String.valueOf(localListTitlePosition.getSQLiteId())).build();
@@ -561,7 +561,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                         syncStats.numListTitlePositionUpdates++;
                     } else {
                         // Local ListTitlePosition does not need updating
-                        Timber.i("computeListTitlePositionMergeSolution(): No update required for ListTitlePosition with ListTitle uuid = %s",
+                        Timber.i("computeListTitlePositionMergeSolution(): No updateStorage required for ListTitlePosition with ListTitle uuid = %s",
                                 localListTitlePosition.getListTitleUuid());
                         syncStats.numListTitlePositionNoUpdateRequired++;
 
@@ -624,19 +624,19 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
 
         // Iterate through the ListItem local list searching for a match in the cloud map
         // If match found, check to see if the local ListItem needs to be updated
-        // If match not found, the ListItem is no longer exists in the cloud, so delete it from local storage
+        // If match not found, the ListItem is no longer exists in the cloud, so deleteFromStorage it from local storage
 
         for (ListItem localListItem : listItemLocalList) {
             ListItem cloudListItem = listItemCloudMap.get(localListItem.getUuid());
             if (cloudListItem != null) {
                 // Match found. The ListItem exist both locally and in the cloud.
-                // Remove from the ListItem from the map to prevent insert later.
+                // Remove from the ListItem from the map to prevent insertIntoStorage later.
                 listItemCloudMap.remove(localListItem.getUuid());
 
                 // Check to see if the local ListItem needs to be updated
                 if (listItemRequiresUpdating(localListItem, cloudListItem)) {
                     // Update existing record
-                    Timber.i("computeListItemMergeSolution(): Scheduling update for: \"%s\".",
+                    Timber.i("computeListItemMergeSolution(): Scheduling updateStorage for: \"%s\".",
                             localListItem.getName());
                     Uri existingListItemUri = ListItemsSqlTable.CONTENT_URI.buildUpon()
                             .appendPath(String.valueOf(localListItem.getSQLiteId())).build();
@@ -650,7 +650,7 @@ public class SyncObjectsFromCloud_InBackground extends AbstractInteractor implem
                     syncStats.numListItemUpdates++;
                 } else {
                     // Local ListItem does not need updating
-                    Timber.i("computeListItemMergeSolution(): No update required for \"%s\".",
+                    Timber.i("computeListItemMergeSolution(): No updateStorage required for \"%s\".",
                             localListItem.getName());
                     syncStats.numListItemNoUpdateRequired++;
                     // If dates are not the same then set local date equal to cloud date

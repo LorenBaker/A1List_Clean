@@ -41,42 +41,16 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     private static final int FALSE = 0;
     private static final int TRUE = 1;
-    private static ListTitleRepository_Impl mListTitleRepository = null;
+    private static ListTitleRepository_Impl mListTitleRepository;
     private final Context mContext;
 
     public ListItemRepository_Impl(Context context) {
         // private constructor
         this.mContext = context;
-        this.mListTitleRepository = AndroidApplication.getListTitleRepository();
+        mListTitleRepository = AndroidApplication.getListTitleRepository();
     }
 
     // CRUD operations
-
-    public static ListItem listItemFromCursor(Cursor cursor) {
-        ListItem listItem = new ListItem();
-
-        listItem.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_ID)));
-        listItem.setObjectId(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_OBJECT_ID)));
-        listItem.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UUID)));
-        listItem.setName(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_NAME)));
-
-        listItem.setListTitleUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID)));
-        listItem.setDeviceUuid(MySettings.getDeviceUuid());
-        listItem.setMessageChannel(MySettings.getActiveUserID());
-
-        listItem.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MANUAL_SORT_KEY)));
-
-        listItem.setStruckOut(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_STRUCK_OUT)) > 0);
-        listItem.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_CHECKED)) > 0);
-        listItem.setFavorite(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_FAVORITE)) > 0);
-        listItem.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MARKED_FOR_DELETION)) > 0);
-
-        long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UPDATED));
-        Date updated = new Date(dateMillis);
-        listItem.setUpdated(updated);
-
-        return listItem;
-    }
 
     public static ContentValues makeListItemContentValues(ListItem listItem) {
         ContentValues cv = new ContentValues();
@@ -102,26 +76,77 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return cv;
     }
 
+    public static ListItem listItemFromCursor(Cursor cursor) {
+        ListItem listItem = new ListItem();
+
+
+        String name = cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_NAME));
+        listItem.setName(name);
+
+        listItem.setSQLiteId(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_ID)));
+
+        String objectId = cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_OBJECT_ID));
+        if(objectId==null||objectId.isEmpty()){
+            Timber.e("listItemFromCursor(): ListItem \"%s's\" objectId not set!", name);
+        }
+        listItem.setObjectId(objectId);
+        listItem.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UUID)));
+        listItem.setListTitleUuid(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_LIST_TITLE_UUID)));
+        listItem.setUrlLink(cursor.getString(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_URL_LINK)));
+        listItem.setDeviceUuid(MySettings.getDeviceUuid());
+        listItem.setMessageChannel(MySettings.getActiveUserID());
+
+        listItem.setManualSortKey(cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MANUAL_SORT_KEY)));
+
+        listItem.setStruckOut(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_STRUCK_OUT)) > 0);
+        listItem.setChecked(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_CHECKED)) > 0);
+        listItem.setFavorite(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_FAVORITE)) > 0);
+        listItem.setMarkedForDeletion(cursor.getInt(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_MARKED_FOR_DELETION)) > 0);
+
+        long dateMillis = cursor.getLong(cursor.getColumnIndexOrThrow(ListItemsSqlTable.COL_UPDATED));
+        Date updated = new Date(dateMillis);
+        listItem.setUpdated(updated);
+
+        return listItem;
+    }
+
     //region Insert ListItem
+
+    /**
+     * TInserts a list of ListItem into local storage.
+     * For each successfully inserted ListItem, this method inserts the ListItem into cloud storage.
+     * @param listItems The list of ListItem to be stored.
+     * @return Returns a list of ListItem successfully inserted into local storage.
+     */
     @Override
-    public List<ListItem> insert(List<ListItem> listItems) {
+    public List<ListItem> insertIntoStorage(List<ListItem> listItems) {
         List<ListItem> successfullyInsertedListItems = insertIntoLocalStorage(listItems);
         if (successfullyInsertedListItems.size() > 0) {
-            insertInCloud(successfullyInsertedListItems);
+            insertIntoCloudStorage(successfullyInsertedListItems);
         }
         return successfullyInsertedListItems;
     }
 
+    /**
+     * Inserts a ListItem into local storage, and if successful, inserts the ListItem into cloud storage.
+     *
+     * @param listItem ListItem to be inserted into storage.
+     * @return Returns TRUE if ListItem successfully inserted into local storage.
+     */
     @Override
-    public boolean insert(ListItem listItem) {
-        // insert new listItem into SQLite db
+    public boolean insertIntoStorage(ListItem listItem) {
         boolean successfullySavedIntoLocalStorage = insertIntoLocalStorage(listItem);
         if (successfullySavedIntoLocalStorage) {
-            insertInCloud(listItem);
+            insertIntoCloudStorage(listItem);
         }
         return successfullySavedIntoLocalStorage;
     }
 
+    /**
+     * Inserts a list of ListItem into local storage.
+     * @param listItems The list of ListItem to be stored.
+     * @return Returns a list of ListItem successfully stored in local storage.
+     */
     @Override
     public List<ListItem> insertIntoLocalStorage(List<ListItem> listItems) {
         List<ListItem> successfullyInsertedListItems = new ArrayList<>();
@@ -140,6 +165,13 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return successfullyInsertedListItems;
     }
 
+    /**
+     * This method inserts a ListItem into local storage
+     * with the ListItem’s local storage dirty flag set to TRUE.
+     *
+     * @param listItem ListItem to be inserted into local storage.
+     * @return Returns TRUE if successful.
+     */
     @Override
     public boolean insertIntoLocalStorage(ListItem listItem) {
         boolean result = false;
@@ -161,23 +193,35 @@ public class ListItemRepository_Impl implements ListItemRepository,
             Timber.i("insertIntoLocalStorage(): ListItemRepository_Impl: Successfully inserted \"%s\" into the SQLite db.", listItem.getName());
         } else {
             // failed to create listItem in the SQLite db
-            Timber.e("insertIntoLocalStorage(): ListItemRepository_Impl: FAILED to insert \"%s\" into the SQLite db.", listItem.getName());
+            Timber.e("insertIntoLocalStorage(): ListItemRepository_Impl: FAILED to insertIntoStorage \"%s\" into the SQLite db.", listItem.getName());
         }
 
         return result;
     }
 
+    /**
+     * Inserts a list of ListItem into cloud storage.
+     * For each successfully inserted ListItem, the method clears the local storage dirty flag and
+     * sends an Insert message to other devices.
+     * @param listItems List of ListItem for insertion.
+     */
     @Override
-    public void insertInCloud(List<ListItem> listItems) {
-        updateInCloud(listItems, true);
+    public void insertIntoCloudStorage(List<ListItem> listItems) {
+        updateInCloudStorage(listItems, true);
     }
 
+    /**
+     * This method inserts a ListItem into cloud storage,
+     * and if successful, clears the local storage dirty flag and
+     * sends an Insert message to other devices.
+     *
+     * @param listItem ListItem to be inserted into cloud storage.
+     */
+    @Override
+    public void insertIntoCloudStorage(ListItem listItem) {
+        updateInCloudStorage(listItem, true);
+    }
     //endregion
-
-    @Override
-    public void insertInCloud(ListItem listItem) {
-        updateInCloud(listItem, true);
-    }
 
     //region Read ListItem
     @Override
@@ -374,14 +418,14 @@ public class ListItemRepository_Impl implements ListItemRepository,
     @Override
     public List<ListItem> retrieveStruckOutListItems(ListTitle listTitle) {
         List<ListItem> struckOutListItems = new ArrayList<>();
-        Cursor cursor = null;
+        Cursor cursor;
         Uri uri = ListItemsSqlTable.CONTENT_URI;
         String[] projection = ListItemsSqlTable.PROJECTION_ALL;
 
         String selection = ListItemsSqlTable.COL_LIST_TITLE_UUID + " = ? AND "
                 + ListItemsSqlTable.COL_STRUCK_OUT + " = ?";
         String[] selectionArgs = new String[]{listTitle.getUuid(), String.valueOf(TRUE)};
-        String sortOrder = null;
+        String sortOrder = ListItemsSqlTable.SORT_ORDER_NAME_ASC;
 
         ContentResolver cr = mContext.getContentResolver();
         ListItem struckOutListItem;
@@ -404,30 +448,30 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return struckOutListItems;
     }
 
-    @Override
-    public int retrieveNumberOfStruckOutListItems(ListTitle listTitle) {
-        int struckOutListItems = 0;
-        Cursor cursor = null;
-        Uri uri = ListItemsSqlTable.CONTENT_URI;
-        String[] projection = new String[]{ListItemsSqlTable.COL_ID};
-        String selection = ListItemsSqlTable.COL_LIST_TITLE_UUID + " = ? AND "
-                + ListItemsSqlTable.COL_STRUCK_OUT + " = ?";
-        String[] selectionArgs = new String[]{listTitle.getUuid(), String.valueOf(TRUE)};
-        String sortOrder = null;
-        try {
-            ContentResolver cr = mContext.getContentResolver();
-            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
-            if (cursor != null) {
-                struckOutListItems = cursor.getCount();
-                cursor.close();
-            }
-
-        } catch (Exception e) {
-            Timber.e("retrieveNumberOfStruckOutListItems(): Exception: %s.", e.getMessage());
-        }
-
-        return struckOutListItems;
-    }
+//    @Override
+//    public int retrieveNumberOfStruckOutListItems(ListTitle listTitle) {
+//        int struckOutListItems = 0;
+//        Cursor cursor = null;
+//        Uri uri = ListItemsSqlTable.CONTENT_URI;
+//        String[] projection = new String[]{ListItemsSqlTable.COL_ID};
+//        String selection = ListItemsSqlTable.COL_LIST_TITLE_UUID + " = ? AND "
+//                + ListItemsSqlTable.COL_STRUCK_OUT + " = ?";
+//        String[] selectionArgs = new String[]{listTitle.getUuid(), String.valueOf(TRUE)};
+//        String sortOrder = null;
+//        try {
+//            ContentResolver cr = mContext.getContentResolver();
+//            cursor = cr.query(uri, projection, selection, selectionArgs, sortOrder);
+//            if (cursor != null) {
+//                struckOutListItems = cursor.getCount();
+//                cursor.close();
+//            }
+//
+//        } catch (Exception e) {
+//            Timber.e("retrieveNumberOfStruckOutListItems(): Exception: %s.", e.getMessage());
+//        }
+//
+//        return struckOutListItems;
+//    }
 
 //    @Override
 //    public long retrieveListItemNextSortKey(ListTitle listTitle) {
@@ -441,13 +485,13 @@ public class ListItemRepository_Impl implements ListItemRepository,
 //    public void setListItemLastSortKey(ListTitle listTitle, long sortKey) {
 //        ContentValues cv = new ContentValues();
 //        cv.put(ListTitlesSqlTable.COL_LIST_ITEM_LAST_SORT_KEY, sortKey);
-//        mListTitleRepository.update(listTitle);
+//        mListTitleRepository.updateStorage(listTitle);
 //    }
 
     private ListItem getListItem(ListTitle listTitle, String listItemName) {
         // TODO: Does this getListItem method's selection need ListItem not marked for deletion. How to handle favorites.
         ListItem result = null;
-        Cursor cursor = null;
+        Cursor cursor;
         Uri uri = ListItemsSqlTable.CONTENT_URI;
         String selection = ListItemsSqlTable.COL_LIST_TITLE_UUID + " = ? AND "
                 + ListItemsSqlTable.COL_NAME + " = ?";
@@ -504,23 +548,37 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     //region Update ListItem
 
+    /**
+     * Updates a list of ListItem in local and cloud storage.
+     * @param listItems List of ListItem to be updated in local and cloud storage.
+     */
     @Override
-    public void update(List<ListItem> listItems) {
+    public void updateStorage(List<ListItem> listItems) {
         List<ListItem> successfullyUpdatedListItemsInLocalStorage = updateInLocalStorage(listItems);
         if (successfullyUpdatedListItemsInLocalStorage.size() > 0) {
-            updateInCloud(successfullyUpdatedListItemsInLocalStorage, false);
+            updateInCloudStorage(successfullyUpdatedListItemsInLocalStorage, false);
         }
     }
 
+    /**
+     * This method updates a ListItem in local storage,
+     * and if successful, updates the ListItem in cloud storage.
+     *
+     * @param listItem ListItem to be updated.
+     */
     @Override
-    public void update(ListItem listItem) {
+    public void updateStorage(ListItem listItem) {
         if (updateInLocalStorage(listItem) == 1) {
-            updateInCloud(listItem, false);
+            updateInCloudStorage(listItem, false);
         }
     }
 
+    /**
+     * This method updates a list of ListItem in local storage.
+     * @param listItems The list of ListItem to be updated.
+     * @return Returns a list of ListItem successfully updated in local storage.
+     */
 
-    //region Update in Local Storage
     @Override
     public List<ListItem> updateInLocalStorage(List<ListItem> listItems) {
         List<ListItem> successfullyUpdatedListItems = new ArrayList<>();
@@ -539,6 +597,15 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return successfullyUpdatedListItems;
     }
 
+
+    /**
+     * This method updates a ListItem in local storage and sets the its
+     * local storage dirty flag set to TRUE and sets its update time to
+     * the device’s current time.
+     *
+     * @param listItem ListItem to be updated.
+     * @return Returns the number of updated records.
+     */
     @Override
     public int updateInLocalStorage(ListItem listItem) {
         listItem.setUpdated(Calendar.getInstance().getTime());
@@ -547,7 +614,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
         if (numberOfRecordsUpdated == 1) {
             Timber.i("updateInLocalStorage(): Successfully updated \"%s\" in the SQLiteDb.", listItem.getName());
         } else {
-            Timber.e("updateInLocalStorage(): FAILED to update \"%s\" in the SQLiteDb.", listItem.getName());
+            Timber.e("updateInLocalStorage(): FAILED to updateStorage \"%s\" in the SQLiteDb.", listItem.getName());
         }
         return numberOfRecordsUpdated;
     }
@@ -568,12 +635,16 @@ public class ListItemRepository_Impl implements ListItemRepository,
         return numberOfRecordsUpdated;
 
     }
-    //endregion
 
-    //region Update ListItem in Cloud
-
+    /**
+     * This method updates the provided list of ListItem in cloud storage via a background thread.
+     * For successfully updated ListItem, the method clears the local storage dirty flag and
+     * sends an Insert message to other devices.
+     * @param listItems List of ListItem to be updated
+     * @param isNew TRUE if the ListItems are new and are to be inserted into cloud storage.
+     */
     @Override
-    public void updateInCloud(List<ListItem> listItems, boolean isNew) {
+    public void updateInCloudStorage(List<ListItem> listItems, boolean isNew) {
         List<ListItem> listItemsThatDoNotHaveObjectIds = new ArrayList<>();
         List<ListItem> listItemsThatHaveObjectIds = new ArrayList<>();
 
@@ -597,7 +668,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
                     MainThreadImpl.getInstance(), this, listItemsThatHaveObjectIds).execute();
 
             for (ListItem listItem : listItemsThatDoNotHaveObjectIds) {
-                Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                Timber.e("updateInCloudStorage(): Unable to updateStorage \"%s\" in the Cloud. No Backendless objectId available!",
                         listItem.getName());
             }
 
@@ -612,6 +683,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
     @Override
     public void onListItemListSavedToBackendless(String successMessage, List<ListItem> successfullySavedListItems) {
         Timber.i("onListItemListSavedToBackendless(): %s", successMessage);
+//        EventBus.getDefault().post(new MyEvents.mainActivityPresenterResume());
     }
 
     @Override
@@ -619,8 +691,16 @@ public class ListItemRepository_Impl implements ListItemRepository,
         Timber.e("onListItemListSaveToBackendlessFailed(): %s", errorMessage);
     }
 
+    /**
+     * Updates a ListItem in cloud storage via a background thread,
+     * and if successful, calls the Clear Local Storage Dirty Flag method and
+     * sends an Update message to other devices.
+     *
+     * @param listItem ListItem to be updated in cloud storage.
+     * @param isNew    TRUE for new ListItems to be inserted into cloud storage.
+     */
     @Override
-    public void updateInCloud(ListItem listItem, boolean isNew) {
+    public void updateInCloudStorage(ListItem listItem, boolean isNew) {
         if (listItem != null) {
             // If the listItem is not new ... make sure that it has a Backendless objectId.
             if (!isNew) {
@@ -631,7 +711,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
                 if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
                     // The listItem is not new AND there is no Backendless objectId available ... so,
                     // Unable to update the listItem in Backendless
-                    Timber.e("updateInCloud(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                    Timber.e("updateInCloudStorage(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
                             listItem.getName());
                     return;
                 }
@@ -639,7 +719,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
             new SaveListItemToCloud_InBackground(ThreadExecutor.getInstance(),
                     MainThreadImpl.getInstance(), this, listItem).execute();
         } else {
-            Timber.e("updateInCloud(): Unable to update ListItem in Cloud. The Provided ListItem is null!");
+            Timber.e("updateInCloudStorage(): Unable to updateStorage ListItem in Cloud. The Provided ListItem is null!");
         }
     }
 
@@ -654,77 +734,22 @@ public class ListItemRepository_Impl implements ListItemRepository,
     }
     //endregion
 
-    @Override
-    public int toggle(ListItem listItem, String fieldName) {
-        int result = 0;
-        boolean newValue;
-        ContentValues cv = new ContentValues();
-
-        switch (fieldName) {
-            case ListItemsSqlTable.COL_CHECKED:
-                newValue = listItem.isChecked();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListItemsSqlTable.COL_CHECKED, newValue ? TRUE : FALSE);
-                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-                updateInLocalStorage(listItem, cv);
-                break;
-
-            case ListItemsSqlTable.COL_FAVORITE:
-                newValue = listItem.isFavorite();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListItemsSqlTable.COL_FAVORITE, newValue ? TRUE : FALSE);
-                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-                updateInLocalStorage(listItem, cv);
-                break;
-
-
-            case ListItemsSqlTable.COL_MARKED_FOR_DELETION:
-                newValue = listItem.isMarkedForDeletion();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, newValue ? TRUE : FALSE);
-                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-                updateInLocalStorage(listItem, cv);
-                break;
-
-
-            case ListItemsSqlTable.COL_STRUCK_OUT:
-                newValue = listItem.isStruckOut();
-                if (newValue) {
-                    result++;
-                } else {
-                    result--;
-                }
-                cv.put(ListItemsSqlTable.COL_STRUCK_OUT, newValue ? TRUE : FALSE);
-                cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, TRUE);
-                updateInLocalStorage(listItem, cv);
-                break;
-
-            default:
-                Timber.e("toggle(): Unknown Field Name! \"%s\"", fieldName);
-                break;
-        }
-        return result;
-    }
-
-    //endregion
-
 
     //region Delete ListItem
+    //    The general deletion process:
+    //    i)	First set the the ListItem's delete flag in local storage;
+    //    ii)	Second, if ListItem is a Favorite then update the ListItem in cloud storage,
+    //          otherwise delete the ListItem in cloud storage;
+    //    iii)	Third, if ListItem successfully deleted from cloud storage then delete from local storage.
+
+    /**
+     * This method deletes the provide list of ListItem from local and cloud storage.
+     * @param listItems List of ListItem to be deleted.
+     * @return returns the number of ListItems successfully marked for deletion in local storage.
+     */
     @Override
-    public int delete(List<ListItem> listItems) {
-        List<ListItem> successfullyMarkedForDeletionListItems = deleteFromLocalStorage(listItems);
+    public int deleteFromStorage(List<ListItem> listItems) {
+        List<ListItem> successfullyMarkedForDeletionListItems = setDeleteFlagInLocalStorage(listItems);
         List<ListItem> listItemsForCloudUpdate = new ArrayList<>();
         List<ListItem> listItemsForCloudDeletion = new ArrayList<>();
 
@@ -737,54 +762,142 @@ public class ListItemRepository_Impl implements ListItemRepository,
         }
 
         if (listItemsForCloudUpdate.size() > 0) {
-            updateInCloud(listItemsForCloudUpdate, false);
+            updateInCloudStorage(listItemsForCloudUpdate, false);
         }
 
         if (listItemsForCloudDeletion.size() > 0) {
-            deleteFromCloud(listItemsForCloudDeletion);
+            deleteFromCloudStorage(listItemsForCloudDeletion);
         }
 
         return successfullyMarkedForDeletionListItems.size();
     }
 
+    /**
+     * This method first calls the Set Delete Flag in Local Storage method,
+     * and if successful, calls either the Update in Cloud Storage method if the ListItem
+     * is a Favorite otherwise it calls the Delete from Cloud Storage method.
+     *
+     * @param listItem ListItem to be deleted.
+     * @return Returns the number of ListItems that were marked for deletion in local storage.
+     */
     @Override
-    public int delete(ListItem listItem) {
-        int numberOfDeletedListItems = deleteFromLocalStorage(listItem);
-        if (numberOfDeletedListItems == 1) {
+    public int deleteFromStorage(ListItem listItem) {
+        int numberListItemsMarkedForDeletion = setDeleteFlagInLocalStorage(listItem);
+        if (numberListItemsMarkedForDeletion == 1) {
             if (listItem.isFavorite()) {
                 listItem.setMarkedForDeletion(true);
                 listItem.setStruckOut(false);
-                updateInCloud(listItem, false);
+                updateInCloudStorage(listItem, false);
             } else {
-                deleteFromCloud(listItem);
+                deleteFromCloudStorage(listItem);
             }
         }
 
-        return numberOfDeletedListItems;
+        return numberListItemsMarkedForDeletion;
     }
 
+    /**
+     * This method sets a list of ListItems delete flags' to TRUE,
+     * for each successfully marked ListItem sets its struck out flag to FALSE and
+     * sets sets the updated time to the device’s current time.
+     *
+     * @param listItems List of ListItem
+     * @return Returns List of ListItem successfully marked for deletion in local storage.
+     */
     @Override
-    public List<ListItem> deleteFromLocalStorage(List<ListItem> listItems) {
-        List<ListItem> successfullyMarkedForDeletionListItems = new ArrayList<>();
+    public List<ListItem> setDeleteFlagInLocalStorage(List<ListItem> listItems) {
+        List<ListItem> listItemsWithDeleteFlagSet = new ArrayList<>();
         for (ListItem listItem : listItems) {
-            if (deleteFromLocalStorage(listItem) == 1) {
+            int numberOfUpdatedRecords = setDeleteFlagInLocalStorage(listItem);
+            if (numberOfUpdatedRecords == 1) {
                 listItem.setMarkedForDeletion(true);
                 listItem.setStruckOut(false);
-                successfullyMarkedForDeletionListItems.add(listItem);
+                listItem.setUpdated(Calendar.getInstance().getTime());
+                listItemsWithDeleteFlagSet.add(listItem);
             }
         }
-
-        if (successfullyMarkedForDeletionListItems.size() == listItems.size()) {
-            Timber.i("deleteFromLocalStorage(): Successfully marked all %d ListItems for deletion in SQLiteDb.",
-                    successfullyMarkedForDeletionListItems.size());
-        } else {
-            Timber.e("deleteFromLocalStorage(): Only marked %d of of %d ListItems for deletion in SQLiteDb.",
-                    successfullyMarkedForDeletionListItems.size(), listItems.size());
-        }
-
-        return successfullyMarkedForDeletionListItems;
+        return listItemsWithDeleteFlagSet;
     }
 
+    /**
+     * This method
+     * sets the ListItem’s local storage delete flag to TRUE,
+     * sets the ListItem’s local storage dirty flag set to TRUE,
+     * sets the ListItem's local storage struck out flag to FALSE, and
+     * sets the updated time to the device’s current time.
+     *
+     * @param listItem ListItem to be marked for deletion.
+     * @return Returns the number of updated ListItem records
+     */
+    @Override
+    public int setDeleteFlagInLocalStorage(ListItem listItem) {
+        int numberOfMarkedListItems = 0;
+        try {
+            Uri uri = ListItemsSqlTable.CONTENT_URI;
+            String selection = ListItemsSqlTable.COL_UUID + " = ?";
+            String[] selectionArgs = new String[]{listItem.getUuid()};
+            ContentResolver cr = mContext.getContentResolver();
+            ContentValues cv = new ContentValues();
+            cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
+            cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, String.valueOf(TRUE));
+            cv.put(ListItemsSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
+            cv.put(ListItemsSqlTable.COL_UPDATED, Calendar.getInstance().getTimeInMillis());
+            numberOfMarkedListItems = cr.update(uri, cv, selection, selectionArgs);
+            if (numberOfMarkedListItems == 1) {
+                Timber.i("setDeleteFlagInLocalStorage(): Successfully marked \"%s\" for deletion in SQLiteDb.", listItem.getName());
+            } else {
+                Timber.e("setDeleteFlagInLocalStorage(): FAILED to marked \"%s\" for deletion in SQLiteDb.", listItem.getName());
+            }
+
+        } catch (Exception e) {
+            Timber.e("deleteFromStorage(): Exception: %s.", e.getMessage());
+        }
+
+        return numberOfMarkedListItems;
+
+//        List<ListItem> successfullyMarkedForDeletionListItems = new ArrayList<>();
+//        for (ListItem listItem : listItems) {
+//            if (deleteFromLocalStorage(listItem) == 1) {
+//                listItem.setMarkedForDeletion(true);
+//                listItem.setStruckOut(false);
+//                successfullyMarkedForDeletionListItems.add(listItem);
+//            }
+//        }
+//
+//        if (successfullyMarkedForDeletionListItems.size() == listItems.size()) {
+//            Timber.i("deleteFromLocalStorage(): Successfully marked all %d ListItems for deletion in SQLiteDb.",
+//                    successfullyMarkedForDeletionListItems.size());
+//        } else {
+//            Timber.e("deleteFromLocalStorage(): Only marked %d of of %d ListItems for deletion in SQLiteDb.",
+//                    successfullyMarkedForDeletionListItems.size(), listItems.size());
+//        }
+//
+//        return successfullyMarkedForDeletionListItems;
+    }
+
+    /**
+     * This method deletes a list of ListItem from local storage.
+     *
+     * @param listItems ListItems to be deleted
+     * @return Return a list of ListItem that were deleted from local storage.
+     */
+    @Override
+    public List<ListItem> deleteFromLocalStorage(List<ListItem> listItems) {
+        List<ListItem> listItemsDeletedFromLocalStorage = new ArrayList<>();
+        for (ListItem listItem : listItems) {
+            if (deleteFromLocalStorage(listItem) == 1) {
+                listItemsDeletedFromLocalStorage.add(listItem);
+            }
+        }
+        return listItemsDeletedFromLocalStorage;
+    }
+
+    /**
+     * This method deletes a ListItem from local storage.
+     *
+     * @param listItem ListItem to be deleted.
+     * @return Returns the number of deleted ListItems.
+     */
     @Override
     public int deleteFromLocalStorage(ListItem listItem) {
         int numberOfDeletedListItems = 0;
@@ -793,32 +906,69 @@ public class ListItemRepository_Impl implements ListItemRepository,
             String selection = ListItemsSqlTable.COL_UUID + " = ?";
             String[] selectionArgs = new String[]{listItem.getUuid()};
             ContentResolver cr = mContext.getContentResolver();
-            ContentValues cv = new ContentValues();
-            cv.put(ListItemsSqlTable.COL_UPDATED, Calendar.getInstance().getTimeInMillis());
-            cv.put(ListItemsSqlTable.COL_MARKED_FOR_DELETION, String.valueOf(TRUE));
-            cv.put(ListItemsSqlTable.COL_STRUCK_OUT, String.valueOf(FALSE));
-            numberOfDeletedListItems = cr.update(uri, cv, selection, selectionArgs);
+            numberOfDeletedListItems = cr.delete(uri, selection, selectionArgs);
             if (numberOfDeletedListItems == 1) {
-                Timber.i("deleteFromLocalStorage(): Successfully marked \"%s\" for deletion in SQLiteDb.", listItem.getName());
+                Timber.i("deleteFromLocalStorage(): Successfully deleted \"%s\" from the SQLiteDb.", listItem.getName());
             } else {
-                Timber.e("deleteFromLocalStorage(): FAILED to marked \"%s\" for deletion in SQLiteDb.", listItem.getName());
+                Timber.e("deleteFromLocalStorage(): FAILED to deleteFromStorage \"%s\" from the SQLiteDb.", listItem.getName());
             }
 
         } catch (Exception e) {
-            Timber.e("delete(): Exception: %s.", e.getMessage());
+            Timber.e("deleteFromStorage(): Exception: %s.", e.getMessage());
         }
 
         return numberOfDeletedListItems;
     }
 
+    /**
+     * This method
+     * clears the local storage dirty flag,
+     * sets the ListItem's cloud Object ID, and
+     * updates the ListItem’s modified time to that provided by cloud storage.
+     *
+     * @param listItem ListItem successfully stored in the cloud.
+     * @return Returns the number of updated records in local storage.
+     */
     @Override
-    public void deleteFromCloud(List<ListItem> listItems) {
+    public int clearLocalStorageDirtyFlag(ListItem listItem) {
+        ContentValues cv = new ContentValues();
+        Date updatedDate = listItem.getUpdated();
+        if (updatedDate == null) {
+            updatedDate = listItem.getCreated();
+        }
+        if (updatedDate != null) {
+            long updated = updatedDate.getTime();
+            cv.put(ListItemsSqlTable.COL_UPDATED, updated);
+        }
+
+        cv.put(ListItemsSqlTable.COL_LIST_ITEM_DIRTY, FALSE);
+        cv.put(ListItemsSqlTable.COL_OBJECT_ID, listItem.getObjectId());
+
+        return updateInLocalStorage(listItem, cv);
+    }
+
+    /**
+     * This method deletes a list of ListItems in cloud storage via a background thread,
+     * and for each successfully deleted ListItem calls the Delete from Local Storage method and
+     * sends a Delete message to other devices.
+     *
+     * @param listItems List of ListItems to be deleted from cloud storage.
+     */
+    @Override
+    public void deleteFromCloudStorage(List<ListItem> listItems) {
         new DeleteListItemsFromCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listItems).execute();
     }
 
+    /**
+     * This method deletes the ListItem in cloud storage via a background thread,
+     * and if successful, calls the Delete from Local Storage method and
+     * sends a Delete message to other devices.
+     *
+     * @param listItem ListItem to be deleted from cloud storage.
+     */
     @Override
-    public void deleteFromCloud(ListItem listItem) {
+    public void deleteFromCloudStorage(ListItem listItem) {
         new DeleteListItemFromCloud_InBackground(ThreadExecutor.getInstance(),
                 MainThreadImpl.getInstance(), this, listItem).execute();
     }

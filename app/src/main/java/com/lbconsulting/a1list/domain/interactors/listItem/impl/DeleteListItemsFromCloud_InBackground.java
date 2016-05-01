@@ -1,21 +1,22 @@
 package com.lbconsulting.a1list.domain.interactors.listItem.impl;
 
-import android.content.ContentResolver;
-import android.net.Uri;
-
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
 import com.lbconsulting.a1list.AndroidApplication;
+import com.lbconsulting.a1list.backendlessMessaging.ListItemMessage;
+import com.lbconsulting.a1list.backendlessMessaging.Messaging;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listItem.interactors.DeleteListItemsFromCloud;
 import com.lbconsulting.a1list.domain.model.ListItem;
-import com.lbconsulting.a1list.domain.storage.ListItemsSqlTable;
+import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
+
+import timber.log.Timber;
 
 /**
  * An interactor that saves the provided ListItem to Backendless.
@@ -39,38 +40,51 @@ public class DeleteListItemsFromCloud_InBackground extends AbstractInteractor im
             return;
         }
 
-        for (ListItem mListItem : mListItems) {
+        List<ListItem> successfullyRemovedListItems = new ArrayList<>();
+        ListItemRepository_Impl listItemRepository = AndroidApplication.getListItemRepository();
+        for (ListItem listItem : mListItems) {
             try {
                 // Delete ListItem from Backendless.
-                long timestamp = Backendless.Data.of(ListItem.class).remove(mListItem);
-
-                try {
-                    // Delete ListItem from the SQLite Db
-                    int numberOfDeletedListItems = 0;
-
-                    Uri uri = ListItemsSqlTable.CONTENT_URI;
-                    String selection = ListItemsSqlTable.COL_UUID + " = ?";
-                    String[] selectionArgs = new String[]{mListItem.getUuid()};
-                    ContentResolver cr = AndroidApplication.getContext().getContentResolver();
-                    numberOfDeletedListItems = cr.delete(uri, selection, selectionArgs);
-
-                    if (numberOfDeletedListItems == 1) {
-                        String successMessage = "\"" + mListItem.getName() + "\" successfully deleted from SQLiteDb and removed from Backendless at " + new Date(timestamp).toString();
-                        postListItemsDeletedFromBackendless(successMessage);
-                    } else {
-                        String errorMessage = "\"" + mListItem.getName() + "\" NOT DELETED from SQLiteDb but removed from Backendless at " + new Date(timestamp).toString();
-                        postListItemDeletionFromBackendlessFailed(errorMessage);
-                    }
-
-                } catch (Exception e) {
-                    String errorMessage = "\"" + mListItem.getName() + "\" DELETION EXCEPTION: " + e.getMessage();
-                    postListItemDeletionFromBackendlessFailed(errorMessage);
-                }
+                Backendless.Data.of(ListItem.class).remove(listItem);
+                Timber.i("run(): Successfully deleted \"%s\" from Backendless.", listItem.getName());
+                successfullyRemovedListItems.add(listItem);
 
             } catch (BackendlessException e) {
-                String errorMessage = "\"" + mListItem.getName() + "\" FAILED TO BE REMOVED from Backendless. " + e.getMessage();
-                postListItemDeletionFromBackendlessFailed(errorMessage);
+                Timber.e("run(): BackendlessException: FAILED to deleted \"%s\" from Backendless. BackendlessException: %s",
+                        listItem.getName(), e.getMessage());
             }
+        }
+
+        // Delete successfully removed ListItems from local storage.
+        List<ListItem> listItemsDeletedFromLocalStorage = listItemRepository.deleteFromLocalStorage(successfullyRemovedListItems);
+
+        // Send delete messages to other devices.
+        for (ListItem removedListItem : successfullyRemovedListItems) {
+            ListItemMessage.sendMessage(removedListItem, Messaging.ACTION_DELETE);
+        }
+
+        // Post results
+        if (mListItems.size() == successfullyRemovedListItems.size() && mListItems.size() == listItemsDeletedFromLocalStorage.size()) {
+            String successMessage =
+                    String.format("Successfully deleted all %d ListItems from both Backendless and the SQLiteDb.",
+                            mListItems.size());
+            postListItemsDeletedFromBackendless(successMessage);
+        } else if (mListItems.size() == successfullyRemovedListItems.size()) {
+            // Failed to delete some listItems from local storage.
+            String errorMessage = String.format("Successfully deleted all %d ListItems from Backendless BUT only %d ListItems from the SQLiteDB.",
+                    mListItems.size(), listItemsDeletedFromLocalStorage.size());
+            postListItemDeletionFromBackendlessFailed(errorMessage);
+        } else if (successfullyRemovedListItems.size() == listItemsDeletedFromLocalStorage.size()) {
+            // Failed to delete some listItems from cloud storage.
+            String errorMessage = String.format("Only deleted %d of %d ListItems from Backendless and the SQLiteDB.",
+                    listItemsDeletedFromLocalStorage.size(), mListItems.size());
+            postListItemDeletionFromBackendlessFailed(errorMessage);
+        } else {
+            // Failed to delete some listItems from cloud storage. And from those successfully deleted
+            // from cloud storage, Failed to delete some from local storage.
+            String errorMessage = String.format("Only deleted %d of %d ListItems from Backendless AND Only deleted %d of %d ListItems from SQLiteDb",
+                    successfullyRemovedListItems.size(), mListItems.size(), listItemsDeletedFromLocalStorage.size(), mListItems.size());
+            postListItemDeletionFromBackendlessFailed(errorMessage);
         }
     }
 

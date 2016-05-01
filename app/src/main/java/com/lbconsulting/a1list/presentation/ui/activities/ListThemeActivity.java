@@ -372,6 +372,8 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
             new ApplyTextSizeAndMarginsToAllListThemes_InBackground(ThreadExecutor.getInstance(),
                     MainThreadImpl.getInstance(), this, mListTheme).execute();
         }
+
+        finish();
     }
 
 
