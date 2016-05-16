@@ -298,7 +298,7 @@ public class ListTitleActivity extends AppCompatActivity implements View.OnClick
                 AppSettingsRepository_Impl appSettingsRepository = AndroidApplication.getAppSettingsRepository();
                 AppSettings appSettings = appSettingsRepository.retrieveAppSettings();
                 appSettings.setLastListTitleViewedUuid(listTitle.getUuid());
-                appSettingsRepository.update(appSettings);
+                appSettingsRepository.updateInStorage(appSettings);
                 break;
         }
         finish();

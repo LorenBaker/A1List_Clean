@@ -144,6 +144,14 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
             case EDIT_EXISTING_LIST_THEME:
                 btnSaveTheme.setText("Save Theme");
                 mToolbar.setTitle("Edit Theme");
+                // To prohibit duplicate ListThemes being created in Backendless,
+                // make sure that the provided ListTheme has a Backendless ObjectId
+                if (mListTheme.getObjectId() == null || mListTheme.getObjectId().isEmpty()) {
+                    ListTheme localListTheme = AndroidApplication.getListThemeRepository().retrieveListThemeByUuid(mListTheme.getUuid());
+                    if (localListTheme != null && !localListTheme.getObjectId().isEmpty()) {
+                        mListTheme.setObjectId(localListTheme.getObjectId());
+                    }
+                }
                 break;
 
             case CREATE_NEW_LIST_THEME:
@@ -360,11 +368,11 @@ public class ListThemeActivity extends AppCompatActivity implements View.OnClick
 
         switch (mMode) {
             case EDIT_EXISTING_LIST_THEME:
-                mListThemeRepository.update(mListTheme);
+                mListThemeRepository.updateStorage(mListTheme);
                 break;
 
             case CREATE_NEW_LIST_THEME:
-                mListThemeRepository.insert(mListTheme);
+                mListThemeRepository.insertIntoStorage(mListTheme);
                 break;
         }
 

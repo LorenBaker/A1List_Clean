@@ -1,20 +1,18 @@
 package com.lbconsulting.a1list.domain.interactors.listTheme.impl;
 
-import android.content.ContentResolver;
-import android.net.Uri;
-
 import com.backendless.Backendless;
 import com.backendless.exceptions.BackendlessException;
 import com.lbconsulting.a1list.AndroidApplication;
+import com.lbconsulting.a1list.backendlessMessaging.ListThemeMessage;
+import com.lbconsulting.a1list.backendlessMessaging.Messaging;
 import com.lbconsulting.a1list.domain.executor.Executor;
 import com.lbconsulting.a1list.domain.executor.MainThread;
 import com.lbconsulting.a1list.domain.interactors.base.AbstractInteractor;
 import com.lbconsulting.a1list.domain.interactors.listTheme.interactors.DeleteListThemeFromCloud;
 import com.lbconsulting.a1list.domain.model.ListTheme;
-import com.lbconsulting.a1list.domain.storage.ListThemesSqlTable;
 import com.lbconsulting.a1list.utils.CommonMethods;
 
-import java.util.Date;
+import java.util.Locale;
 
 /**
  * An interactor that saves the provided ListTheme to Backendless.
@@ -22,12 +20,14 @@ import java.util.Date;
 public class DeleteListThemeFromCloud_InBackground extends AbstractInteractor implements DeleteListThemeFromCloud {
     private final Callback mCallback;
     private final ListTheme mListTheme;
+    private final ListTheme mDefaultListTheme;
 
     public DeleteListThemeFromCloud_InBackground(Executor threadExecutor, MainThread mainThread,
-                                                 Callback callback, ListTheme listTheme) {
+                                                 Callback callback, ListTheme listTheme, ListTheme defaultListTheme) {
         super(threadExecutor, mainThread);
-        mListTheme = listTheme;
         mCallback = callback;
+        mListTheme = listTheme;
+        mDefaultListTheme = defaultListTheme;
     }
 
 
@@ -39,33 +39,30 @@ public class DeleteListThemeFromCloud_InBackground extends AbstractInteractor im
 
         try {
             // Delete ListTheme from Backendless.
-            long timestamp = Backendless.Data.of(ListTheme.class).remove(mListTheme);
+            Backendless.Data.of(ListTheme.class).remove(mListTheme);
 
-            try {
-                // Delete ListTheme from the SQLite Db
-                int numberOfDeletedListThemes;
+            // Delete ListTheme from local storage
+            int numberOfListThemesDeletedFromLocalStorage = AndroidApplication.getListThemeRepository()
+                    .deleteFromLocalStorage(mListTheme);
 
-                Uri uri = ListThemesSqlTable.CONTENT_URI;
-                String selection = ListThemesSqlTable.COL_UUID + " = ?";
-                String[] selectionArgs = new String[]{mListTheme.getUuid()};
-                ContentResolver cr = AndroidApplication.getContext().getContentResolver();
-                numberOfDeletedListThemes = cr.delete(uri, selection, selectionArgs);
+            // Send deleteFromStorage message to other devices.
+            ListThemeMessage.sendMessage(mListTheme, Messaging.ACTION_DELETE);
 
-                if (numberOfDeletedListThemes == 1) {
-                    String successMessage = "\"" + mListTheme.getName() + "\" successfully deleted from SQLiteDb and removed from Backendless at " + new Date(timestamp).toString();
-                    postListThemeDeletedFromCloud(successMessage);
-                } else {
-                    String errorMessage = "\"" + mListTheme.getName() + "\" NOT DELETED from SQLiteDb but removed from Backendless at " + new Date(timestamp).toString();
-                    postListThemeDeletionFromCloudFailed(errorMessage);
-                }
-
-            } catch (Exception e) {
-                String errorMessage = "\"" + mListTheme.getName() + "\" DELETION EXCEPTION: " + e.getMessage();
+            if (numberOfListThemesDeletedFromLocalStorage == 1) {
+                String successMessage = String.format(Locale.getDefault(),
+                        "Successfully deleted \"%s\" from both Backendless and the SQLiteDB.",
+                        mListTheme.getName());
+                postListThemeDeletedFromCloud(successMessage);
+            } else {
+                String errorMessage = String.format(Locale.getDefault(),
+                        "Successfully deleted \"%s\" from Backendless BUT NOT from the SQLiteDB.",
+                        mListTheme.getName());
                 postListThemeDeletionFromCloudFailed(errorMessage);
             }
 
         } catch (BackendlessException e) {
-            String errorMessage = "\"" + mListTheme.getName() + "\" FAILED TO BE REMOVED from Backendless. " + e.getMessage();
+            String errorMessage = String.format("FAILED to delete \"%s\" from Backendless. BackendlessException: %s",
+                    mListTheme.getName(), e.getMessage());
             postListThemeDeletionFromCloudFailed(errorMessage);
         }
     }

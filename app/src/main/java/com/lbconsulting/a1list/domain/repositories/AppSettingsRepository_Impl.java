@@ -104,7 +104,7 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 
     //region Update AppSettings
     @Override
-    public void update(AppSettings appSettings) {
+    public void updateInStorage(AppSettings appSettings) {
         if(appSettings!=null) {
             if (updateInLocalStorage(appSettings) == 1) {
                 updateInCloud(appSettings,false);
@@ -199,6 +199,24 @@ public class AppSettingsRepository_Impl implements AppSettingsRepository,
 
         new SaveAppSettingsToCloud_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(),
                 this, appSettings).execute();
+    }
+
+    @Override
+    public int clearAllData() {
+        int numberOfDeletedAppSettings = 0;
+        try {
+            Uri uri = AppSettingsSqlTable.CONTENT_URI;
+            String selection = null;
+            String[] selectionArgs = null;
+            ContentResolver cr = mContext.getContentResolver();
+            numberOfDeletedAppSettings = cr.delete(uri, selection, selectionArgs);
+            Timber.i("clearAllData(): Successfully deleted %d AppSettings from the SQLiteDb.", numberOfDeletedAppSettings);
+
+        } catch (Exception e) {
+            Timber.e("clearAllData(): Exception: %s.", e.getMessage());
+        }
+
+        return numberOfDeletedAppSettings;
     }
 
     @Override

@@ -27,13 +27,11 @@ import com.lbconsulting.a1list.presentation.ui.activities.backendless.Backendles
 import com.lbconsulting.a1list.presentation.ui.adapters.ListThemeArrayAdapter;
 import com.lbconsulting.a1list.threading.MainThreadImpl;
 import com.lbconsulting.a1list.utils.CommonMethods;
-import com.lbconsulting.a1list.utils.CsvParser;
 import com.lbconsulting.a1list.utils.MyEvents;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.Bind;
@@ -84,13 +82,16 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
                     //Yes button clicked
                     List<ListTheme> struckOutListThemes = mListThemeRepository.retrieveStruckOutListThemes();
                     if (struckOutListThemes.size() > 0) {
-                        List<ListTheme> successfullyMarkedListThemes = mListThemeRepository.deleteFromLocalStorage(struckOutListThemes);
-                        if (successfullyMarkedListThemes.size() > 0) {
-                            mPresenter.resume();
-                            mNumberOfStruckOutListThemes = mListThemeRepository.retrieveNumberOfStruckOutListThemes();
-                            new DeleteListThemesFromCloud_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(),
-                                    ManageListThemesActivity.this, successfullyMarkedListThemes).execute();
-                        }
+                        mListThemeRepository.deleteFromStorage(struckOutListThemes);
+                        mPresenter.resume();
+
+//                        List<ListTheme> successfullyMarkedListThemes = mListThemeRepository.deleteFromLocalStorage(struckOutListThemes);
+//                        if (successfullyMarkedListThemes.size() > 0) {
+//                            mPresenter.resume();
+//                            mNumberOfStruckOutListThemes = mListThemeRepository.retrieveNumberOfStruckOutListThemes();
+//                            new DeleteListThemesFromCloud_InBackground(ThreadExecutor.getInstance(), MainThreadImpl.getInstance(),
+//                                    ManageListThemesActivity.this, successfullyMarkedListThemes).execute();
+//                        }
                     }
 //                    mDeleteStruckOutListThemes.execute();
 //                    if (CommonMethods.isNetworkAvailable()) {
@@ -310,7 +311,7 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
         startActivity(intent);
         finish();
     }
-
+}
 //    @Override
 //    public void onStruckOutListThemesDeleted(String successMessage) {
 //        Timber.i("onStruckOutListThemesDeleted(): %s.", successMessage);
@@ -333,45 +334,45 @@ public class ManageListThemesActivity extends AppCompatActivity implements ListT
 //    }
 
 
-    private class MessagePayload {
-        private String mCreationTime;
-        private String mAction;
-        private String mTableName;
-        private String mObjectUuid;
+//    private class MessagePayload {
+//        private String mCreationTime;
+//        private String mAction;
+//        private String mTableName;
+//        private String mObjectUuid;
+//
+//        public MessagePayload(String action, String tableName, String objectUuid) {
+//            this.mAction = action;
+//            this.mTableName = tableName;
+//            this.mObjectUuid = objectUuid;
+//            mCreationTime = String.valueOf(System.currentTimeMillis());
+//        }
 
-        public MessagePayload(String action, String tableName, String objectUuid) {
-            this.mAction = action;
-            this.mTableName = tableName;
-            this.mObjectUuid = objectUuid;
-            mCreationTime = String.valueOf(System.currentTimeMillis());
-        }
-
-        public MessagePayload(String csvDataString) {
-            ArrayList<ArrayList<String>> records = CsvParser.CreateRecordAndFieldLists(csvDataString);
-            if (records.size() > 0) {
-                // load the first (and only) record.
-                ArrayList<String> record = records.get(0);
-                this.mAction = record.get(0);
-                this.mTableName = record.get(1);
-                this.mObjectUuid = record.get(2);
-                mCreationTime = record.get(3);
-            } else {
-                Timber.e("MessagePayload(): Unable to create MessagePayload. No data records found!");
-            }
-        }
-
-        @Override
-        public String toString() {
-            return String.valueOf(mAction + ": " + mTableName + ": " + mObjectUuid + "\n>> " + mCreationTime);
-        }
-
-        public String toCsvString() {
-            ArrayList<String> payload = new ArrayList<>();
-            payload.add(mAction);
-            payload.add(mTableName);
-            payload.add(mObjectUuid);
-            payload.add(mCreationTime);
-            return CsvParser.toCSVString(payload);
-        }
-    }
-}
+//        public MessagePayload(String csvDataString) {
+//            ArrayList<ArrayList<String>> records = CsvParser.CreateRecordAndFieldLists(csvDataString);
+//            if (records.size() > 0) {
+//                // load the first (and only) record.
+//                ArrayList<String> record = records.get(0);
+//                this.mAction = record.get(0);
+//                this.mTableName = record.get(1);
+//                this.mObjectUuid = record.get(2);
+//                mCreationTime = record.get(3);
+//            } else {
+//                Timber.e("MessagePayload(): Unable to create MessagePayload. No data records found!");
+//            }
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return String.valueOf(mAction + ": " + mTableName + ": " + mObjectUuid + "\n>> " + mCreationTime);
+//        }
+//
+//        public String toCsvString() {
+//            ArrayList<String> payload = new ArrayList<>();
+//            payload.add(mAction);
+//            payload.add(mTableName);
+//            payload.add(mObjectUuid);
+//            payload.add(mCreationTime);
+//            return CsvParser.toCSVString(payload);
+//        }
+//    }
+//}

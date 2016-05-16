@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         SyncObjectsFromCloud.Callback {
     private static final int NOTIFICATION_DOWNLOAD_ID = 33;
     private static ListTitlesPresenter_Impl mMainActivityPresenter;
+    private static boolean mLoggingOut;
     @Bind(R.id.fab)
     FloatingActionButton mFab;
     @Bind(R.id.toolbar)
@@ -95,6 +96,11 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     private ListItemRepository_Impl mListItemRepository;
     private int mPosition;
     private ListTitle mActiveListTitle;
+    private boolean mDownloadNotificationRunning;
+
+    public static boolean isLoggingOut() {
+        return mLoggingOut;
+    }
 
     // TODO: Add share from Groupon
     @Override
@@ -117,6 +123,8 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         mListThemeRepository = AndroidApplication.getListThemeRepository();
         mListTitleRepository = AndroidApplication.getListTitleRepository();
         mListItemRepository = AndroidApplication.getListItemRepository();
+        mDownloadNotificationRunning = false;
+        mLoggingOut = false;
 
         if (MySettings.getDeviceUuid().equals(MySettings.NOT_AVAILABLE)) {
             String newUuid = UUID.randomUUID().toString();
@@ -150,16 +158,18 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
     @Subscribe
     public void onEvent(MyEvents.showEditListItemDialog event) {
         Gson gson = new Gson();
-        String listItemJson = gson.toJson(event.getListItem());
+        ListItem listItem = event.getListItem();
+        String listItemJson = gson.toJson(listItem);
         dialogEditListItemName dialog = dialogEditListItemName.newInstance(listItemJson);
         dialog.show(getSupportFragmentManager(), "dialogEditListItemName");
     }
 
     @Subscribe
-    public void onEvent(MyEvents.mainActivityPresenterResume event){
+    public void onEvent(MyEvents.mainActivityPresenterResume event) {
         Timber.d("onEvent(): mainActivityPresenterResume");
         mainActivityPresenterResume();
     }
+
     @OnClick(R.id.fab)
     public void fab() {
         if (mActiveListTitle != null) {
@@ -233,6 +243,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         notificationBuilder.setTicker("Syncing A1List");
         notificationManager
                 .notify(NOTIFICATION_DOWNLOAD_ID, notificationBuilder.build());
+        mDownloadNotificationRunning = true;
     }
 
     private void cancelDownLoadNotification() {
@@ -249,6 +260,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
         notificationBuilder.setSmallIcon(android.R.drawable.stat_sys_download);
         notificationBuilder.setTicker("Syncing A1List");
         notificationManager.cancelAll();
+        mDownloadNotificationRunning = false;
     }
 
     private boolean requiresSyncing() {
@@ -313,9 +325,9 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             }
         });
         mTabLayout.setupWithViewPager(mViewPager);
-        int position =0;
+        int position = 0;
         AppSettings appSettings = mAppSettingsRepository.retrieveAppSettings();
-        if(appSettings!=null) {
+        if (appSettings != null) {
             String lastListTitleViewedUuid = appSettings.getLastListTitleViewedUuid();
             position = mSectionsPagerAdapter.getPosition(lastListTitleViewedUuid);
         }
@@ -346,17 +358,20 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
 
     @Override
     protected void onPause() {
-        // TODO: Start service that saves any dirty objects to Backendless
+        // TODO: If not logging out, start service that saves any dirty objects to Backendless
         super.onPause();
         Timber.i("onPause()");
         MySettings.setStartedFromRegistrationActivity(false);
+        if (mDownloadNotificationRunning) {
+            cancelDownLoadNotification();
+        }
         if (mSectionsPagerAdapter != null) {
             ListTitle listTitle = mSectionsPagerAdapter.getListTitle(mPosition);
             if (listTitle != null) {
                 AppSettings appSettings = mAppSettingsRepository.retrieveAppSettings();
                 if (appSettings != null) {
                     appSettings.setLastListTitleViewedUuid(listTitle.getUuid());
-                    mAppSettingsRepository.update(appSettings);
+                    mAppSettingsRepository.updateInStorage(appSettings);
                 }
             }
         }
@@ -478,7 +493,7 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             ListTitlePosition newListTitlePosition = ListTitlePosition.newInstance(newListTitle.getUuid());
             newListTitle.setListTitlePositionUuid(newListTitlePosition.getUuid());
             listTitles.add(newListTitle);
-            ListTitleAndPosition newPosition = new ListTitleAndPosition(newListTitle,newListTitlePosition);
+            ListTitleAndPosition newPosition = new ListTitleAndPosition(newListTitle, newListTitlePosition);
             listTitleAndPositions.add(newPosition);
         }
         mListTitleRepository.insertIntoStorage(listTitles);
@@ -599,11 +614,11 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             Backendless.UserService.logout(new AsyncCallback<Void>() {
                 public void handleResponse(Void response) {
                     // user has been logged out.
-                    String msg = String.format( "User \"%s\" logged out.", MySettings.getActiveUserName());
+                    String msg = String.format("User \"%s\" logged out.", MySettings.getActiveUserName());
                     Timber.i("logoutUser(): %s", msg);
                     CommonMethods.showSnackbar(mFab, msg, Snackbar.LENGTH_LONG);
                     MySettings.resetActiveUserAndEmail();
-//                    MESSAGE_CHANNEL = MySettings.NOT_AVAILABLE;
+                    clearAllDatabaseTables();
                     startLoginActivity();
                 }
 
@@ -617,6 +632,14 @@ public class MainActivity extends AppCompatActivity implements ListTitlesPresent
             Timber.i("logoutUser(): %s", msg);
             CommonMethods.showSnackbar(mFab, msg, Snackbar.LENGTH_LONG);
         }
+    }
+
+    private void clearAllDatabaseTables() {
+        AndroidApplication.getAppSettingsRepository().clearAllData();
+        AndroidApplication.getListThemeRepository().clearAllData();
+        AndroidApplication.getListTitleRepository().clearAllData();
+        AndroidApplication.getListItemRepository().clearAllData();
+        mLoggingOut = true;
     }
 
     private void showPreferencesActivity() {

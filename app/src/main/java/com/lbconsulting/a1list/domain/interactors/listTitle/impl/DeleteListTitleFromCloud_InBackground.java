@@ -55,7 +55,7 @@ public class DeleteListTitleFromCloud_InBackground extends AbstractInteractor im
             int numberOfDeletedListTitlesFromLocalStorage = listTitleRepository.deleteFromLocalStorage(mListTitle);
             int numberOfDeletedListTitlePositionsFromLocalStorage = listTitleRepository.deleteFromLocalStorage(mListTitle, mListTitlePosition);
 
-            // Send delete message to other devices.
+            // Send deleteFromStorage message to other devices.
             ListTitleMessage.sendMessage(mListTitle, Messaging.ACTION_DELETE);
             ListTitlePositionMessage.sendMessage(mListTitle, mListTitlePosition, Messaging.ACTION_DELETE);
 

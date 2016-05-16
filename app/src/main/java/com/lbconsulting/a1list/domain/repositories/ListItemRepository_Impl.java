@@ -600,7 +600,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     /**
      * This method updates a ListItem in local storage and sets the its
-     * local storage dirty flag set to TRUE and sets its update time to
+     * local storage dirty flag set to TRUE and sets its updateStorage time to
      * the device’s current time.
      *
      * @param listItem ListItem to be updated.
@@ -710,8 +710,8 @@ public class ListItemRepository_Impl implements ListItemRepository,
                 }
                 if (listItem.getObjectId() == null || listItem.getObjectId().isEmpty()) {
                     // The listItem is not new AND there is no Backendless objectId available ... so,
-                    // Unable to update the listItem in Backendless
-                    Timber.e("updateInCloudStorage(): Unable to update \"%s\" in the Cloud. No Backendless objectId available!",
+                    // Unable to updateStorage the listItem in Backendless
+                    Timber.e("updateInCloudStorage(): Unable to updateStorage \"%s\" in the Cloud. No Backendless objectId available!",
                             listItem.getName());
                     return;
                 }
@@ -737,10 +737,10 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     //region Delete ListItem
     //    The general deletion process:
-    //    i)	First set the the ListItem's delete flag in local storage;
-    //    ii)	Second, if ListItem is a Favorite then update the ListItem in cloud storage,
-    //          otherwise delete the ListItem in cloud storage;
-    //    iii)	Third, if ListItem successfully deleted from cloud storage then delete from local storage.
+    //    i)	First set the the ListItem's deleteFromStorage flag in local storage;
+    //    ii)	Second, if ListItem is a Favorite then updateStorage the ListItem in cloud storage,
+    //          otherwise deleteFromStorage the ListItem in cloud storage;
+    //    iii)	Third, if ListItem successfully deleted from cloud storage then deleteFromStorage from local storage.
 
     /**
      * This method deletes the provide list of ListItem from local and cloud storage.
@@ -797,7 +797,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
     }
 
     /**
-     * This method sets a list of ListItems delete flags' to TRUE,
+     * This method sets a list of ListItems deleteFromStorage flags' to TRUE,
      * for each successfully marked ListItem sets its struck out flag to FALSE and
      * sets sets the updated time to the device’s current time.
      *
@@ -821,7 +821,7 @@ public class ListItemRepository_Impl implements ListItemRepository,
 
     /**
      * This method
-     * sets the ListItem’s local storage delete flag to TRUE,
+     * sets the ListItem’s local storage deleteFromStorage flag to TRUE,
      * sets the ListItem’s local storage dirty flag set to TRUE,
      * sets the ListItem's local storage struck out flag to FALSE, and
      * sets the updated time to the device’s current time.
@@ -945,6 +945,24 @@ public class ListItemRepository_Impl implements ListItemRepository,
         cv.put(ListItemsSqlTable.COL_OBJECT_ID, listItem.getObjectId());
 
         return updateInLocalStorage(listItem, cv);
+    }
+
+    @Override
+    public int clearAllData() {
+        int numberOfDeletedListItems = 0;
+        try {
+            Uri uri = ListItemsSqlTable.CONTENT_URI;
+            String selection = null;
+            String[] selectionArgs = null;
+            ContentResolver cr = mContext.getContentResolver();
+            numberOfDeletedListItems = cr.delete(uri, selection, selectionArgs);
+            Timber.i("clearAllData(): Successfully deleted %d ListItems from the SQLiteDb.", numberOfDeletedListItems);
+
+        } catch (Exception e) {
+            Timber.e("clearAllData(): Exception: %s.", e.getMessage());
+        }
+
+        return numberOfDeletedListItems;
     }
 
     /**

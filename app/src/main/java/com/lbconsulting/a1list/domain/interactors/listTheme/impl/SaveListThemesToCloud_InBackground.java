@@ -93,7 +93,7 @@ public class SaveListThemesToCloud_InBackground extends AbstractInteractor imple
                     if (isNew) {
                         action = Messaging.ACTION_CREATE;
                     }
-                    ListThemeMessage.sendMessage(listTheme, action, null);
+                    ListThemeMessage.sendMessage(listTheme, action);
 
                     String successMessage = String.format("Successfully saved \"%s\" to Backendless.", response.getName());
                     Timber.i("run(): %s", successMessage);

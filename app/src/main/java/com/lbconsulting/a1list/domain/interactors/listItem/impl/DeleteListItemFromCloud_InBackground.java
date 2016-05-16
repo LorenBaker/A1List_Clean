@@ -45,7 +45,7 @@ public class DeleteListItemFromCloud_InBackground extends AbstractInteractor imp
             // Delete ListItem from local storage
             int numberOfListItemsDeletedFromLocalStorage = listItemRepository.deleteFromLocalStorage(mListItem);
 
-            // Send delete message to other devices.
+            // Send deleteFromStorage message to other devices.
             ListItemMessage.sendMessage(mListItem, Messaging.ACTION_DELETE);
 
             if (numberOfListItemsDeletedFromLocalStorage == 1) {

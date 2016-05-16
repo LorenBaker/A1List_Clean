@@ -26,11 +26,12 @@ public interface AppSettingsRepository {
     //endregion
 
     //region Update AppSettings
-    void update(AppSettings appSettings);
+    void updateInStorage(AppSettings appSettings);
 
     int updateInLocalStorage(AppSettings appSettings);
 
     void updateInCloud(AppSettings appSettings, boolean isNew);
     //endregion
 
+    int clearAllData();
 }

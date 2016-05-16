@@ -196,7 +196,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         if (successfullyInsertedIntoSQLiteDb) {
             insertIntoCloudStorage(listTitle);
             AppSettings dirtyListSettings = mAppSettingsRepository.retrieveDirtyAppSettings();
-            mAppSettingsRepository.update(dirtyListSettings);
+            mAppSettingsRepository.updateInStorage(dirtyListSettings);
         }
         return successfullyInsertedIntoSQLiteDb;
     }
@@ -1060,10 +1060,10 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
 
     //region Delete ListTitle
     //    The general deletion process:
-    //    i)	First, delete any ListItems associated with the ListTitle;
-    //    ii)   Second, set the the ListTitle's delete flag in local storage;
-    //    iii)	Third, delete the ListTitle from cloud storage;
-    //    iv)	Fourth, if ListTitle successfully deleted from cloud storage then delete it from local storage.
+    //    i)	First, deleteFromStorage any ListItems associated with the ListTitle;
+    //    ii)   Second, set the the ListTitle's deleteFromStorage flag in local storage;
+    //    iii)	Third, deleteFromStorage the ListTitle from cloud storage;
+    //    iv)	Fourth, if ListTitle successfully deleted from cloud storage then deleteFromStorage it from local storage.
 
     /**
      * Deletes a ListTitle and its associated ListItems and ListTitlePosition from local and cloud storage.
@@ -1073,7 +1073,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
      */
     @Override
     public int deleteFromStorage(ListTitle listTitle) {
-        // delete any ListItems that are held in the listTitle to be deleted.
+        // deleteFromStorage any ListItems that are held in the listTitle to be deleted.
         ListItemRepository_Impl listItemRepository = AndroidApplication.getListItemRepository();
         List<ListItem> listItemsForDeletion = listItemRepository.retrieveListItems(listTitle);
         if (listItemsForDeletion.size() > 0) {
@@ -1084,14 +1084,14 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
                     listItem.setFavorite(false);
                 }
             }
-            // delete all ListItems
+            // deleteFromStorage all ListItems
             listItemRepository.deleteFromStorage(listItemsForDeletion);
         }
 
         // Mark the ListTitle for deletion
         int numberOfListTitlesMarkedForDeletion = setDeleteFlagInLocalStorage(listTitle);
         if (numberOfListTitlesMarkedForDeletion == 1) {
-            // delete the ListTitle and its ListTitlePosition from cloud storage.
+            // deleteFromStorage the ListTitle and its ListTitlePosition from cloud storage.
             deleteFromCloudStorage(listTitle);
         }
 
@@ -1106,7 +1106,7 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
 //            String selection = ListTitlePositionsSqlTable.COL_UUID + " = ?";
 //            String[] selectionArgs = new String[]{listTitlePosition.getUuid()};
 //            ContentResolver cr = mContext.getContentResolver();
-//            numberOfDeletedListTitlePositions = cr.delete(uri, selection, selectionArgs);
+//            numberOfDeletedListTitlePositions = cr.deleteFromStorage(uri, selection, selectionArgs);
 //            if (numberOfDeletedListTitlePositions == 1) {
 //                Timber.i("deleteFromLocalStorage(): Successfully deleted \"%s's\" ListTitlePosition from the SQLiteDb.", listTitle.getName());
 //            } else {
@@ -1234,6 +1234,37 @@ public class ListTitleRepository_Impl implements ListTitleRepository,
         cv.put(ListTitlesSqlTable.COL_OBJECT_ID, listTitle.getObjectId());
 
         return updateInLocalStorage(listTitle, cv);
+    }
+
+    @Override
+    public int clearAllData() {
+        int numberOfDeletedListTitles = 0;
+        try {
+            Uri uri = ListTitlesSqlTable.CONTENT_URI;
+            String selection = null;
+            String[] selectionArgs = null;
+            ContentResolver cr = mContext.getContentResolver();
+            numberOfDeletedListTitles = cr.delete(uri, selection, selectionArgs);
+            Timber.i("clearAllData(): Successfully deleted %d ListTitles from the SQLiteDb.", numberOfDeletedListTitles);
+
+        } catch (Exception e) {
+            Timber.e("clearAllData(): Exception: %s.", e.getMessage());
+        }
+
+        int numberOfDeletedListTitlePositions = 0;
+        try {
+            Uri uri = ListTitlePositionsSqlTable.CONTENT_URI;
+            String selection = null;
+            String[] selectionArgs = null;
+            ContentResolver cr = mContext.getContentResolver();
+            numberOfDeletedListTitlePositions = cr.delete(uri, selection, selectionArgs);
+            Timber.i("clearAllData(): Successfully deleted %d ListTitlePositions from the SQLiteDb.", numberOfDeletedListTitlePositions);
+
+        } catch (Exception e) {
+            Timber.e("clearAllData(): Exception: %s.", e.getMessage());
+        }
+
+        return numberOfDeletedListTitles;
     }
 
     public int deleteListTitlePositionFromLocalStorage(ListTitlePosition listTitlePosition) {

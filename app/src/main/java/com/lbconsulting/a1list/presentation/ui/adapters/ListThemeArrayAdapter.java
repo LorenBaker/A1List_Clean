@@ -161,7 +161,7 @@ public class ListThemeArrayAdapter extends ArrayAdapter<ListTheme> {
                     setNoStrikeOut((TextView) v, mSelectedTheme.isBold(), mSelectedTheme.getTextColor());
                 }
                 EventBus.getDefault().post(new MyEvents.incrementStrikeOutCount(strikeOutIncrement));
-                mListThemeRepository.update(mSelectedTheme);
+                mListThemeRepository.updateStorage(mSelectedTheme);
 
             }
         });

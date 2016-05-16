@@ -84,4 +84,6 @@ public interface ListTitleRepository {
     //endregion
 
     int clearLocalStorageDirtyFlag(ListTitle listTitle);
+
+    int clearAllData();
 }

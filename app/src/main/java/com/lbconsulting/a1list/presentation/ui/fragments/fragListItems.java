@@ -19,6 +19,7 @@ import com.lbconsulting.a1list.domain.model.ListTitlePosition;
 import com.lbconsulting.a1list.domain.repositories.ListItemRepository_Impl;
 import com.lbconsulting.a1list.domain.repositories.ListTitleRepository_Impl;
 import com.lbconsulting.a1list.presentation.presenters.interfaces.ListItemsPresenter;
+import com.lbconsulting.a1list.presentation.ui.activities.MainActivity;
 import com.lbconsulting.a1list.presentation.ui.adapters.ListItemsArrayAdapter;
 import com.lbconsulting.a1list.utils.CommonMethods;
 import com.lbconsulting.a1list.utils.MyEvents;
@@ -222,12 +223,14 @@ public class fragListItems extends Fragment implements ListItemsPresenter.ListIt
         super.onPause();
         Timber.i("onPause()for ListTitle \"%s\".", mListTitle.getName());
 
-        // Save the ListView's position
-        int firstVisiblePosition = lvListItems.getFirstVisiblePosition();
-        View v = lvListItems.getChildAt(0);
-        int top = (v == null) ? 0 : (v.getTop() - lvListItems.getPaddingTop());
+        if(!MainActivity.isLoggingOut()) {
+            // Save the ListView's position
+            int firstVisiblePosition = lvListItems.getFirstVisiblePosition();
+            View v = lvListItems.getChildAt(0);
+            int top = (v == null) ? 0 : (v.getTop() - lvListItems.getPaddingTop());
 
-        mListTitleRepository.updateListTitlePosition(mListTitle, firstVisiblePosition, top);
+            mListTitleRepository.updateListTitlePosition(mListTitle, firstVisiblePosition, top);
+        }
     }
 
     @Override

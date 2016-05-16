@@ -177,7 +177,7 @@ public class CreateInitialListThemes_InBackground extends AbstractInteractor imp
             //endregion
 
 
-            mListThemesInsertedIntoLocalStorage = mListThemeRepository.insert(newListThemes);
+            mListThemesInsertedIntoLocalStorage = mListThemeRepository.insertIntoStorage(newListThemes);
             String createdListThemeMessage;
             // check if we have failed to retrieve any ListThemes
             if (mListThemesInsertedIntoLocalStorage == null) {

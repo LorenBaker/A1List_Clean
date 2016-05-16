@@ -58,7 +58,7 @@ public class DeleteListItemsFromCloud_InBackground extends AbstractInteractor im
         // Delete successfully removed ListItems from local storage.
         List<ListItem> listItemsDeletedFromLocalStorage = listItemRepository.deleteFromLocalStorage(successfullyRemovedListItems);
 
-        // Send delete messages to other devices.
+        // Send deleteFromStorage messages to other devices.
         for (ListItem removedListItem : successfullyRemovedListItems) {
             ListItemMessage.sendMessage(removedListItem, Messaging.ACTION_DELETE);
         }
@@ -70,18 +70,18 @@ public class DeleteListItemsFromCloud_InBackground extends AbstractInteractor im
                             mListItems.size());
             postListItemsDeletedFromBackendless(successMessage);
         } else if (mListItems.size() == successfullyRemovedListItems.size()) {
-            // Failed to delete some listItems from local storage.
+            // Failed to deleteFromStorage some listItems from local storage.
             String errorMessage = String.format("Successfully deleted all %d ListItems from Backendless BUT only %d ListItems from the SQLiteDB.",
                     mListItems.size(), listItemsDeletedFromLocalStorage.size());
             postListItemDeletionFromBackendlessFailed(errorMessage);
         } else if (successfullyRemovedListItems.size() == listItemsDeletedFromLocalStorage.size()) {
-            // Failed to delete some listItems from cloud storage.
+            // Failed to deleteFromStorage some listItems from cloud storage.
             String errorMessage = String.format("Only deleted %d of %d ListItems from Backendless and the SQLiteDB.",
                     listItemsDeletedFromLocalStorage.size(), mListItems.size());
             postListItemDeletionFromBackendlessFailed(errorMessage);
         } else {
-            // Failed to delete some listItems from cloud storage. And from those successfully deleted
-            // from cloud storage, Failed to delete some from local storage.
+            // Failed to deleteFromStorage some listItems from cloud storage. And from those successfully deleted
+            // from cloud storage, Failed to deleteFromStorage some from local storage.
             String errorMessage = String.format("Only deleted %d of %d ListItems from Backendless AND Only deleted %d of %d ListItems from SQLiteDb",
                     successfullyRemovedListItems.size(), mListItems.size(), listItemsDeletedFromLocalStorage.size(), mListItems.size());
             postListItemDeletionFromBackendlessFailed(errorMessage);

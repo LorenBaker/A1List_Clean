@@ -83,7 +83,7 @@ public class A1List_ContentProvider extends ContentProvider {
                     selection = "1";
                 }
                 // Perform the deletion
-                deleteCount = db.delete(ListItemsSqlTable.TABLE_LIST_ITEMS, selection, selectionArgs);
+                deleteCount = db.delete(AppSettingsSqlTable.TABLE_APP_SETTINGS, selection, selectionArgs);
                 break;
 
             case APP_SETTINGS_SINGLE_ROW:
@@ -91,7 +91,7 @@ public class A1List_ContentProvider extends ContentProvider {
                 rowId = uri.getLastPathSegment();
                 selection = ListItemsSqlTable.COL_ID + "=" + rowId;
                 // Perform the deletion
-                deleteCount = db.delete(ListItemsSqlTable.TABLE_LIST_ITEMS, selection, selectionArgs);
+                deleteCount = db.delete(AppSettingsSqlTable.TABLE_APP_SETTINGS, selection, selectionArgs);
                 break;
 
             case LIST_ITEMS_MULTI_ROWS:

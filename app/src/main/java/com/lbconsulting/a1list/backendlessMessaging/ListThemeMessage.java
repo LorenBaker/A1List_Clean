@@ -17,24 +17,22 @@ public class ListThemeMessage {
     ListTheme listTheme;
     int action;
     int target;
-    String defaultListThemeUuid;
 
     public ListThemeMessage() {
 
     }
 
-    public ListThemeMessage(ListTheme listTheme, int action, int target, String defaultListThemeUuid) {
+    public ListThemeMessage(ListTheme listTheme, int action, int target) {
         this.listTheme = listTheme;
         this.action = action;
         this.target = target;
-        this.defaultListThemeUuid = defaultListThemeUuid;
     }
 
-    public static String toJson(ListTheme listTheme, int action, int target, String defaultListThemeUuid) {
+    public static String toJson(ListTheme listTheme, int action, int target) {
         String listThemeJsonString = "";
 
         try {
-            ListThemeMessage message = new ListThemeMessage(listTheme, action, target, defaultListThemeUuid);
+            ListThemeMessage message = new ListThemeMessage(listTheme, action, target);
             Gson gson = new Gson();
             listThemeJsonString = gson.toJson(message);
         } catch (Exception e) {
@@ -49,11 +47,11 @@ public class ListThemeMessage {
         return gson.fromJson(jsonString, ListThemeMessage.class);
     }
 
-    public static void sendMessage(ListTheme listTheme, int action, String defaultListThemeUuid) {
+    public static void sendMessage(ListTheme listTheme, int action) {
         String messageChannel = listTheme.getMessageChannel();
 
         int target = Messaging.TARGET_ALL_DEVICES;
-        String listThemeMessageJson = toJson(listTheme, action, target, defaultListThemeUuid);
+        String listThemeMessageJson = toJson(listTheme, action, target);
         MessageStatus messageStatus = Backendless.Messaging.publish(messageChannel, listThemeMessageJson);
         if (messageStatus.getErrorMessage() == null) {
             // successfully sent message to Backendless.
@@ -103,11 +101,4 @@ public class ListThemeMessage {
         this.target = target;
     }
 
-    public String getDefaultListThemeUuid() {
-        return defaultListThemeUuid;
-    }
-
-    public void setDefaultListThemeUuid(String defaultListThemeUuid) {
-        this.defaultListThemeUuid = defaultListThemeUuid;
-    }
 }

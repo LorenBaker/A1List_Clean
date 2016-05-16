@@ -76,4 +76,7 @@ public interface ListItemRepository {
     //endregion
 
     int clearLocalStorageDirtyFlag(ListItem listItem);
+
+    int clearAllData();
+
 }

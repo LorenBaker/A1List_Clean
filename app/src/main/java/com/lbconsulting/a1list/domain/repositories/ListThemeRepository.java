@@ -10,9 +10,9 @@ import java.util.List;
 public interface ListThemeRepository {
 
     //region Insert ListTheme
-    List<ListTheme> insert(List<ListTheme> listThemes);
+    List<ListTheme> insertIntoStorage(List<ListTheme> listThemes);
 
-    boolean insert(ListTheme listTheme);
+    boolean insertIntoStorage(ListTheme listTheme);
 
     List<ListTheme> insertIntoLocalStorage(List<ListTheme> listThemes);
 
@@ -22,7 +22,6 @@ public interface ListThemeRepository {
 
     void insertInCloud(ListTheme listTheme);
     //endregion
-
 
     //region Retrieve ListTheme
     ListTheme retrieveListThemeByUuid(String uuid);
@@ -39,9 +38,9 @@ public interface ListThemeRepository {
     //endregion
 
     //region Update ListTheme
-    void update(List<ListTheme> listThemes);
+    void updateStorage(List<ListTheme> listThemes);
 
-    void update(ListTheme listTheme);
+    void updateStorage(ListTheme listTheme);
 
     List<ListTheme> updateInLocalStorage(List<ListTheme> listThemes);
 
@@ -51,25 +50,28 @@ public interface ListThemeRepository {
 
     void updateInCloud(ListTheme listTheme, boolean isNew);
 
-//    int toggle(ListTheme listTheme, String fieldName);
-
-    void clearDefaultFlag();
-
     int applyTextSizeAndMarginsToAllListThemes(ListTheme listTheme);
     //endregion
 
     //region Delete ListTheme
-    int delete(List<ListTheme> listThemes);
+    int deleteFromStorage(List<ListTheme> listThemes);
 
-    int delete(ListTheme listTheme);
+    int deleteFromStorage(ListTheme listTheme);
 
-    List<ListTheme> deleteFromLocalStorage(List<ListTheme> listThemes);
+    List<ListTheme> setDeleteFlagInLocalStorage(List<ListTheme> listTheme);
 
-    int deleteFromLocalStorage(ListTheme listTheme, ListTheme defaultListTheme);
+    int setDeleteFlagInLocalStorage(ListTheme listTheme,ListTheme defaultListTheme);
 
     void deleteFromCloud(List<ListTheme> listThemes);
 
-    void deleteFromCloud(ListTheme listTheme);
+    void deleteFromCloud(ListTheme listTheme,ListTheme defaultListTheme);
 
+    List<ListTheme> deleteFromLocalStorage(List<ListTheme> listThemes);
 
+    int deleteFromLocalStorage(ListTheme listTheme);
+    //endregion
+
+    int clearLocalStorageDirtyFlag(ListTheme listTheme);
+
+    int clearAllData();
 }

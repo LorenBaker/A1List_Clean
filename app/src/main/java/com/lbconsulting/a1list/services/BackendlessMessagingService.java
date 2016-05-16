@@ -261,9 +261,7 @@ public class BackendlessMessagingService extends Service {
                                                 AndroidApplication.getListThemeRepository().updateInLocalStorage(listTheme);
                                                 break;
                                             case Messaging.ACTION_DELETE:
-                                                String defaultListThemeUuid = listThemeMessage.getDefaultListThemeUuid();
-                                                ListTheme defaultListTheme = AndroidApplication.getListThemeRepository().retrieveListThemeByUuid(defaultListThemeUuid);
-                                                AndroidApplication.getListThemeRepository().deleteFromLocalStorage(listTheme, defaultListTheme);
+                                                AndroidApplication.getListThemeRepository().deleteFromLocalStorage(listTheme);
                                                 break;
                                         }
                                         // TODO: Figure out what ui to updateStorage with a ListTheme change
